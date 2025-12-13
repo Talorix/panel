@@ -11,46 +11,65 @@
   <!-- Sidebar -->
   <%- include('../components/sidebar', { name: name, user: user }) %>
 
-  <!-- Main Content -->
   <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-6xl mx-auto space-y-8">
+    <div class="max-w-6xl mx-auto space-y-6">
 
-      <!-- Welcome Section -->
-      <div class="bg-neutral-950 border border-neutral-900 p-4 rounded-2xl shadow-lg">
+      <!-- Welcome Banner -->
+      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl shadow-lg">
         <h1 class="text-3xl font-bold">👋 Welcome back, <%= user.username %>!</h1>
+        <p class="text-gray-400 mt-1">Here's your server overview.</p>
       </div>
 
-      <!-- Servers Section -->
-      <div class="space-y-4">
-      <div class="bg-neutral-950 border border-neutral-900 shadow-xl rounded-2xl p-6">
-        <h2 class="text-2xl font-semibold mb-4">Your Servers</h2>
-
-        <% if (user.servers && user.servers.length > 0) { %>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 border border-neutral-900">
-          <% user.servers.forEach(server => { %>
-          <div class="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 hover:border-indigo-500 hover:shadow-xl transition-all">
-            <div class="flex justify-between items-start mb-4">
-              <h3 class="text-xl font-semibold"><%= server.name %></h3>
-              <span class="text-sm text-gray-400">ID: <%= server.id %></span>
-            </div>
-            <p class="text-gray-300 mb-1"><strong>Node:</strong> <%= server.node.name %></p>
-            <p class="text-gray-300 mb-1"><strong>IP:</strong> <%= server.node.address %>:<%= server.port %></p>
-            <button class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl transition-colors">
-              Manage
-            </button>
-          </div>
-          <% }) %>
-        </div>
-        <% } else { %>
-        <p class="text-gray-400">No servers added yet.</p>
-        <% } %>
+      <!-- Servers Table -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-neutral-950 border-b border-neutral-800">
+            <tr class="text-gray-400 text-sm">
+              <th class="p-4">Server Name</th>
+              <th class="p-4">Node</th>
+              <th class="p-4">IP Address</th>
+              <th class="p-4">Status</th>
+              <th class="p-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (user.servers && user.servers.length > 0) { %>
+              <% user.servers.forEach(server => { %>
+                <tr class="border-b border-neutral-800 hover:bg-neutral-800/50 transition">
+                  <td class="p-4 font-medium"><%= server.name %></td>
+                  <td class="p-4 text-gray-300"><%= server.node.name %></td>
+                  <td class="p-4 text-gray-400"><%= server.node.ip %>:<%= server.port %></td>
+                  <td class="p-4">
+                    <% if (server.status === "online") { %>
+                      <span class="flex items-center gap-2 text-green-400">
+                        <i data-lucide="heart-pulse" class="w-4 h-4 animate-pulse"></i> Online
+                      </span>
+                    <% } else { %>
+                      <span class="flex items-center gap-2 text-red-400">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i> Offline
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="p-4 text-right flex gap-2 justify-end">
+                    <a href="/server/manage/<%= server.id %>" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-xl text-sm">
+                      <i data-lucide="settings" class="w-4 h-4"></i> Manage
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="p-4 text-gray-400 text-center">No servers added yet.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
       </div>
-</div> 
+
     </div>
   </main>
 
   <script>
-    // Initialize Lucide icons
     lucide.createIcons();
   </script>
 </body>

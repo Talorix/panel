@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - <%= node.name %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen flex">
+
+  <%- include('../components/sidebar', { name, user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-4xl mx-auto space-y-6">
+
+      <!-- Node Header -->
+      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold"><%= node.name %></h1>
+          <% if (node.status === "online") { %>
+            <p class="text-green-400 mt-2">Node Online</p>
+          <% } else if (node.status === "dockernotrunning") { %>
+            <p class="text-yellow-400 mt-2">Docker Not Running</p>
+          <% } else { %>
+            <p class="text-red-400 mt-2">Node Offline</p>
+          <% } %>
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="configureNode()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-sm">
+            <i data-lucide="key" class="w-4 h-4"></i> Configure
+          </button>
+          <button onclick="deleteNode()" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
+          </button>
+        </div>
+    </div>
+
+      <!-- Charts -->
+<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
+  <h2 class="text-xl font-semibold mb-4">Node Usage</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- CPU Chart -->
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <h3 class="text-lg font-medium mb-2">CPU Usage (%)</h3>
+      <canvas id="cpuChart" height="150"></canvas>
+    </div>
+
+    <!-- RAM Chart -->
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <h3 class="text-lg font-medium mb-2">RAM Usage (GB)</h3>
+      <canvas id="ramChart" height="150"></canvas>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </main>
+
+  <!-- Configure Node Modal -->
+  <div id="configModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 w-full max-w-xl">
+      <h2 class="text-xl font-semibold mb-4">Configure Node</h2>
+      <p class="text-gray-400 mb-2">Run this command on the node machine:</p>
+      <pre id="configCommand" class="bg-neutral-950 border border-neutral-800 rounded-xl p-4 text-sm text-gray-200 overflow-x-auto"></pre>
+      <div class="flex justify-end gap-2 mt-6">
+        <button onclick="closeConfigModal()" class="px-4 py-2 text-gray-400">Close</button>
+        <button onclick="copyCommand()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const nodeId = "<%= req.params.id %>";
+
+    // Configure Node
+    async function configureNode() {
+      const res = await fetch(`/admin/node/${nodeId}/configure-key`, { method: "POST" });
+      const data = await res.json();
+      document.getElementById("configCommand").textContent = data.command;
+      document.getElementById("configModal").classList.remove("hidden");
+      document.getElementById("configModal").classList.add("flex");
+    }
+
+    function closeConfigModal() {
+      document.getElementById("configModal").classList.add("hidden");
+      document.getElementById("configModal").classList.remove("flex");
+    }
+
+    function copyCommand() {
+      navigator.clipboard.writeText(document.getElementById("configCommand").textContent);
+    }
+
+    // Delete Node
+    async function deleteNode() {
+      if (!confirm("Are you sure you want to delete this node?")) return;
+      const res = await fetch(`/admin/node/${nodeId}/delete`, { method: "POST" });
+      if (res.ok) window.location.href = "/admin/nodes";
+      else alert("Failed to delete node");
+    }
+
+    // Charts setup
+    const labels = Array.from({length: 20}, (_, i) => '');
+    const cpuChart = new Chart(document.getElementById('cpuChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'CPU %',
+          data: Array(20).fill(0),
+          borderColor: 'rgb(34,197,94)',
+          backgroundColor: 'rgba(34,197,94,0.2)',
+          tension: 0.3
+        }]
+      },
+      options: { animation: false, responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+
+    const ramChart = new Chart(document.getElementById('ramChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'RAM GB',
+          data: Array(20).fill(0),
+          borderColor: 'rgb(59,130,246)',
+          backgroundColor: 'rgba(59,130,246,0.2)',
+          tension: 0.3
+        }]
+      },
+      options: { animation: false, responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Fetch stats every 5s
+    async function fetchStats() {
+      try {
+        const res = await fetch(`/admin/node/stats/${nodeId}`);
+        if (!res.ok) throw new Error('Failed to fetch stats');
+        const data = await res.json();
+
+        const cpuPercent = Math.min((data.stats.totalCpuCores ? 100 : 0), 100); // Optional CPU usage percent
+        const ramUsed = parseFloat(data.stats.usedRamGB);
+
+        // Shift old data
+        cpuChart.data.datasets[0].data.shift();
+        cpuChart.data.datasets[0].data.push(cpuPercent);
+        cpuChart.update('none');
+
+        ramChart.data.datasets[0].data.shift();
+        ramChart.data.datasets[0].data.push(ramUsed);
+        ramChart.update('none');
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setInterval(fetchStats, 5000);
+    fetchStats();
+  </script>
+</body>
+</html>

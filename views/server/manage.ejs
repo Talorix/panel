@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - <%= server.name %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- Sidebar -->
+  <%- include('../components/sidebar', { name: name, user: user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-6xl mx-auto space-y-6">
+
+      <!-- Server Header -->
+      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl shadow-lg flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold">🖥 <%= server.name %></h1>
+          <p class="text-gray-400 mt-1">Node: <%= server.node?.name || 'Unknown' %> | IP: <%= server.node?.ip || '0.0.0.0' %>:<%= server.port %></p>
+        </div>
+        <div>
+          <% if (server.status === "online") { %>
+            <span class="flex items-center gap-2 text-green-400">
+              <i data-lucide="heart-pulse" class="w-5 h-5 animate-pulse"></i> Online
+            </span>
+          <% } else { %>
+            <span class="flex items-center gap-2 text-red-400">
+              <i data-lucide="x-circle" class="w-5 h-5"></i> Offline
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 flex gap-4">
+        <a href="#" class="px-4 py-2 bg-indigo-600 rounded-xl text-sm flex items-center gap-2">
+          <i data-lucide="terminal"></i> Console
+        </a>
+        <a href="#" class="px-4 py-2 hover:bg-neutral-800 rounded-xl text-sm flex items-center gap-2">
+          <i data-lucide="folder"></i> Files
+        </a>
+        <a href="#" class="px-4 py-2 hover:bg-neutral-800 rounded-xl text-sm flex items-center gap-2">
+          <i data-lucide="settings"></i> Settings
+        </a>
+      </div>
+<!-- Power Actions -->
+<div class="mt-4 flex gap-2">
+  <button data-action="start" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-xl">Start</button>
+  <button data-action="stop" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl">Stop</button>
+  <button data-action="restart" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-xl">Restart</button>
+</div>
+
+      <!-- Console -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 h-96 overflow-auto font-mono text-sm" id="console"></div>
+
+      <!-- Input -->
+      <div class="mt-2 flex gap-2">
+        <input type="text" id="cmdInput" placeholder="Type a command..." class="flex-1 p-2 rounded-xl bg-neutral-800 border border-neutral-700 text-gray-100 font-mono" />
+        <button id="sendBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl">Send</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+  lucide.createIcons();
+const consoleEl = document.getElementById("console");
+const inputEl = document.getElementById("cmdInput");
+const sendBtn = document.getElementById("sendBtn");
+const instanceId = "<%= server.id %>";
+let ws;
+
+const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+function cleanOutput(str) {
+  // Remove non-printable characters like \u0001, \u0000
+  return str.replace(/[\u0000-\u001F\u007F]/g, '');
+}
+
+function appendToConsole(msg, color) {
+  const div = document.createElement("div");
+  div.textContent = msg;
+  if (color) div.style.color = color;
+  consoleEl.appendChild(div);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+
+function handleWebSocketMessage(event) {
+  try {
+    const data = JSON.parse(event.data);
+
+    if (data.event === "cmd") appendToConsole(cleanOutput(data.payload));
+    else if (data.event === "power") appendToConsole(data.payload, "orange");
+    else if (data.event === "stats") console.log("Stats:", data.payload);
+    else if (data.event === "error") appendToConsole(`Error: ${data.payload}`, "red");
+  } catch {
+    appendToConsole(cleanOutput(event.data)); // fallback for raw messages
+  }
+}
+
+function initWebSocket() {
+  const port = window.location.port ? `:${window.location.port}` : '';
+  ws = new WebSocket(`${protocol}://${window.location.hostname}${port}/console/${instanceId}`);
+
+  ws.onopen = () => appendToConsole("Connected to server console", "green");
+  ws.onmessage = handleWebSocketMessage;
+  ws.onclose = () => {
+    appendToConsole("Disconnected, reconnecting...", "red");
+    setTimeout(initWebSocket, 3000);
+  };
+  ws.onerror = (err) => {
+    appendToConsole("WebSocket error, reconnecting...", "yellow");
+    console.error(err);
+    setTimeout(initWebSocket, 5000);
+  };
+}
+
+initWebSocket();
+
+// Send commands
+sendBtn.addEventListener("click", () => {
+  const cmd = inputEl.value.trim();
+  if (!cmd || ws.readyState !== WebSocket.OPEN) return;
+
+  ws.send(JSON.stringify({
+    event: "cmd",
+    payload: {
+      containerId: "<%= server.containerId %>",
+      command: cmd
+    }
+  }));
+
+  inputEl.value = "";
+});
+
+inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") sendBtn.click(); });
+
+// Power buttons
+document.querySelectorAll('button[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.getAttribute('data-action');
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        event: `power:${action}`,
+        payload: { containerId: "<%= server.containerId %>" }
+      }));
+    }
+  });
+});
+
+</script>
+
+</body>
+</html>

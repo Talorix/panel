@@ -1,11 +1,20 @@
 const express = require("express");
-const app = express();
 const path = require("path");
 const fs = require('fs');
+const session = require("express-session");
 const config = require("./config.json");
-const PORT = config.port;
 const unsqh = require("./modules/db.js");
 
+// --- WebSocket support ---
+const expressWs = require('express-ws');
+
+const PORT = config.port;
+const app = express();
+
+// --- Initialize express-ws 
+expressWs(app);
+
+// --- Settings ---
 const currentSettings = unsqh.get("settings", "app") || {};
 const newSettings = {
   name: currentSettings.name || config.name,
@@ -13,18 +22,18 @@ const newSettings = {
 };
 unsqh.put("settings", "app", newSettings);
 
-const session = require("express-session");
-
-app.use(session({
+// --- Session middleware ---
+const sessionMiddleware = session({
   name: "sid",
   secret: config.session_secret,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 // 1 day cause afk is bad 
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
   }
-}));
+});
+app.use(sessionMiddleware);
 
 // --- Express setup ---
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +47,8 @@ app.use((req, res, next) => {
   next();
 });
 
+const consoleWS = require('./modules/websocket.js');
+consoleWS(app);
 // --- Load backend routes ---
 const loadedRoutes = [];
 const routeFiles = fs.readdirSync("./routers").filter(file => file.endsWith(".js"));
@@ -61,5 +72,5 @@ app.use(async (req, res) => {
 
 // --- Start server ---
 app.listen(PORT, () => {
-  console.log(`well it got started!`);
+  console.log(`Server + console WS running on port ${PORT}`);
 });

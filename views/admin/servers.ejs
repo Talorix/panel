@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= name %> - Servers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex">
+  <%- include('../components/sidebar', { name, user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-6xl mx-auto space-y-6">
+      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold">🗄 Servers</h1>
+          <p class="text-gray-400">Manage all user servers</p>
+        </div>
+        <a href="/admin/servers/new" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl font-medium">
+          + Create Server
+        </a>
+      </div>
+
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+        <table class="w-full text-left">
+          <thead class="bg-neutral-950 border-b border-neutral-800">
+            <tr class="text-gray-400 text-sm">
+              <th class="p-4">Name</th>
+              <th class="p-4">Node</th>
+              <th class="p-4">Image</th>
+              <th class="p-4">Owner</th>
+              <th class="p-4">CPU</th>
+              <th class="p-4">RAM</th>
+              <th class="p-4">Port</th>
+              <th class="p-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% servers.forEach(server => { 
+                const node = nodes.find(n => n.id === server.nodeId);
+                const image = images.find(i => i.id === server.imageId);
+                const owner = users.find(u => u.id === server.userId);
+            %>
+              <tr class="border-b border-neutral-800 hover:bg-neutral-800/50 transition">
+                <td class="p-4 font-medium"><%= server.name %></td>
+                <td class="p-4 text-gray-400"><%= node ? node.name : "Unknown" %></td>
+                <td class="p-4 text-gray-400"><%= image ? image.name : "Unknown" %></td>
+                <td class="p-4 text-gray-400"><%= owner ? owner.username : "Unknown" %></td>
+                <td class="p-4 text-gray-400"><i data-lucide="cpu" class="inline w-4 h-4 mr-1"></i><%= server.core %></td>
+                <td class="p-4 text-gray-400"><i data-lucide="memory-stick" class="inline w-4 h-4 mr-1"></i><%= server.ram %> MB</td>
+                <td class="p-4 text-gray-400"><%= server.port %></td>
+                <td class="p-4 text-right">
+                  <button onclick="deleteServer('<%= server.id %>')" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-xl text-sm flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    async function deleteServer(id) {
+      if (!confirm("Are you sure you want to delete this server?")) return;
+      const res = await fetch(`/admin/servers/delete/${id}`, { method: "POST" });
+      if (res.ok) location.reload();
+      else alert("Failed to delete server");
+    }
+  </script>
+</body>
+</html>

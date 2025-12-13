@@ -12,10 +12,25 @@
       Dashboard
     </a>
     <% if (user.admin) { %>
-    <a href="/admin/overview" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
-      <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="user-star"></svg>
-      Admin
-    </a>
+    <div class="space-y-1">
+      <a href="/admin/overview" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
+        <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="user-star"></svg>
+        Admin
+      </a>
+      <!-- Admin Sub-links -->
+      <a href="/admin/nodes" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
+        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="server"></svg>
+        Nodes
+      </a>
+      <a href="/admin/images" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
+        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="image"></svg>
+        Images
+      </a>
+      <a href="/admin/servers" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
+        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="cpu"></svg>
+        Servers
+      </a>
+    </div>
     <% } %>
     <a href="/settings" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
       <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="settings-2"></svg>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - New Image</title>
+   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen flex">
+  <%- include('../components/sidebar', { name, user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-xl mx-auto space-y-6">
+      <h1 class="text-3xl font-bold mb-4">🖼 Create New Docker Image</h1>
+
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+        <input id="dockerImage" placeholder="Docker Image (e.g., ubuntu:latest)" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+        <input id="name" placeholder="Name" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+        <input id="description" placeholder="Description" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+
+        <!-- ENVs -->
+        <div>
+          <h3 class="font-semibold mb-2">Environment Variables</h3>
+          <div id="envsContainer" class="space-y-2"></div>
+          <button type="button" onclick="addEnv()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-xl text-sm mt-2">+ New ENV</button>
+        </div>
+
+        <!-- Files -->
+        <div>
+          <h3 class="font-semibold mb-2">Files</h3>
+          <div id="filesContainer" class="space-y-2"></div>
+          <button type="button" onclick="addFile()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-xl text-sm mt-2">+ New File</button>
+        </div>
+
+        <div class="flex justify-end mt-4">
+          <button onclick="createImage()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl">Create</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+     lucide.createIcons();
+
+    let envCount = 0;
+    let fileCount = 0;
+
+    function addEnv(key = '', value = '') {
+      envCount++;
+      const container = document.getElementById('envsContainer');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2';
+      div.innerHTML = `
+        <input type="text" placeholder="Key" value="${key}" class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
+        <input type="text" placeholder="Value" value="${value}" class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
+        <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 px-2 rounded-xl text-sm">X</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function addFile(filename = '', url = '') {
+      fileCount++;
+      const container = document.getElementById('filesContainer');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2';
+      div.innerHTML = `
+        <input type="text" placeholder="Filename" value="${filename}" class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
+        <input type="text" placeholder="URL" value="${url}" class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
+        <button type="button" onclick="this.parentNode.remove()" class="bg-red-600 hover:bg-red-700 px-2 rounded-xl text-sm">X</button>
+      `;
+      container.appendChild(div);
+    }
+
+    async function createImage() {
+      try {
+        // Collect ENVs
+        const envs = {};
+        document.querySelectorAll('#envsContainer > div').forEach(div => {
+          const [keyInput, valueInput] = div.querySelectorAll('input');
+          if (keyInput.value) envs[keyInput.value] = valueInput.value;
+        });
+
+        // Collect Files
+        const files = [];
+        document.querySelectorAll('#filesContainer > div').forEach(div => {
+          const [filenameInput, urlInput] = div.querySelectorAll('input');
+          if (filenameInput.value && urlInput.value) files.push({ filename: filenameInput.value, url: urlInput.value });
+        });
+
+        const res = await axios.post('/admin/images/new', {
+          dockerImage: document.getElementById('dockerImage').value,
+          name: document.getElementById('name').value,
+          description: document.getElementById('description').value,
+          envs,
+          files
+        });
+
+        if (res.data.success) window.location.href = '/admin/images';
+      } catch (err) {
+        alert("Failed to create image. Check your inputs.");
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

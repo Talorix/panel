@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - New Server</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+   <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex">
+  <%- include('../components/sidebar', { name, user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-xl mx-auto space-y-6">
+      <h1 class="text-3xl font-bold mb-4">🖥 Create New Server</h1>
+
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+
+        <!-- Select User -->
+        <select id="user" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+          <option value="">Select User</option>
+          <% users.forEach(u => { %>
+            <option value="<%= u.id %>"><%= u.username %></option>
+          <% }) %>
+        </select>
+
+        <!-- Select Node -->
+        <select id="node" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+          <option value="">Select Node</option>
+          <% nodes.forEach(n => { %>
+            <option value="<%= n.id %>"><%= n.name %> (<%= n.ip %>:<%= n.port %>)</option>
+          <% }) %>
+        </select>
+
+        <!-- Select Image -->
+        <select id="image" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+          <option value="">Select Image</option>
+          <% images.forEach(i => { %>
+            <option value="<%= i.id %>"><%= i.name %></option>
+          <% }) %>
+        </select>
+
+        <!-- Server Info -->
+        <input id="name" placeholder="Server Name" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
+        <input id="ram" placeholder="RAM (MB)" type="number" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"/>
+        <input id="core" placeholder="CPU Cores" type="number" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"/>
+        <input id="port" placeholder="Port" type="number" class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"/>
+
+        <div class="flex justify-end">
+          <button onclick="createServer()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl">Create</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    async function createServer() {
+      try {
+        const res = await axios.post('/admin/servers/new', {
+          userId: document.getElementById('user').value,
+          nodeId: document.getElementById('node').value,
+          imageId: document.getElementById('image').value,
+          name: document.getElementById('name').value,
+          ram: parseInt(document.getElementById('ram').value),
+          core: parseInt(document.getElementById('core').value),
+          port: parseInt(document.getElementById('port').value)
+        });
+
+        if(res.data.success) window.location.href = '/admin/servers';
+      } catch(err) {
+        alert("Failed to create server. Check inputs and node availability.");
+        console.error(err);
+      }
+    }
+     lucide.createIcons();
+
+  </script>
+</body>
+</html>
