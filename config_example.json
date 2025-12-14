@@ -1,6 +1,0 @@
-{
-    "port": 25565,
-    "name": "Talorix",
-    "MASTER_PASSWORD": "",
-    "_note1": "Your master password must be at least 12 chars, include upper/lowercase, a number, and a special character."
-}
