@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- Sidebar -->
+  <%- include('../components/sidebar', { name: name, user: user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-4xl mx-auto space-y-6">
+
+      <div class="bg-neutral-950 border border-neutral-950 p-6 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold mb-4">Settings</h1>
+
+        <!-- Messages -->
+        <% if (message) { %>
+          <p class="text-green-500 mb-2"><%= message %></p>
+        <% } %>
+        <% if (error) { %>
+          <p class="text-red-500 mb-2"><%= error %></p>
+        <% } %>
+
+        <!-- Password Change -->
+        <div class="bg-neutral-950 border border-neutral-900 rounded-2xl p-6 mb-6">
+          <h2 class="text-xl font-semibold mb-4">Change Password</h2>
+          <form action="/settings/password" method="POST" class="space-y-3">
+            <input type="password" name="currentPassword" placeholder="Current Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
+            <input type="password" name="newPassword" placeholder="New Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
+            <input type="password" name="confirmPassword" placeholder="Confirm New Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Change Password</button>
+          </form>
+        </div>
+
+        <!-- Two-Factor Authentication -->
+        <div class="bg-neutral-950 border border-neutral-900 rounded-2xl p-6">
+          <h2 class="text-xl font-semibold mb-4">Two-Factor Authentication</h2>
+
+          <% if (user.twoFactorEnabled) { %>
+            <p class="mb-3">2FA is currently <strong>enabled</strong>.</p>
+            <form action="/settings/2fa/disable" method="POST">
+              <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-white font-semibold shadow">Disable 2FA</button>
+            </form>
+          <% } else if (qrCodeUrl) { %>
+            <p class="mb-3">Scan this QR code with your authenticator app:</p>
+            <img src="<%= qrCodeUrl %>" alt="2FA QR Code" class="mb-4 rounded-xl border border-neutral-700">
+            <form action="/settings/2fa/verify" method="POST" class="space-y-3">
+              <input type="text" name="token" placeholder="Enter token from app" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
+              <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Verify & Enable 2FA</button>
+            </form>
+          <% } else { %>
+            <form action="/settings/2fa/setup" method="POST">
+              <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Enable 2FA</button>
+            </form>
+          <% } %>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

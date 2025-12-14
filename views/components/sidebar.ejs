@@ -32,10 +32,6 @@
       </a>
     </div>
     <% } %>
-    <a href="/settings" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
-      <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="settings-2"></svg>
-      Settings
-    </a>
   </nav>
 
   <!-- User Box at Bottom -->
@@ -52,7 +48,7 @@
 
       <!-- Animated Dropdown -->
       <div id="userDropdown" class="absolute left-0 bottom-full mb-2 w-full bg-neutral-950 border border-neutral-800 rounded-xl shadow-lg transform scale-95 opacity-0 origin-bottom transition-all duration-200 pointer-events-none flex-col z-50">
-        <button class="w-full text-left px-4 py-2 hover:bg-neutral-900 transition-colors">2FA (Not Implemented)</button>
+        <button onclick="window.location.href='/settings'" class="cursor-pointer w-full text-left px-4 py-2 hover:bg-neutral-900 transition-colors">Settings</button>
         <form id="logoutFormSidebar" method="POST">
           <button type="submit" class="w-full text-left px-4 py-2 hover:bg-neutral-900 transition-colors text-red-500">Logout</button>
         </form>

@@ -66,6 +66,12 @@ router.get("/server/files/:id", requireAuth, async (req, res) => {
 
   const pathQuery = req.query.path || "/";
 
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  const user = unsqh.get("users", req.session.userId);
+
+  let files = [];
+
   try {
     const response = await axios.get(
       `${getNodeUrl(node)}/server/fs/${server.idt}/files`,
@@ -73,21 +79,22 @@ router.get("/server/files/:id", requireAuth, async (req, res) => {
         params: { path: pathQuery, key: node.key },
       }
     );
-    const settings = unsqh.get("settings", "app") || {};
-    const appName = settings.name || "App";
-    const user = unsqh.get("users", req.session.userId);
-
-    res.render("server/files", {
-      name: appName,
-      user,
-      server,
-      files: response.data,
-      path: pathQuery,
-    });
+    files = response.data || [];
   } catch (err) {
-    res.status(500).send(err.message);
+    // the error would usually means node is offline
+    // console.error("Error fetching files:", err.message);
+    files = [];
   }
+
+  res.render("server/files", {
+    name: appName,
+    user,
+    server,
+    files,
+    path: pathQuery,
+  });
 });
+
 
 /**
  * GET /server/files/:id/content

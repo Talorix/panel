@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const unsqh = require("../modules/db.js");
 const crypto = require("crypto");
+const speakeasy = require("speakeasy");
+const QRCode = require("qrcode");
 
 function name() {
   const settings = unsqh.get("settings", "app") || {};
@@ -29,7 +31,10 @@ router.post("/login", (req, res) => {
   if (user.password !== hash) return res.status(401).json({ error: "Invalid credentials" });
 
   req.session.userId = user.id;
-
+   if (user.twoFactorSecret) {
+    req.session.pending2FA = user.id; 
+    return res.render("authentication/2fa", { name: name(), error: null });
+  }
   const { password: _, ...safeUser } = user;
   res.redirect('/dashboard');
 });
@@ -81,6 +86,29 @@ router.post("/register", (req, res) => {
   res.redirect("/dashboard");
 });
 
+router.post("/login/2fa", (req, res) => {
+  const { token } = req.body;
+  const userId = req.session.pending2FA;
+  if (!userId) return res.redirect("/");
+
+  const user = unsqh.get("users", userId);
+  if (!user || !user.twoFactorSecret) return res.redirect("/");
+
+  const verified = speakeasy.totp.verify({
+    secret: user.twoFactorSecret,
+    encoding: 'base32',
+    token
+  });
+
+  if (!verified) {
+    return res.render("authentication/2fa", { name: name(), error: "Invalid 2FA code" });
+  }
+
+  req.session.userId = user.id;
+  delete req.session.pending2FA;
+
+  res.redirect("/dashboard");
+});
 router.post("/logout", (req, res) => {
   req.session.destroy(err => {
     if (err) return res.status(500).json({ error: "Logout failed" });
