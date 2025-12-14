@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <title><%= name %> - <%= server.name %> Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- Sidebar -->
+  <%- include('../components/sidebar', { name: name, user: user }) %>
+
+  <main class="flex-1 p-8 overflow-auto">
+    <div class="max-w-6xl mx-auto space-y-6">
+
+      <!-- Server Header -->
+      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl shadow-lg flex justify-between items-center">
+        <div>
+          <h1 class="text-3xl font-bold">🛠 <%= server.name %> Settings</h1>
+          <p class="text-gray-400 mt-1">
+            Node: <%= server.node?.name || 'Unknown' %> | IP: <%= server.node?.ip || '0.0.0.0' %>:<%= server.port %>
+          </p>
+        </div>
+        <div>
+          <% if (server.status === "online") { %>
+            <span class="flex items-center gap-2 text-green-400">
+              <i data-lucide="heart-pulse" class="w-5 h-5 animate-pulse"></i> Online
+            </span>
+          <% } else { %>
+            <span class="flex items-center gap-2 text-red-400">
+              <i data-lucide="x-circle" class="w-5 h-5"></i> Offline
+            </span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <%- include('../components/server_nav', { server: server.id }) %>
+
+      <!-- Rename Server -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+        <h2 class="text-xl font-semibold">Rename Server</h2>
+        <form action="/server/settings/<%= server.id %>/rename" method="POST" class="flex gap-2">
+          <input type="text" name="newName" placeholder="New server name" class="flex-1 p-3 rounded-xl bg-neutral-800 border border-neutral-700 text-gray-100" required>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl">Rename</button>
+        </form>
+      </div>
+
+      <!-- Reinstall Server -->
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4">
+        <h2 class="text-xl font-semibold">Reinstall Server</h2>
+        <p class="text-gray-400">This will reinstall the server and replace its files with the latest versions.</p>
+        <form action="/server/settings/reinstall/<%= server.idt %>" method="POST">
+          <button type="submit" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-xl">Reinstall Server</button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+  </script>
+
+</body>
+</html>

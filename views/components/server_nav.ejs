@@ -1,28 +1,23 @@
-<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex gap-4">
+<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-wrap items-center justify-between">
 
-  <a
-    href="/server/manage/<%= server %>"
-    class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900"
-    id="tab-console"
-  >
-    <i data-lucide="terminal"></i> Console
-  </a>
+  <!-- Tabs -->
+  <div class="flex gap-2 flex-wrap">
+    <a href="/server/manage/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-console">
+      <i data-lucide="terminal"></i> Console
+    </a>
+    <a href="/server/files/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-files">
+      <i data-lucide="folder"></i> Files
+    </a>
+    <a href="/server/settings/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-settings">
+      <i data-lucide="settings"></i> Settings
+    </a>
+  </div>
 
-  <a
-    href="/server/files/<%= server %>"
-    class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900"
-    id="tab-files"
-  >
-    <i data-lucide="folder"></i> Files
-  </a>
-
-  <a
-    href="/server/settings/<%= server %>"
-    class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900"
-    id="tab-settings"
-  >
-    <i data-lucide="settings"></i> Settings
-  </a>
+  <div id="power-actions" class="flex gap-2 flex-wrap hidden">
+    <button data-action="start" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-xl text-sm">Start</button>
+    <button data-action="stop" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-sm">Stop</button>
+    <button data-action="restart" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-xl text-sm">Restart</button>
+  </div>
 
 </div>
 
@@ -30,12 +25,11 @@
   lucide.createIcons();
 
   const path = window.location.pathname;
-
-  // Remove indigo, use neutral-800 background and subtle shadow for active
   const activeClass = 'bg-neutral-900';
 
   if (path.includes('/server/manage/')) {
     document.getElementById('tab-console').classList.add(...activeClass.split(' '));
+    document.getElementById('power-actions').classList.remove('hidden');
   } else if (path.includes('/server/files/')) {
     document.getElementById('tab-files').classList.add(...activeClass.split(' '));
   } else if (path.includes('/server/settings/')) {
