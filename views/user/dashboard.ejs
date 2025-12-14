@@ -12,7 +12,7 @@
   <%- include('../components/sidebar', { name: name, user: user }) %>
 
   <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-6">
 
       <!-- Welcome Banner -->
       <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl shadow-lg">
@@ -20,52 +20,114 @@
         <p class="text-gray-400 mt-1">Here's your server overview.</p>
       </div>
 
-      <!-- Servers Table -->
-      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-        <table class="w-full text-left">
-          <thead class="bg-neutral-950 border-b border-neutral-800">
-            <tr class="text-gray-400 text-sm">
-              <th class="p-4">Server Name</th>
-              <th class="p-4">Node</th>
-              <th class="p-4">IP Address</th>
-              <th class="p-4">Status</th>
-              <th class="p-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (user.servers && user.servers.length > 0) { %>
-              <% user.servers.forEach(server => { %>
-                <tr class="border-b border-neutral-800 hover:bg-neutral-800/50 transition">
-                  <td class="p-4 font-medium"><%= server.name %></td>
-                  <td class="p-4 text-gray-300"><%= server.node.name %></td>
-                  <td class="p-4 text-gray-400"><%= server.node.ip %>:<%= server.port %></td>
-                  <td class="p-4">
-                    <% if (server.status === "online") { %>
-                      <span class="flex items-center gap-2 text-green-400">
-                        <i data-lucide="heart-pulse" class="w-4 h-4 animate-pulse"></i> Online
-                      </span>
-                    <% } else { %>
-                      <span class="flex items-center gap-2 text-red-400">
-                        <i data-lucide="x-circle" class="w-4 h-4"></i> Offline
-                      </span>
-                    <% } %>
-                  </td>
-                  <td class="p-4 text-right flex gap-2 justify-end">
-                    <a href="/server/manage/<%= server.id %>" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-xl text-sm">
-                      <i data-lucide="settings" class="w-4 h-4"></i> Manage
-                    </a>
-                  </td>
-                </tr>
-              <% }) %>
-            <% } else { %>
-              <tr>
-                <td colspan="5" class="p-4 text-gray-400 text-center">No servers added yet.</td>
-              </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
+      <!-- Server Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% if (user.servers && user.servers.length > 0) { %>
+          <% user.servers.forEach(server => { %>
+            <div class="bg-neutral-950 border border-neutral-800 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+              <div>
+                <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                  <i data-lucide="server" class="w-5 h-5"></i> <%= server.name %>
+                </h2>
+                <p class="text-gray-400 text-sm mb-1">Node: <%= server.node.name %></p>
+                <p class="text-gray-400 text-sm mb-4">IP: <%= server.node.ip %>:<%= server.port %></p>
 
+                <!-- CPU Bar -->
+                <div class="mb-2">
+                  <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>CPU</span><span id="server-<%= server.id %>-cpu-val">- %</span>
+                  </div>
+                  <div class="w-full h-2 bg-neutral-800 rounded-full">
+                    <div id="server-<%= server.id %>-cpu-bar" class="h-2 bg-gray-100 rounded-full" style="width:0%"></div>
+                  </div>
+                </div>
+
+                <!-- RAM Bar -->
+                <div class="mb-2">
+                  <div class="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>RAM</span><span id="server-<%= server.id %>-ram-val">- %</span>
+                  </div>
+                  <div class="w-full h-2 bg-neutral-800 rounded-full">
+                    <div id="server-<%= server.id %>-ram-bar" class="h-2 bg-gray-100 rounded-full" style="width:0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status & Manage Button -->
+              <div class="mt-4 flex justify-between items-center">
+                <span id="server-<%= server.id %>-status" class="flex items-center gap-2 text-gray-400">
+                  <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Loading...
+                </span>
+                <a href="/server/manage/<%= server.id %>" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-xl text-sm">
+                  <i data-lucide="settings" class="w-4 h-4"></i> Manage
+                </a>
+              </div>
+
+              <!-- Per-server stats WebSocket -->
+              <script>
+            (function(){
+  const serverId = "<%= server.id %>";
+  const statusEl = document.getElementById(`server-${serverId}-status`);
+  const cpuBar = document.getElementById(`server-${serverId}-cpu-bar`);
+  const cpuVal = document.getElementById(`server-${serverId}-cpu-val`);
+  const ramBar = document.getElementById(`server-${serverId}-ram-bar`);
+  const ramVal = document.getElementById(`server-${serverId}-ram-val`);
+
+  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${protocol}://${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/stats/${serverId}`);
+
+  ws.onopen = () => console.log(`Server ${serverId} stats WS connected`);
+
+  ws.onmessage = (evt) => {
+    try {
+      const data = JSON.parse(evt.data);
+      const stats = data.stats;
+      if (!stats || stats.id !== '<%= server.containerId %>') return;
+
+      // CPU %
+      let cpuPercent = 0;
+      if (stats.cpu_stats && stats.precpu_stats) {
+        const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+        const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+        cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100 : 0;
+        cpuBar.style.width = Math.min(cpuPercent, 100) + '%';
+        cpuVal.textContent = cpuPercent.toFixed(1) + ' %';
+      }
+
+      // RAM %
+      let ramPercent = 0;
+      if(stats.memory_stats && stats.memory_stats.usage && stats.memory_stats.limit) {
+        ramPercent = (stats.memory_stats.usage / stats.memory_stats.limit) * 100;
+        ramBar.style.width = Math.min(ramPercent, 100) + '%';
+        ramVal.textContent = ramPercent.toFixed(1) + ' %';
+      }
+
+      // Status
+      if(ramPercent > 1){
+        statusEl.className = "flex items-center gap-2 text-emerald-400";
+        statusEl.innerHTML = `<i data-lucide="server" class="w-4 h-4"></i> Online`;
+      } else {
+        statusEl.className = "flex items-center gap-2 text-red-700";
+        statusEl.innerHTML = `<i data-lucide="server-off" class="w-4 h-4"></i> Offline`;
+      }
+
+      lucide.createIcons();
+    } catch(err){
+      console.error(`Error updating server ${serverId}:`, err);
+    }
+  };
+
+  ws.onclose = () => console.log(`Server ${serverId} stats WS closed`);
+  ws.onerror = (err) => console.error(`Server ${serverId} stats WS error:`, err);
+})();
+
+              </script>
+
+          <% }) %>
+        <% } else { %>
+          <p class="text-gray-400 col-span-full text-center">No servers added yet.</p>
+        <% } %>
+      </div>
     </div>
   </main>
 

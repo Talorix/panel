@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const unsqh = require("../modules/db.js");
 const axios = require("axios");
-
+const multer = require("multer");
+const upload = multer();
 /* =========================
    MIDDLEWARE
 ========================= */
@@ -413,4 +414,50 @@ router.post(
   }
 );
 
+/**
+ * POST /server/files/:id/upload
+ * Query: ?path=/subfolder
+ * FormData: file=<file>
+ */
+router.post(
+  "/server/files/:id/upload",
+  requireAuth,
+  upload.single("file"),
+  async (req, res) => {
+    const server = getServerForUser(req.session.userId, req.params.id);
+    if (!server) return res.status(404).send("Server not found");
+    if (!server.node) return res.status(500).send("Server node not assigned");
+
+    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+    if (!node) return res.status(404).send("Node not found");
+
+    const pathQuery = req.query.path || "/";
+
+    if (!req.file) return res.status(400).send("No file uploaded");
+
+    try {
+      // Send the file to the node via Axios using multipart/form-data
+      const FormData = require("form-data");
+      const form = new FormData();
+      form.append("file", req.file.buffer, req.file.originalname);
+
+      await axios.post(
+        `${getNodeUrl(node)}/server/fs/${server.idt}/file/upload`,
+        form,
+        {
+          headers: {
+            ...form.getHeaders(),
+          },
+          params: { path: pathQuery, key: node.key },
+        }
+      );
+
+      res.redirect(
+        `/server/files/${server.id}?path=${encodeURIComponent(pathQuery)}`
+      );
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+  }
+);
 module.exports = router;
