@@ -12,7 +12,7 @@
   <%- include('../components/sidebar', { name, user }) %>
 
   <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto space-y-6">
 
       <!-- Node Header -->
       <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl flex items-center justify-between">
@@ -35,30 +35,179 @@
             <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
           </button>
         </div>
-    </div>
+      </div>
 
-      <!-- Charts -->
-<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
-  <h2 class="text-xl font-semibold mb-4">Node Usage</h2>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- CPU Chart -->
-    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
-      <h3 class="text-lg font-medium mb-2">CPU Usage (%)</h3>
-      <canvas id="cpuChart" height="150"></canvas>
-    </div>
+      <!-- Tabs -->
+      <div class="flex space-x-4 border-b border-neutral-800">
+        <button id="tab-stats" class="pb-2 border-b-2 border-indigo-600 font-semibold">Stats</button>
+        <button id="tab-allocations" class="pb-2 text-gray-400 hover:text-gray-100">Allocations</button>
+      </div>
 
-    <!-- RAM Chart -->
-    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
-      <h3 class="text-lg font-medium mb-2">RAM Usage (GB)</h3>
-      <canvas id="ramChart" height="150"></canvas>
-    </div>
+      <!-- Tab Content -->
+      <div id="tabContent">
+
+        <!-- Stats Content -->
+        <div id="content-stats" class="space-y-6">
+          <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
+            <h2 class="text-xl font-semibold mb-4">Node Usage</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- CPU Chart -->
+              <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+                <h3 class="text-lg font-medium mb-2">CPU Usage (%)</h3>
+                <canvas id="cpuChart" height="150"></canvas>
+              </div>
+
+              <!-- RAM Chart -->
+              <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+                <h3 class="text-lg font-medium mb-2">RAM Usage (GB)</h3>
+                <canvas id="ramChart" height="150"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Allocations Content -->
+<div id="content-allocations" class="hidden space-y-6">
+  <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">
+    <h2 class="text-xl font-semibold mb-4">Node Allocations</h2>
+
+    <!-- Add Allocation Form -->
+    <form id="addAllocationForm" class="flex flex-wrap gap-2 items-end">
+      <div class="flex flex-col">
+        <label class="text-sm text-gray-400">IP</label>
+        <input type="text" name="ip" placeholder="IP" class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100" required>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-sm text-gray-400">Port(s)</label>
+        <input type="text" name="port" placeholder="25565 or 25565-25665" class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100" required>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-sm text-gray-400">Domain (optional)</label>
+        <input type="text" name="domain" placeholder="domain.com" class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100">
+      </div>
+      <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-sm text-white">Add Allocation(s)</button>
+    </form>
+
+    <!-- Allocations Table -->
+    <table class="min-w-full table-auto border-collapse border border-neutral-800 mt-4">
+      <thead>
+        <tr class="bg-neutral-900">
+          <th class="px-4 py-2 border-b border-neutral-800">IP</th>
+          <th class="px-4 py-2 border-b border-neutral-800">Port</th>
+          <th class="px-4 py-2 border-b border-neutral-800">Domain</th>
+          <th class="px-4 py-2 border-b border-neutral-800">Type</th>
+          <th class="px-4 py-2 border-b border-neutral-800">Claimed By</th>
+          <th class="px-4 py-2 border-b border-neutral-800">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="allocationsTableBody">
+        <% for(let i=0; i < (node.allocations || []).length; i++) { 
+     let a = node.allocations[i]; %>
+<tr id="allocation-<%= a.id %>">
+  <td class="px-4 py-2 border-b border-neutral-800"><%= a.ip %></td>
+  <td class="px-4 py-2 border-b border-neutral-800"><%= a.port %></td>
+  <td class="px-4 py-2 border-b border-neutral-800"><%= a.domain || "-" %></td>
+  <td class="px-4 py-2 border-b border-neutral-800"><%= a.type || "-" %></td>
+  <td class="px-4 py-2 border-b border-neutral-800">
+    <% if(a.allocationOwnedto) { %>
+      <%= servers.find(s => s.id === a.allocationOwnedto.serverId)?.name || "Unknown" %>
+    <% } else { %>
+      -
+    <% } %>
+  </td>
+  <td class="px-4 py-2 border-b border-neutral-800">
+    <% if(!a.allocationOwnedto) { %>
+      <button onclick='deleteAllocation("<%= a.id %>")' class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded-xl text-sm text-white">Delete</button>
+    <% } else { %>
+      <button class="bg-stone-600 hover:bg-stone-700 px-2 py-1 rounded-xl text-sm text-white" title="Please delete the server first">Cannot Delete</button>
+    <% } %>
+  </td>
+</tr>
+<% } %>
+      </tbody>
+    </table>
   </div>
 </div>
+
+<script>
+  // Add Allocation
+  document.getElementById("addAllocationForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const ip = form.ip.value.trim();
+    const port = form.port.value.trim();
+    const domain = form.domain.value.trim();
+
+    if (!ip || !port) return alert("IP and Port are required");
+
+    try {
+      const res = await fetch(`/admin/node/${nodeId}/allocations/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip, port, domain })
+      });
+      const data = await res.json();
+
+      if (!res.ok) return alert(data.error || "Failed to add allocation");
+
+      // Refresh table
+      if (data.added) {
+        data.added.forEach(a => addAllocationRow(a));
+      } else if (data.allocation) {
+        addAllocationRow(data.allocation);
+      }
+
+      form.reset();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add allocation");
+    }
+  });
+
+  function addAllocationRow(a) {
+    const tbody = document.getElementById("allocationsTableBody");
+    const row = document.createElement("tr");
+    row.id = `allocation-${a.id}`;
+    row.innerHTML = `
+      <td class="px-4 py-2 border-b border-neutral-800">${a.ip}</td>
+      <td class="px-4 py-2 border-b border-neutral-800">${a.port}</td>
+      <td class="px-4 py-2 border-b border-neutral-800">${a.domain || "-"}</td>
+      <td class="px-4 py-2 border-b border-neutral-800">${a.type || "secondary"}</td>
+      <td class="px-4 py-2 border-b border-neutral-800">-</td>
+      <td class="px-4 py-2 border-b border-neutral-800">
+        <button onclick="deleteAllocation('${a.id}')" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded-xl text-sm text-white">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  }
+
+  // Delete Allocation
+  async function deleteAllocation(allocationId) {
+    if (!confirm("Are you sure you want to delete this allocation?")) return;
+
+    try {
+      const res = await fetch(`/admin/node/${nodeId}/allocations/delete/${allocationId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        return alert(data.error || "Failed to delete allocation");
+      }
+
+      // Remove row from table
+      const row = document.getElementById(`allocation-${allocationId}`);
+      if (row) row.remove();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete allocation");
+    }
+  }
+</script>
+
+      </div>
 
     </div>
   </main>
 
-  <!-- Configure Node Modal -->
+  <!-- Configure Node Modal (unchanged) -->
   <div id="configModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
     <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 w-full max-w-xl">
       <h2 class="text-xl font-semibold mb-4">Configure Node</h2>
@@ -74,6 +223,28 @@
   <script>
     lucide.createIcons();
     const nodeId = "<%= req.params.id %>";
+
+    // Tabs
+    const tabStats = document.getElementById("tab-stats");
+    const tabAlloc = document.getElementById("tab-allocations");
+    const contentStats = document.getElementById("content-stats");
+    const contentAlloc = document.getElementById("content-allocations");
+
+    tabStats.addEventListener("click", () => {
+      contentStats.classList.remove("hidden");
+      contentAlloc.classList.add("hidden");
+      tabStats.classList.add("border-indigo-600", "font-semibold");
+      tabAlloc.classList.remove("border-indigo-600", "font-semibold");
+      tabAlloc.classList.add("text-gray-400");
+    });
+
+    tabAlloc.addEventListener("click", () => {
+      contentAlloc.classList.remove("hidden");
+      contentStats.classList.add("hidden");
+      tabAlloc.classList.add("border-indigo-600", "font-semibold");
+      tabStats.classList.remove("border-indigo-600", "font-semibold");
+      tabStats.classList.add("text-gray-400");
+    });
 
     // Configure Node
     async function configureNode() {
@@ -133,17 +304,15 @@
       options: { animation: false, responsive: true, scales: { y: { beginAtZero: true } } }
     });
 
-    // Fetch stats every 5s
     async function fetchStats() {
       try {
         const res = await fetch(`/admin/node/stats/${nodeId}`);
         if (!res.ok) throw new Error('Failed to fetch stats');
         const data = await res.json();
 
-        const cpuPercent = Math.min((data.stats.totalCpuCores ? 100 : 0), 100); // Optional CPU usage percent
+        const cpuPercent = Math.min((data.stats.totalCpuCores ? 100 : 0), 100);
         const ramUsed = parseFloat(data.stats.usedRamGB);
 
-        // Shift old data
         cpuChart.data.datasets[0].data.shift();
         cpuChart.data.datasets[0].data.push(cpuPercent);
         cpuChart.update('none');
@@ -152,9 +321,7 @@
         ramChart.data.datasets[0].data.push(ramUsed);
         ramChart.update('none');
 
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     setInterval(fetchStats, 5000);

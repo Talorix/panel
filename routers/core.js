@@ -2,7 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
 const unsqh = require("../modules/db.js");
-const axios = require('axios');
+const axios = require("axios");
 /* =========================
    MIDDLEWARE
 ========================= */
@@ -56,7 +56,7 @@ router.get("/dashboard", requireAuth, (req, res) => {
 
   res.render("user/dashboard", {
     name: appName,
-    user: safeUser
+    user: safeUser,
   });
 });
 
@@ -85,8 +85,9 @@ router.post("/admin/node/create", requireAuth, requireAdmin, (req, res) => {
     ip,
     port,
     key,
+    allocations: [],
     status: "offline",
-    createdAt: Date.now()
+    createdAt: Date.now(),
   };
 
   unsqh.put("nodes", id, node);
@@ -94,10 +95,9 @@ router.post("/admin/node/create", requireAuth, requireAdmin, (req, res) => {
   res.json({
     id,
     key,
-    status: "created"
+    status: "created",
   });
 });
-
 
 /**
  * GET /admin/nodes
@@ -114,7 +114,7 @@ router.get("/admin/nodes", requireAuth, requireAdmin, async (req, res) => {
       node.status = status;
     }
   }
-  
+
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
   const user = unsqh.get("users", req.session.userId);
@@ -122,23 +122,28 @@ router.get("/admin/nodes", requireAuth, requireAdmin, async (req, res) => {
   res.render("admin/nodes", {
     name: appName,
     user,
-    nodes
+    nodes,
   });
 });
 
 /**
  * POST /admin/node/:id/configure-key
  */
-router.post("/admin/node/:id/configure-key", requireAuth, requireAdmin, (req, res) => {
-  const node = unsqh.get("nodes", req.params.id);
-  if (!node) return res.status(404).json({ error: "Node not found" });
+router.post(
+  "/admin/node/:id/configure-key",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
-  const panelUrl = `${req.protocol}://${req.get("host")}`;
+    const panelUrl = `${req.protocol}://${req.get("host")}`;
 
-  res.json({
-    command: `npm run configure --key ${node.key} --panel ${panelUrl}`
-  });
-});
+    res.json({
+      command: `npm run configure --key ${node.key} --panel ${panelUrl}`,
+    });
+  }
+);
 
 /**
  * POST /admin/node/:id
@@ -164,6 +169,7 @@ router.post("/admin/node/:id", requireAuth, requireAdmin, async (req, res) => {
  */
 router.get("/admin/node/:id", requireAuth, requireAdmin, async (req, res) => {
   const node = unsqh.get("nodes", req.params.id);
+  const servers = unsqh.list("servers");
   if (!node) return res.redirect("/admin/nodes");
 
   const status = await checkNodeHealth(node);
@@ -180,7 +186,8 @@ router.get("/admin/node/:id", requireAuth, requireAdmin, async (req, res) => {
     name: appName,
     user,
     node,
-    req
+    servers,
+    req,
   });
 });
 
@@ -195,27 +202,181 @@ router.post("/admin/node/:id/delete", requireAuth, requireAdmin, (req, res) => {
 
   res.json({ success: true });
 });
+/**
+ * POST /admin/node/:id/allocations/add
+ * body: { ip, domain, port }
+ * - port can be a single number or a range like "25565-27888"
+ */
+router.post(
+  "/admin/node/:id/allocations/add",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
+    const { ip, domain, port } = req.body;
+    if (!ip || !port)
+      return res.status(400).json({ error: "IP and port are required" });
+
+    node.allocations = node.allocations || [];
+
+    // Check if port is a range
+    if (typeof port === "string" && port.includes("-")) {
+      const [start, end] = port.split("-").map(Number);
+      if (isNaN(start) || isNaN(end) || start > end) {
+        return res.status(400).json({ error: "Invalid port range" });
+      }
+
+      const ports = [];
+      for (let p = start; p <= end; p++) ports.push(p);
+
+      const batchSize = 150;
+      const added = [];
+
+      for (let i = 0; i < ports.length; i += batchSize) {
+        const batch = ports.slice(i, i + batchSize);
+
+        batch.forEach((p) => {
+          if (!node.allocations.some((a) => a.ip === ip && a.port === p)) {
+            const allocation = {
+              id: crypto.randomUUID(),
+              ip,
+              domain: domain || null,
+              port: p,
+              createdAt: Date.now(),
+            };
+            node.allocations.push(allocation);
+            added.push(allocation);
+          }
+        });
+      }
+
+      unsqh.update("nodes", req.params.id, { allocations: node.allocations });
+      return res.json({ success: true, added, totalAdded: added.length });
+    }
+
+    // Single port case
+    const portNumber = Number(port);
+    if (node.allocations.some((a) => a.ip === ip && a.port === portNumber)) {
+      return res.status(409).json({ error: "Allocation already exists" });
+    }
+
+    const allocation = {
+      id: crypto.randomUUID(),
+      ip,
+      domain: domain || null,
+      port: portNumber,
+      createdAt: Date.now(),
+    };
+
+    node.allocations.push(allocation);
+    unsqh.update("nodes", req.params.id, { allocations: node.allocations });
+
+    res.json({ success: true, allocation });
+  }
+);
+
+/**
+ * POST /admin/node/:id/allocations/edit/:allocationId
+ * body: { ip?, domain?, port? }
+ */
+router.post(
+  "/admin/node/:id/allocations/edit/:allocationId",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node || !node.allocations) {
+      return res.status(404).json({ error: "Node or allocations not found" });
+    }
+
+    const allocation = node.allocations.find(
+      (a) => a.id === req.params.allocationId
+    );
+    if (!allocation) {
+      return res.status(404).json({ error: "Allocation not found" });
+    }
+
+    const { ip, domain, port } = req.body;
+
+    if (ip !== undefined) allocation.ip = ip;
+    if (domain !== undefined) allocation.domain = domain;
+
+    if (port !== undefined) {
+      if (
+        node.allocations.some(
+          (a) =>
+            a.ip === (ip ?? allocation.ip) &&
+            a.port === Number(port) &&
+            a.id !== allocation.id
+        )
+      ) {
+        return res.status(409).json({ error: "IP and port already in use" });
+      }
+      allocation.port = Number(port);
+    }
+
+    unsqh.update("nodes", req.params.id, { allocations: node.allocations });
+
+    res.json({ success: true, allocation });
+  }
+);
+
+/**
+ * DELETE /admin/node/:id/allocations/delete/:allocationId
+ */
+router.delete(
+  "/admin/node/:id/allocations/delete/:allocationId",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node || !node.allocations) {
+      return res.status(404).json({ error: "Node or allocations not found" });
+    }
+
+    const before = node.allocations.length;
+
+    node.allocations = node.allocations.filter(
+      (a) => a.id !== req.params.allocationId
+    );
+
+    if (node.allocations.length === before) {
+      return res.status(404).json({ error: "Allocation not found" });
+    }
+
+    unsqh.update("nodes", req.params.id, { allocations: node.allocations });
+
+    res.json({ success: true });
+  }
+);
 /**
  * GET /admin/node/stats/:id
  * Fetch node stats from the node API
  */
-router.get("/admin/node/stats/:id", requireAuth, requireAdmin, async (req, res) => {
-  const node = unsqh.get("nodes", req.params.id);
-  if (!node) return res.status(404).json({ error: "Node not found" });
+router.get(
+  "/admin/node/stats/:id",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
-  try {
-    const response = await fetch(`http://${node.ip}:${node.port}/stats?key=${node.key}`);
-    if (!response.ok) throw new Error(`Node returned ${response.status}`);
-    
-    const stats = await response.json();
-    res.json({ stats });
-  } catch (err) {
-    console.error("Failed to fetch node stats:", err);
-    res.status(500).json({ error: "Failed to fetch node stats" });
+    try {
+      const response = await fetch(
+        `http://${node.ip}:${node.port}/stats?key=${node.key}`
+      );
+      if (!response.ok) throw new Error(`Node returned ${response.status}`);
+
+      const stats = await response.json();
+      res.json({ stats });
+    } catch (err) {
+      console.error("Failed to fetch node stats:", err);
+      res.status(500).json({ error: "Failed to fetch node stats" });
+    }
   }
-});
-
+);
 
 /**
  * GET /admin/images
@@ -243,28 +404,51 @@ router.get("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
 });
 
 /**
- * GET /admin/images/export/:id
- * Export a single image as JSON
+ * GET /admin/image/:id
+ * Show detailed info of a single image
  */
-router.get("/admin/images/export/:id", requireAuth, requireAdmin, (req, res) => {
+router.get("/admin/image/:id", requireAuth, requireAdmin, (req, res) => {
   const image = unsqh.get("images", req.params.id);
   if (!image) return res.status(404).send("Image not found");
 
-  const exportData = {
-    dockerImage: image.dockerImage,
-    name: image.name,
-    description: image.description,
-    envs: image.envs,
-    files: image.files
-  };
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  const user = unsqh.get("users", req.session.userId);
 
-  const jsonStr = JSON.stringify(exportData, null, 2);
-
-  res.setHeader("Content-Disposition", `attachment; filename="${image.name.replace(/\s+/g, '_')}.json"`);
-  res.setHeader("Content-Type", "application/json");
-
-  res.send(jsonStr);
+  res.render("admin/image", { name: appName, user, image });
 });
+
+/**
+ * GET /admin/images/export/:id
+ * Export a single image as JSON
+ */
+router.get(
+  "/admin/images/export/:id",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const image = unsqh.get("images", req.params.id);
+    if (!image) return res.status(404).send("Image not found");
+
+    const exportData = {
+      dockerImage: image.dockerImage,
+      name: image.name,
+      description: image.description,
+      envs: image.envs,
+      files: image.files,
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${image.name.replace(/\s+/g, "_")}.json"`
+    );
+    res.setHeader("Content-Type", "application/json");
+
+    res.send(jsonStr);
+  }
+);
 
 /**
  * POST /admin/images/new
@@ -274,7 +458,8 @@ router.get("/admin/images/export/:id", requireAuth, requireAdmin, (req, res) => 
 router.post("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
   const { dockerImage, name, description, envs, files } = req.body;
 
-  if (!dockerImage || !name) return res.status(400).json({ error: "Missing fields" });
+  if (!dockerImage || !name)
+    return res.status(400).json({ error: "Missing fields" });
 
   const id = crypto.randomUUID();
   const image = {
@@ -284,7 +469,7 @@ router.post("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
     description: description || "",
     envs: envs || {},
     files: files || [], // [{ filename, url }]
-    createdAt: Date.now()
+    createdAt: Date.now(),
   };
 
   unsqh.put("images", id, image);
@@ -296,14 +481,18 @@ router.post("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
  * POST /admin/images/delete/:id
  * Delete an image
  */
-router.post("/admin/images/delete/:id", requireAuth, requireAdmin, (req, res) => {
-  const image = unsqh.get("images", req.params.id);
-  if (!image) return res.status(404).json({ error: "Image not found" });
+router.post(
+  "/admin/images/delete/:id",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const image = unsqh.get("images", req.params.id);
+    if (!image) return res.status(404).json({ error: "Image not found" });
 
-  unsqh.delete("images", req.params.id);
-  res.json({ success: true });
-});
-
+    unsqh.delete("images", req.params.id);
+    res.json({ success: true });
+  }
+);
 
 /**
  * GET /admin/servers
@@ -319,7 +508,14 @@ router.get("/admin/servers", requireAuth, requireAdmin, (req, res) => {
   const appName = settings.name || "App";
   const user = unsqh.get("users", req.session.userId);
 
-  res.render("admin/servers", { name: appName, user, servers, users, nodes, images });
+  res.render("admin/servers", {
+    name: appName,
+    user,
+    servers,
+    users,
+    nodes,
+    images,
+  });
 });
 
 /**
@@ -336,7 +532,14 @@ router.get("/admin/servers", requireAuth, requireAdmin, (req, res) => {
   const appName = settings.name || "App";
   const user = unsqh.get("users", req.session.userId);
 
-  res.render("admin/servers", { name: appName, user, servers, users, nodes, images });
+  res.render("admin/servers", {
+    name: appName,
+    user,
+    servers,
+    users,
+    nodes,
+    images,
+  });
 });
 
 /**
@@ -344,7 +547,7 @@ router.get("/admin/servers", requireAuth, requireAdmin, (req, res) => {
  * Render create server page
  */
 router.get("/admin/servers/new", requireAuth, requireAdmin, (req, res) => {
-  const nodes = unsqh.list("nodes").filter(n => n.status === "online");
+  const nodes = unsqh.list("nodes").filter((n) => n.status === "online");
   const images = unsqh.list("images");
   const users = unsqh.list("users");
 
@@ -358,88 +561,139 @@ router.get("/admin/servers/new", requireAuth, requireAdmin, (req, res) => {
 /**
  * POST /admin/servers/new
  */
-router.post("/admin/servers/new", requireAuth, requireAdmin, async (req, res) => {
-  const { imageId, nodeId, name, ram, core, disk, port, userId, env = {} } = req.body;
+router.post(
+  "/admin/servers/new",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const {
+      imageId,
+      nodeId,
+      allocationId,
+      name,
+      ram,
+      core,
+      disk,
+      userId,
+      env = {},
+    } = req.body;
 
-  if (!imageId || !nodeId || !name || !userId) {
-    return res.status(400).json({ error: "Missing fields" });
-  }
+    if (!imageId || !nodeId || !allocationId || !name || !userId) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
 
-  const node = unsqh.get("nodes", nodeId);
-  if (!node) return res.status(404).json({ error: "Node not found" });
+    const node = unsqh.get("nodes", nodeId);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
-  const image = unsqh.get("images", imageId);
-  if (!image) return res.status(404).json({ error: "Image not found" });
+    const allocation = (node.allocations || []).find(
+      (a) => a.id === allocationId
+    );
+    if (!allocation) {
+      return res.status(404).json({ error: "Allocation not found" });
+    }
+    if (allocation.allocationOwnedto?.serverId) {
+      return res.status(409).json({
+        error: "Allocation already claimed by another server",
+      });
+    }
+    const { port, domain, ip } = allocation;
 
-  const targetUser = unsqh.get("users", userId);
-  if (!targetUser) return res.status(404).json({ error: "User not found" });
+    const image = unsqh.get("images", imageId);
+    if (!image) return res.status(404).json({ error: "Image not found" });
 
-  const finalEnv = {};
-  for (const key of Object.keys(image.envs || {})) {
-    finalEnv[key] = env[key] ?? image.envs[key];
-  }
+    const targetUser = unsqh.get("users", userId);
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
 
-  const interpolateEnv = (str, envObj = {}) => {
-    if (typeof str !== "string") return str;
-    return str.replace(/\$\{(\w+)\}/g, (_, key) => {
-      return envObj[key] ?? process.env[key] ?? "";
-    });
-  };
+    /* -------------------------
+     ENV MERGE
+  ------------------------- */
+    const finalEnv = {};
+    for (const key of Object.keys(image.envs || {})) {
+      finalEnv[key] = env[key] ?? image.envs[key];
+    }
 
-  try {
-    const resolvedFiles = (image.files || []).map(file => ({
-      ...file,
-      url: interpolateEnv(file.url, finalEnv),
-      name: interpolateEnv(file.name, finalEnv)
-    }));
+    const interpolateEnv = (str, envObj = {}) => {
+      if (typeof str !== "string") return str;
+      return str.replace(/\$\{(\w+)\}/g, (_, key) => {
+        return envObj[key] ?? process.env[key] ?? "";
+      });
+    };
 
-    const response = await axios.post(
-      `http://${node.ip}:${node.port}/server/create?key=${node.key}`,
-      {
-        dockerimage: image.dockerImage,
-        env: finalEnv,
+    try {
+      const resolvedFiles = (image.files || []).map((file) => ({
+        ...file,
+        url: interpolateEnv(file.url, finalEnv),
+        name: interpolateEnv(file.name, finalEnv),
+      }));
+
+      /* -------------------------
+       CREATE SERVER ON NODE
+    ------------------------- */
+      const response = await axios.post(
+        `http://${node.ip}:${node.port}/server/create?key=${node.key}`,
+        {
+          dockerimage: image.dockerImage,
+          env: finalEnv,
+          name,
+          ram,
+          core,
+          disk,
+          port,
+          files: resolvedFiles,
+        }
+      );
+
+      const { containerId, idt } = response.data;
+
+      /* -------------------------
+       SERVER DATA
+    ------------------------- */
+      const serverId = crypto.randomUUID();
+      const serverData = {
+        id: serverId,
+        userId,
+        node: {
+          id: nodeId,
+          ip: node.ip,
+          name: node.name,
+        },
+        allocationId,
+        ip: `${domain ?? ip}`,
+        imageId,
         name,
         ram,
         core,
         disk,
         port,
-        files: resolvedFiles
-      }
-    );
+        containerId,
+        idt,
+        env: finalEnv,
+        suspended: false,
+        createdAt: Date.now(),
+      };
+      allocation.type = "primary";
+      allocation.allocationOwnedto = {
+        serverId,
+      };
 
-    const { containerId, idt } = response.data;
+      unsqh.update("nodes", nodeId, { allocations: node.allocations });
 
-    const serverId = crypto.randomUUID();
-    const serverData = {
-      id: serverId,
-      userId,
-      node: { ip: node.ip, name: node.name },
-      imageId,
-      name,
-      ram,
-      core,
-      disk,
-      port,
-      containerId,
-      idt,
-      ports,
-      env: finalEnv,
-      suspended: false,
-      createdAt: Date.now()
-    };
+      unsqh.put("servers", serverId, serverData);
 
-    unsqh.put("servers", serverId, serverData);
+      /* -------------------------
+       ATTACH TO USER
+    ------------------------- */
+      targetUser.servers = targetUser.servers || [];
+      targetUser.servers.push(serverData);
+      unsqh.update("users", userId, { servers: targetUser.servers });
 
-    targetUser.servers = targetUser.servers || [];
-    targetUser.servers.push(serverData);
-    unsqh.update("users", userId, { servers: targetUser.servers });
-
-    res.json({ success: true, server: serverData });
-  } catch (err) {
-    console.error("Failed to deploy server:", err);
-    res.status(500).json({ error: "Failed to deploy server" });
+      res.json({ success: true, server: serverData });
+    } catch (err) {
+      console.error("Failed to deploy server:", err);
+      res.status(500).json({ error: "Failed to deploy server" });
+    }
   }
-});
+);
 
 /**
  * POST /admin/edit/:serverId
@@ -447,98 +701,115 @@ router.post("/admin/servers/new", requireAuth, requireAdmin, async (req, res) =>
  * Body: { name?, ram?, core?, disk?, port?, imageId?, env?, files? }
  * - files: [{ filename, url }] – optional, will be downloaded/overwritten on node
  */
-router.post("/admin/edit/:serverId", requireAuth, requireAdmin, async (req, res) => {
-  const { serverId } = req.params;
-  const server = unsqh.get("servers", serverId);
-  if (!server) return res.status(404).json({ error: "Server not found" });
+router.post(
+  "/admin/edit/:serverId",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const { serverId } = req.params;
+    const server = unsqh.get("servers", serverId);
+    if (!server) return res.status(404).json({ error: "Server not found" });
 
-  const node = unsqh.list("nodes").find(n => n.ip === server.node.ip);
-  if (!node) return res.status(404).json({ error: "Node not found" });
+    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
-  const {
-    name,
-    ram,
-    core,
-    disk,
-    port,
-    env: newEnv = {},
-    files: newFiles = [],
-    imageId
-  } = req.body;
+    const {
+      name,
+      ram,
+      core,
+      disk,
+      port,
+      env: newEnv = {},
+      files: newFiles = [],
+      imageId,
+    } = req.body;
 
-  let image;
-  if (imageId) {
-    image = unsqh.get("images", imageId);
-    if (!image) return res.status(404).json({ error: "Image not found" });
-  } else {
-    image = unsqh.get("images", server.imageId);
-  }
-
-  // Merge env variables (existing server env overridden by newEnv)
-  const mergedEnv = { ...(server.env || {}), ...(newEnv || {}) };
-  
-  // If image has envs, ensure defaults are included
-  for (const key of Object.keys(image.envs || {})) {
-    if (mergedEnv[key] === undefined) mergedEnv[key] = image.envs[key];
-  }
-
-  // Interpolate file URLs
-  const interpolateEnv = (str, envObj = {}) => {
-    if (typeof str !== "string") return str;
-    return str.replace(/\$\{(\w+)\}/g, (_, key) => envObj[key] ?? process.env[key] ?? "");
-  };
-  const resolvedFiles = (newFiles.length ? newFiles : image.files || []).map(file => ({
-    ...file,
-    url: interpolateEnv(file.url, mergedEnv),
-    name: interpolateEnv(file.name, mergedEnv)
-  }));
-
-  try {
-    // Send edit request to the node
-    const response = await axios.post(
-      `${getNodeUrl(node)}/server/edit`,
-      {
-        idt: server.idt,
-        dockerimage: image.dockerImage,
-        env: mergedEnv,
-        name: name || server.name,
-        ram: ram || server.ram,
-        core: core || server.core,
-        disk: disk || server.disk,
-        port: port || server.port,
-        files: resolvedFiles
-      },
-      { params: { key: node.key, idt: server.idt } }
-    );
-
-    const { containerId } = response.data;
-
-    // Update admin server info
-    server.name = name || server.name;
-    server.ram = ram || server.ram;
-    server.core = core || server.core;
-    server.disk = disk || server.disk;
-    server.port = port || server.port;
-    server.env = mergedEnv;
-    server.imageId = image.id;
-    server.containerId = containerId;
-    server.files = resolvedFiles;
-
-    unsqh.put("servers", server.id, server);
-
-    // Update user's server list
-    const user = unsqh.get("users", server.userId);
-    if (user && user.servers) {
-      user.servers = user.servers.map(s => s.id === server.id ? server : s);
-      unsqh.put("users", user.id, user);
+    let image;
+    if (imageId) {
+      image = unsqh.get("images", imageId);
+      if (!image) return res.status(404).json({ error: "Image not found" });
+    } else {
+      image = unsqh.get("images", server.imageId);
     }
 
-    res.json({ success: true, server });
-  } catch (err) {
-    console.error("Failed to edit server:", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to edit server", details: err.message });
+    // Merge env variables (existing server env overridden by newEnv)
+    const mergedEnv = { ...(server.env || {}), ...(newEnv || {}) };
+
+    // If image has envs, ensure defaults are included
+    for (const key of Object.keys(image.envs || {})) {
+      if (mergedEnv[key] === undefined) mergedEnv[key] = image.envs[key];
+    }
+
+    // Interpolate file URLs
+    const interpolateEnv = (str, envObj = {}) => {
+      if (typeof str !== "string") return str;
+      return str.replace(
+        /\$\{(\w+)\}/g,
+        (_, key) => envObj[key] ?? process.env[key] ?? ""
+      );
+    };
+    const resolvedFiles = (newFiles.length ? newFiles : image.files || []).map(
+      (file) => ({
+        ...file,
+        url: interpolateEnv(file.url, mergedEnv),
+        name: interpolateEnv(file.name, mergedEnv),
+      })
+    );
+
+    try {
+      // Send edit request to the node
+      const response = await axios.post(
+        `${getNodeUrl(node)}/server/edit`,
+        {
+          idt: server.idt,
+          dockerimage: image.dockerImage,
+          env: mergedEnv,
+          name: name || server.name,
+          ram: ram || server.ram,
+          core: core || server.core,
+          disk: disk || server.disk,
+          port: port || server.port,
+          files: resolvedFiles,
+        },
+        { params: { key: node.key, idt: server.idt } }
+      );
+
+      const { containerId } = response.data;
+
+      // Update admin server info
+      server.name = name || server.name;
+      server.ram = ram || server.ram;
+      server.core = core || server.core;
+      server.disk = disk || server.disk;
+      server.port = port || server.port;
+      server.env = mergedEnv;
+      server.imageId = image.id;
+      server.containerId = containerId;
+      server.files = resolvedFiles;
+
+      unsqh.put("servers", server.id, server);
+
+      // Update user's server list
+      const user = unsqh.get("users", server.userId);
+      if (user && user.servers) {
+        user.servers = user.servers.map((s) =>
+          s.id === server.id ? server : s
+        );
+        unsqh.put("users", user.id, user);
+      }
+
+      res.json({ success: true, server });
+    } catch (err) {
+      console.error(
+        "Failed to edit server:",
+        err.response?.data || err.message
+      );
+      res
+        .status(500)
+        .json({ error: "Failed to edit server", details: err.message });
+    }
   }
-});
+);
 
 /**
  * GET /admin/edit/:serverId
@@ -550,7 +821,7 @@ router.get("/admin/edit/:serverId", requireAuth, requireAdmin, (req, res) => {
   if (!server) return res.status(404).send("Server not found");
 
   const user = unsqh.get("users", server.userId);
-  const nodes = unsqh.list("nodes").filter(n => n.status === "online");
+  const nodes = unsqh.list("nodes").filter((n) => n.status === "online");
   const images = unsqh.list("images");
   const users = unsqh.list("users");
 
@@ -563,62 +834,78 @@ router.get("/admin/edit/:serverId", requireAuth, requireAdmin, (req, res) => {
     server,
     nodes,
     users,
-    images
+    images,
   });
 });
-
 
 /**
  * POST /admin/servers/suspend/:id
  * Suspend the server thats it ;3
  */
-router.post("/admin/servers/suspend/:id", requireAuth, requireAdmin, async (req, res) => {
-  const server = unsqh.get("servers", req.params.id);
-  if (!server) return res.status(404).json({ error: "Server not found" });
+router.post(
+  "/admin/servers/suspend/:id",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const server = unsqh.get("servers", req.params.id);
+    if (!server) return res.status(404).json({ error: "Server not found" });
 
-  if (server.node && server.node.ip && server.node.key && server.containerId) {
-    try {
-      await axios.post(
-        `http://${server.node.ip}:${server.node.port}/server/action/${server.containerId}?action=stop&key=${server.node.key}`
-      );
-    } catch (nodeErr) {
-      console.warn("Failed to stop server on node, ignoring:", nodeErr.message);
+    if (
+      server.node &&
+      server.node.ip &&
+      server.node.key &&
+      server.containerId
+    ) {
+      try {
+        await axios.post(
+          `http://${server.node.ip}:${server.node.port}/server/action/${server.containerId}?action=stop&key=${server.node.key}`
+        );
+      } catch (nodeErr) {
+        console.warn(
+          "Failed to stop server on node, ignoring:",
+          nodeErr.message
+        );
+      }
     }
+
+    server.suspended = true;
+    unsqh.update("servers", server.id, { suspended: true });
+
+    const user = unsqh.get("users", server.userId);
+    if (user && user.servers) {
+      const userServer = user.servers.find((s) => s.id === server.id);
+      if (userServer) userServer.suspended = true;
+      unsqh.update("users", user.id, { servers: user.servers });
+    }
+
+    res.json({ success: true, suspended: true });
   }
-
-  server.suspended = true;
-  unsqh.update("servers", server.id, { suspended: true });
-
-  const user = unsqh.get("users", server.userId);
-  if (user && user.servers) {
-    const userServer = user.servers.find(s => s.id === server.id);
-    if (userServer) userServer.suspended = true;
-    unsqh.update("users", user.id, { servers: user.servers });
-  }
-
-  res.json({ success: true, suspended: true });
-});
-
+);
 
 /**
  * POST /admin/servers/unsuspend/:id
  */
-router.post("/admin/servers/unsuspend/:id", requireAuth, requireAdmin, (req, res) => {
-  const server = unsqh.get("servers", req.params.id);
-  if (!server) return res.status(404).json({ error: "Server not found" });
+router.post(
+  "/admin/servers/unsuspend/:id",
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    const server = unsqh.get("servers", req.params.id);
+    if (!server) return res.status(404).json({ error: "Server not found" });
 
-  server.suspended = false;
-  unsqh.update("servers", server.id, { suspended: false });
+    server.suspended = false;
+    unsqh.update("servers", server.id, { suspended: false });
 
-  const user = unsqh.get("users", server.userId);
-  if (user && user.servers) {
-    const userServer = user.servers.find(s => s.id === server.id);
-    if (userServer) userServer.suspended = false;
-    unsqh.update("users", user.id, { servers: user.servers });
+    const user = unsqh.get("users", server.userId);
+    if (user && user.servers) {
+      const userServer = user.servers.find((s) => s.id === server.id);
+      if (userServer) userServer.suspended = false;
+      unsqh.update("users", user.id, { servers: user.servers });
+    }
+
+    res.json({ success: true, suspended: false });
   }
-
-  res.json({ success: true, suspended: false });
-});
+);
 
 /**
  * DELETE /admin/servers/delete/:id
@@ -626,29 +913,40 @@ router.post("/admin/servers/unsuspend/:id", requireAuth, requireAdmin, (req, res
 router.delete("/admin/servers/delete/:id", requireAuth, requireAdmin, async (req, res) => {
   const server = unsqh.get("servers", req.params.id);
   if (!server) return res.status(404).json({ error: "Server not found" });
-  const node = unsqh.list("nodes").find(n => n.ip === server.node.ip);
+
+  // Fetch node consistently from db
+  const node = unsqh.list("nodes").find(n => n.ip === server.node?.ip || n.id === server.node?.id);
   if (!node) return res.status(404).json({ error: "Node not found" });
 
   try {
     // Tell node to delete container if node info is available
-    if (server && server.idt) {
+    if (server.idt) {
       try {
-        const response = await axios.delete(
-          `http://${node.ip}:${node.port}/server/delete/${server.idt}?key=${node.key}`
-        );
+        await axios.delete(`http://${node.ip}:${node.port}/server/delete/${server.idt}?key=${node.key}`);
       } catch (nodeErr) {
-        console.warn("Failed to delete server on node:");
+        console.warn("Failed to delete server on node:", nodeErr.message);
       }
     }
 
-    // Remove from user's servers array
+    // Free allocations owned by this server
+    if (Array.isArray(node.allocations)) {
+      node.allocations.forEach(a => {
+        if (a.allocationOwnedto?.serverId === server.id) {
+          a.allocationOwnedto = null;
+          a.type = ""; // optional, reset type
+        }
+      });
+      unsqh.update("nodes", node.id, { allocations: node.allocations });
+    }
+
+    // Remove server from user's servers
     const user = unsqh.get("users", server.userId);
-    if (user && user.servers) {
-      user.servers = user.servers.filter((s) => s.id !== server.id);
+    if (user?.servers) {
+      user.servers = user.servers.filter(s => s.id !== server.id);
       unsqh.update("users", user.id, { servers: user.servers });
     }
 
-    // Remove from admin servers table
+    // Remove server from admin table
     unsqh.delete("servers", req.params.id);
 
     res.json({ success: true });
@@ -657,6 +955,7 @@ router.delete("/admin/servers/delete/:id", requireAuth, requireAdmin, async (req
     res.status(500).json({ error: "Failed to delete server" });
   }
 });
+
 
 /**
  * GET /admin/settings
@@ -670,7 +969,7 @@ router.get("/admin/settings", requireAuth, requireAdmin, (req, res) => {
   res.render("admin/settings", {
     name: appName,
     user,
-    settings
+    settings,
   });
 });
 

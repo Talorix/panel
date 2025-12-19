@@ -14,7 +14,9 @@
         <div
           class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl flex justify-between items-center"
         >
-          <h1 class="text-3xl font-bold">🖼 Docker Images</h1>
+          <h1 class="text-3xl font-bold flex items-center gap-2">
+  <i data-lucide="image" class="w-6 h-6"></i> Docker Images
+</h1>
           <div class="flex gap-2">
             <a
               href="/admin/images/new"
@@ -41,8 +43,8 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <% images.forEach(img => { %>
-          <div
-            class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col justify-between"
+          <div onclick="window.location.href='/admin/image/<%= img.id %>'"
+            class="cursor-pointer bg-neutral-950 border border-neutral-800 rounded-2xl p-6 flex flex-col justify-between"
           >
             <div>
               <h2 class="text-xl font-semibold mb-2"><%= img.name %></h2>

@@ -1,185 +1,152 @@
 <!DOCTYPE html>
 <html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
-  <head>
-    <meta charset="UTF-8" />
-    <title><%= name %> - New Server</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-  </head>
-  <body class="min-h-screen flex">
-    <%- include('../components/sidebar', { name, user }) %>
+<head>
+  <meta charset="UTF-8" />
+  <title><%= name %> - New Server</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="flex h-screen">
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-xl mx-auto space-y-6">
-        <h1 class="text-3xl font-bold mb-4">🖥 Create New Server</h1>
+  <!-- Sidebar -->
+  <%- include('../components/sidebar', { name, user }) %>
 
-        <div
-          class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4"
-        >
-          <!-- Select User -->
-          <select
-            id="user"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          >
-            <option value="">Select User</option>
-            <% users.forEach(u => { %>
-            <option value="<%= u.id %>"><%= u.username %></option>
-            <% }) %>
-          </select>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto p-8 flex flex-col gap-6">
+    <h1 class="text-3xl font-bold">🖥 Create New Server</h1>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
 
-          <!-- Select Node -->
-          <select
-            id="node"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          >
-            <option value="">Select Node</option>
-            <% nodes.forEach(n => { %>
-            <option value="<%= n.id %>">
-              <%= n.name %> (<%= n.ip %>:<%= n.port %>)
-            </option>
-            <% }) %>
-          </select>
+    <!-- User and Node Selects -->
+    <div class="flex flex-col md:flex-row gap-4 w-full">
+      <select id="user" class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+        <option value="">Select User</option>
+        <% users.forEach(u => { %>
+          <option value="<%= u.id %>"><%= u.username %></option>
+        <% }) %>
+      </select>
 
-          <select
-            id="image"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-            onchange="loadImageEnv()"
-          >
-            <option value="">Select Image</option>
-            <% images.forEach(i => { %>
-            <option
-              value="<%= i.id %>"
-              data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>"
-            >
-              <%= i.name %>
-            </option>
-            <% }) %>
-          </select>
+      <select id="node" class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-800" onchange="loadAllocations()">
+        <option value="">Select Node</option>
+        <% nodes.forEach(n => { %>
+          <option value="<%= n.id %>" data-allocations="<%= encodeURIComponent(JSON.stringify(n.allocations || [])) %>">
+            <%= n.name %> (<%= n.ip %>:<%= n.port %>)
+          </option>
+        <% }) %>
+      </select>
 
-          <!-- Server Info -->
-          <input
-            id="name"
-            placeholder="Server Name"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="ram"
-            placeholder="RAM (MB)"
-            type="number"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="core"
-            placeholder="CPU Cores"
-            type="number"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="disk"
-            placeholder="Disk (GB)"
-            type="number"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="port"
-            placeholder="Port"
-            type="number"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <!-- ENV Editor -->
-          <div class="space-y-2">
-            <label class="text-sm text-gray-400">Environment Variables</label>
-            <div id="envList" class="space-y-2"></div>
-          </div>
+      <select id="allocation" class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+        <option value="">Select Allocation</option>
+      </select>
+    </div>
 
-          <div class="flex justify-end">
-            <button
-              onclick="createServer()"
-              id="createBtn"
-              class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl"
-            >
-              Create
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
+    <!-- Image Select -->
+    <select id="image" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" onchange="loadImageEnv()">
+      <option value="">Select Image</option>
+      <% images.forEach(i => { %>
+        <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>">
+          <%= i.name %>
+        </option>
+      <% }) %>
+    </select>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-      function loadImageEnv() {
-        const select = document.getElementById("image");
-        const option = select.options[select.selectedIndex];
-        const raw = option.dataset.env;
-        const envs = raw ? JSON.parse(decodeURIComponent(raw)) : {};
+    <!-- Server Info in a single row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+      <input id="name" placeholder="Server Name" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
+      <input id="ram" placeholder="RAM (MB)" type="number" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
+      <input id="core" placeholder="CPU Cores" type="number" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
+      <input id="disk" placeholder="Disk (GB)" type="number" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
+    </div>
 
-        const envList = document.getElementById("envList");
-        envList.innerHTML = "";
+    <!-- Environment Variables -->
+    <div class="space-y-2">
+      <label class="text-sm text-gray-400">Environment Variables</label>
+      <div id="envList" class="space-y-2"></div>
+    </div>
 
-        Object.entries(envs).forEach(([key, value]) => {
-          const row = document.createElement("div");
-          row.className = "flex gap-2";
+    <!-- Create Button -->
+    <div class="flex justify-start">
+      <button onclick="createServer()" id="createBtn" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl">
+        Create
+      </button>
+    </div>
+    </div>
+  </main>
 
-          row.innerHTML = `
-        <input
-          value="${key}"
-          disabled
-          class="w-1/2 p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-gray-400"
-        />
-        <input
-          value="${value}"
-          data-key="${key}"
-          class="w-1/2 p-2 rounded-xl bg-neutral-950 border border-neutral-800"
-        />
-      `;
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    function loadAllocations() {
+      const nodeSelect = document.getElementById("node");
+      const allocSelect = document.getElementById("allocation");
+      allocSelect.innerHTML = '<option value="">Select Allocation</option>';
+      const nodeOption = nodeSelect.options[nodeSelect.selectedIndex];
+      if (!nodeOption) return;
 
-          envList.appendChild(row);
+      const rawAlloc = nodeOption.dataset.allocations;
+      const allocations = rawAlloc ? JSON.parse(decodeURIComponent(rawAlloc)) : [];
+      allocations.forEach((a) => {
+        if (a.allocationOwnedto?.serverId) return;
+        const option = document.createElement("option");
+        option.value = a.id;
+        option.textContent = `${a.ip}:${a.port} (${a.type || "primary"})`;
+        allocSelect.appendChild(option);
+      });
+    }
+
+    function loadImageEnv() {
+      const select = document.getElementById("image");
+      const option = select.options[select.selectedIndex];
+      const raw = option.dataset.env;
+      const envs = raw ? JSON.parse(decodeURIComponent(raw)) : {};
+      const envList = document.getElementById("envList");
+      envList.innerHTML = "";
+      Object.entries(envs).forEach(([key, value]) => {
+        const row = document.createElement("div");
+        row.className = "flex gap-2";
+        row.innerHTML = `
+          <input value="${key}" disabled class="w-1/2 p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-gray-400" />
+          <input value="${value}" data-key="${key}" class="w-1/2 p-2 rounded-xl bg-neutral-950 border border-neutral-800" />
+        `;
+        envList.appendChild(row);
+      });
+    }
+
+    function collectEnv() {
+      const env = {};
+      document.querySelectorAll("#envList input[data-key]").forEach(input => {
+        env[input.dataset.key] = input.value;
+      });
+      return env;
+    }
+
+    async function createServer() {
+      const btn = document.getElementById("createBtn");
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = "Creating…";
+
+      try {
+        const res = await axios.post("/admin/servers/new", {
+          userId: document.getElementById("user").value,
+          nodeId: document.getElementById("node").value,
+          allocationId: document.getElementById("allocation").value,
+          imageId: document.getElementById("image").value,
+          name: document.getElementById("name").value,
+          ram: parseInt(document.getElementById("ram").value),
+          core: parseInt(document.getElementById("core").value),
+          disk: parseInt(document.getElementById("disk").value),
+          env: collectEnv(),
         });
+        if (res.data.success) window.location.href = "/admin/servers";
+        else throw new Error("Server creation failed");
+      } catch (err) {
+        alert("Failed to create server");
+        console.error(err);
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
+    }
 
-      function collectEnv() {
-        const env = {};
-        document
-          .querySelectorAll("#envList input[data-key]")
-          .forEach((input) => {
-            env[input.dataset.key] = input.value;
-          });
-        return env;
-      }
-
-      async function createServer() {
-        const btn = document.getElementById("createBtn");
-        btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = "Creating…";
-
-        try {
-          const res = await axios.post("/admin/servers/new", {
-            userId: document.getElementById("user").value,
-            nodeId: document.getElementById("node").value,
-            imageId: document.getElementById("image").value,
-            name: document.getElementById("name").value,
-            ram: parseInt(document.getElementById("ram").value),
-            core: parseInt(document.getElementById("core").value),
-            disk: parseInt(document.getElementById("disk").value),
-            port: parseInt(document.getElementById("port").value),
-            env: collectEnv(),
-          });
-
-          if (res.data.success) {
-            window.location.href = "/admin/servers";
-          } else {
-            throw new Error("Server creation failed");
-          }
-        } catch (err) {
-          alert("Failed to create server");
-          console.error(err);
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      }
-
-      lucide.createIcons();
-    </script>
-  </body>
+    lucide.createIcons();
+  </script>
+</body>
 </html>

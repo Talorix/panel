@@ -26,7 +26,7 @@
       <input type="email" name="email" placeholder="Email" 
         class="w-full p-3 bg-neutral-900/50 text-gray-100 border border-gray-700 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
 
-      <input type="text" name="username" placeholder="Username" 
+      <input type="text" name="username" placeholder="Username" max="14"
         class="w-full p-3 bg-neutral-900/50 text-gray-100 border border-gray-700 rounded-3xl focus:outline-none focus:ring-2 focus:ring-blue-600" required/>
 
       <input type="password" name="password" placeholder="Password" 
@@ -56,17 +56,6 @@
     </div>
   </div>
 
-  <script>
-    const form = document.getElementById("registerForm");
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      const data = new FormData(form);
-      const response = await fetch("/register", { method: "POST", body: data });
-      const res = await response.json();
-      if(res.success) window.location.href = "/dashboard";
-      else alert(res.error || "Registration failed");
-    });
-  </script>
 
 </body>
 </html>

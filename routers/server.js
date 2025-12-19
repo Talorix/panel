@@ -597,59 +597,63 @@ router.post(
 /**
  * GET /server/network/:id/add/:port
  */
-router.get(
-  "/server/network/:id/add/:port",
-  requireAuth,
-  withServer,
-  async (req, res) => {
-    const { id, port } = req.params;
+router.get("/server/network/:id/add/:port", requireAuth, withServer, async (req, res) => {
+  const { id, port } = req.params;
+  const PORT = Number(port);
 
-    const user = unsqh.get("users", req.session.userId);
-    const server = getServerForUser(req.session.userId, id);
-    if (!server || !server.node) return res.redirect("/dashboard");
+  const user = unsqh.get("users", req.session.userId);
+  const server = getServerForUser(req.session.userId, id);
+  if (!server || !server.node) return res.redirect("/dashboard");
 
-    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
-    if (!node) return res.status(404).send("Node not found");
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
 
-    const allServers = unsqh.list("servers") || [];
-    const portInUse = allServers.some(
-      (s) => s.id !== server.id && s.ports?.includes(p)
+  node.allocations = Array.isArray(node.allocations) ? node.allocations : [];
+
+  const allocation = node.allocations.find(a => a.port === PORT);
+  if (!allocation) return res.redirect(`/server/network/${id}?error=invalid_allocation`);
+  if (allocation.allocationOwnedto) return res.redirect(`/server/network/${id}?error=allocation_taken`);
+
+  if (allocation.type === "primary") {
+    const hasPrimary = node.allocations.some(
+      a => a.type === "primary" && a.allocationOwnedto?.serverId === server.id
     );
-    if (portInUse) {
-      return res.redirect(
-        `/server/network/${id}?port=error&msg=already_in_use`
-      );
-    }
-
-    try {
-      const { data } = await axios.post(
-        `${getNodeUrl(node)}/server/network/${server.idt}/add/${port}`,
-        {},
-        { params: { key: node.key } }
-      );
-      const { containerId: newContainerId } = data;
-
-      // Update user server
-      server.containerId = newContainerId;
-      user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
-      unsqh.put("users", user.id, user);
-
-      // Update admin/server DB
-      const adminServer = unsqh.get("servers", server.id);
-      if (adminServer) {
-        adminServer.containerId = newContainerId;
-        unsqh.put("servers", server.id, adminServer);
-      }
-
-      syncServerPorts(user, server, data.ports);
-
-      res.redirect(`/server/network/${id}?port=added`);
-    } catch (err) {
-      console.error(err.response?.data || err.message);
-      res.redirect(`/server/network/${id}?port=error`);
-    }
+    if (hasPrimary) return res.redirect(`/server/network/${id}?error=primary_exists`);
   }
-);
+
+  try {
+    const { data } = await axios.post(
+      `${getNodeUrl(node)}/server/network/${server.idt}/add/${PORT}`,
+      {},
+      { params: { key: node.key } }
+    );
+
+    // Claim allocation
+    allocation.allocationOwnedto = { serverId: server.id };
+    // Ensure allocation.type is properly set if primary
+    if (!server.port || allocation.type === "primary") allocation.type = "primary";
+
+    unsqh.update("nodes", node.id, { allocations: node.allocations });
+
+    // Add port to server.ports safely
+    server.ports = server.ports || [];
+    if (!server.ports.includes(PORT)) server.ports.push(PORT);
+
+    // Set server.port if not set or this is primary
+    if (!server.port || allocation.type === "primary") server.port = PORT;
+
+    server.containerId = data.containerId;
+    unsqh.put("servers", server.id, server);
+
+    user.servers = user.servers.map(s => s.id === server.id ? server : s);
+    unsqh.put("users", user.id, user);
+
+    res.redirect(`/server/network/${id}?allocation=claimed`);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.redirect(`/server/network/${id}?error=failed`);
+  }
+});
 
 /**
  * POST /server/network/:id/setprimary/:port
@@ -660,6 +664,7 @@ router.post(
   withServer,
   async (req, res) => {
     const { id, port } = req.params;
+    const PORT = Number(port);
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
@@ -668,32 +673,40 @@ router.post(
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
     if (!node) return res.status(404).send("Node not found");
 
+    const allocation = node.allocations?.find(
+      (a) => a.port === PORT && a.allocationOwnedto?.serverId === server.id
+    );
+    if (!allocation)
+      return res.redirect(`/server/network/${id}?error=allocation_not_owned`);
+
     try {
       const { data } = await axios.post(
-        `${getNodeUrl(node)}/server/network/${server.idt}/setprimary/${port}`,
+        `${getNodeUrl(node)}/server/network/${server.idt}/setprimary/${PORT}`,
         {},
         { params: { key: node.key } }
       );
-      const { containerId: newContainerId } = data;
 
-      // Update user server
-      server.containerId = newContainerId;
+      node.allocations.forEach((a) => {
+        if (a.allocationOwnedto?.serverId === server.id) {
+          a.type = a.port === PORT ? "primary" : "secondary";
+        }
+      });
+      unsqh.update("nodes", node.id, { allocations: node.allocations });
+
+      // Set primary port safely
+      server.port = PORT;
+      if (!server.ports.includes(PORT)) server.ports.push(PORT);
+
+      server.containerId = data.containerId;
+      unsqh.put("servers", server.id, server);
+
       user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
       unsqh.put("users", user.id, user);
 
-      // Update admin/server DB
-      const adminServer = unsqh.get("servers", server.id);
-      if (adminServer) {
-        adminServer.containerId = newContainerId;
-        unsqh.put("servers", server.id, adminServer);
-      }
-
-      syncServerPorts(user, server, data.ports, Number(port));
-
-      res.redirect(`/server/network/${id}?port=primary`);
+      res.redirect(`/server/network/${id}?allocation=primary`);
     } catch (err) {
       console.error(err.response?.data || err.message);
-      res.redirect(`/server/network/${id}?port=error`);
+      res.redirect(`/server/network/${id}?error=failed`);
     }
   }
 );
@@ -707,6 +720,7 @@ router.post(
   withServer,
   async (req, res) => {
     const { id, port } = req.params;
+    const PORT = Number(port);
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
@@ -715,33 +729,37 @@ router.post(
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
     if (!node) return res.status(404).send("Node not found");
 
+    const allocation = node.allocations?.find(
+      (a) => a.port === PORT && a.allocationOwnedto?.serverId === server.id
+    );
+    if (!allocation)
+      return res.redirect(`/server/network/${id}?error=allocation_not_owned`);
+
     try {
       const { data } = await axios.post(
-        `${getNodeUrl(node)}/server/network/${server.idt}/remove/${port}`,
+        `${getNodeUrl(node)}/server/network/${server.idt}/remove/${PORT}`,
         {},
         { params: { key: node.key } }
       );
 
-      const { containerId: newContainerId } = data;
+      // Remove allocation ownership
+      delete allocation.allocationOwnedto;
+      unsqh.update("nodes", node.id, { allocations: node.allocations });
 
-      // Update user server
-      server.containerId = newContainerId;
+      // Remove port from server.ports
+      server.ports = server.ports?.filter((p) => p !== PORT) || [];
+      if (server.port === PORT) server.port = server.ports[0] || null;
+
+      server.containerId = data.containerId;
+      unsqh.put("servers", server.id, server);
+
       user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
       unsqh.put("users", user.id, user);
 
-      // Update admin/server DB
-      const adminServer = unsqh.get("servers", server.id);
-      if (adminServer) {
-        adminServer.containerId = newContainerId;
-        unsqh.put("servers", server.id, adminServer);
-      }
-      // ✅ UPDATE PANEL DB
-      syncServerPorts(user, server, data.ports);
-
-      res.redirect(`/server/network/${id}?port=removed`);
+      res.redirect(`/server/network/${id}?allocation=released`);
     } catch (err) {
       console.error(err.response?.data || err.message);
-      res.redirect(`/server/network/${id}?port=error`);
+      res.redirect(`/server/network/${id}?error=failed`);
     }
   }
 );
@@ -766,7 +784,6 @@ router.get("/server/network/:id", requireAuth, withServer, (req, res) => {
   if (!server.port && server.ports.length > 0) {
     server.port = server.ports[0];
   }
-
   res.render("server/network", {
     name: appName,
     user,

@@ -14,10 +14,13 @@
         <div
           class="bg-neutral-950 border border-neutral-900 p-6 rounded-2xl flex justify-between items-center"
         >
-          <div>
-            <h1 class="text-3xl font-bold">🗄 Servers</h1>
-            <p class="text-gray-400">Manage all user servers</p>
-          </div>
+         <div>
+  <h1 class="text-3xl font-bold flex items-center gap-2">
+    <i data-lucide="server" class="w-6 h-6"></i> Servers
+  </h1>
+  <p class="text-gray-400">Manage all user servers</p>
+</div>
+
           <a
             href="/admin/servers/new"
             class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl font-medium"
@@ -26,81 +29,64 @@
           </a>
         </div>
 
-        <div
-          class="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden"
-        >
-          <table class="w-full text-left">
-            <thead class="bg-neutral-950 border-b border-neutral-800">
-              <tr class="text-gray-400 text-sm">
-                <th class="p-4">Name</th>
-                <th class="p-4">Node</th>
-                <th class="p-4">Image</th>
-                <th class="p-4">Owner</th>
-                <th class="p-4">CPU</th>
-                <th class="p-4">RAM</th>
-                <th class="p-4">Port</th>
-                <th class="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% servers.forEach(server => { 
-                   const image = images.find(i => i.id === server.imageId); 
-                   const owner = users.find(u => u.id === server.userId); 
-              %>
-              <tr
-                class="border-b border-neutral-800 hover:bg-neutral-800/50 transition"
-              >
-                <td class="p-4 font-medium"><%= server.name %></td>
-                <td class="p-4 text-gray-400">
-                  <%= server.node ? server.node.name : "Unknown" %>
-                </td>
-                <td class="p-4 text-gray-400">
-                  <%= image ? image.name : "Unknown" %>
-                </td>
-                <td class="p-4 text-gray-400">
-                  <%= owner ? owner.username : "Unknown" %>
-                </td>
-                <td class="p-4 text-gray-400">
-                  <i data-lucide="cpu" class="inline w-4 h-4 mr-1"></i><%= server.core %>
-                </td>
-                <td class="p-4 text-gray-400">
-                  <i data-lucide="memory-stick" class="inline w-4 h-4 mr-1"></i><%= server.ram %> MB
-                </td>
-                <td class="p-4 text-gray-400"><%= server.port %></td>
-                <td class="p-4 text-right flex justify-end gap-2">
-                  <!-- Suspend/Unsuspend button -->
-                  <button
-                    onclick="toggleSuspend('<%= server.id %>', '<%= server.suspended %>')"
-                    class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-2 <%= server.suspended ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700' %>"
-                  >
-                    <i
-                      data-lucide="<%= server.suspended ? 'play' : 'pause' %>"
-                      class="w-4 h-4"
-                    ></i>
-                    <%= server.suspended ? 'Unsuspend' : 'Suspend' %>
-                  </button>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <% servers.forEach(server => { 
+       const image = images.find(i => i.id === server.imageId); 
+       const owner = users.find(u => u.id === server.userId); 
+  %>
+    <div class="bg-neutral-950 border border-neutral-800 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      
+      <!-- Top: Name & Node -->
+      <div class="flex justify-between items-center mb-4">
+        <div class="font-semibold text-gray-100"><%= server.name %></div>
+        <div class="text-gray-400 text-sm"><%= server.node ? server.node.name : 'Unknown' %></div>
+      </div>
 
-                  <!-- Edit button -->
-                  <a
-                    href="/admin/edit/<%= server.id %>"
-                    class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-xl text-sm flex items-center gap-2"
-                  >
-                    <i data-lucide="edit-2" class="w-4 h-4"></i> Edit
-                  </a>
-
-                  <!-- Delete button -->
-                  <button
-                    onclick="deleteServer('<%= server.id %>')"
-                    class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-xl text-sm flex items-center gap-2"
-                  >
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
-                  </button>
-                </td>
-              </tr>
-              <% }) %>
-            </tbody>
-          </table>
+      <!-- Middle: Details -->
+      <div class="grid grid-cols-2 gap-4 mb-4 text-gray-400 text-sm">
+        <div>
+          <span class="font-medium text-gray-300">Image:</span> <%= image ? image.name : 'Unknown' %>
         </div>
+        <div>
+          <span class="font-medium text-gray-300">Owner:</span> <%= owner ? owner.username : 'Unknown' %>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-medium text-gray-300">CPU:</span> <i data-lucide="cpu" class="w-4 h-4"></i> <%= server.core %>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-medium text-gray-300">RAM:</span> <i data-lucide="memory-stick" class="w-4 h-4"></i> <%= server.ram %> MB
+        </div>
+        <div>
+          <span class="font-medium text-gray-300">Port:</span> <%= server.port %>
+        </div>
+      </div>
+
+      <!-- Bottom: Actions -->
+      <div class="flex flex-wrap justify-end gap-2">
+        <!-- Suspend/Unsuspend -->
+        <button onclick="toggleSuspend('<%= server.id %>', '<%= server.suspended %>')"
+          class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-2 <%= server.suspended ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-600 hover:bg-green-700' %>">
+          <i data-lucide="<%= server.suspended ? 'play' : 'pause' %>" class="w-4 h-4"></i>
+          <%= server.suspended ? 'Unsuspend' : 'Suspend' %>
+        </button>
+
+        <!-- Edit -->
+        <a href="/admin/edit/<%= server.id %>"
+          class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-xl text-sm flex items-center gap-2">
+          <i data-lucide="edit-2" class="w-4 h-4"></i> Edit
+        </a>
+
+        <!-- Delete -->
+        <button onclick="deleteServer('<%= server.id %>')"
+          class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-xl text-sm flex items-center gap-2">
+          <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
+        </button>
+      </div>
+
+    </div>
+  <% }) %>
+</div>
+
       </div>
     </main>
 

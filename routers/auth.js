@@ -69,7 +69,7 @@ router.post("/register", (req, res) => {
     });
   }
 
-  const randomId = Math.random(12);
+  const randomId = Date.now().toString() + Math.floor(Math.random() * 1000);
 
   const hash = crypto.createHash("sha256").update(password).digest("hex");
 
