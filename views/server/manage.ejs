@@ -31,31 +31,7 @@
 
     <main class="flex-1 p-8 overflow-auto">
       <div class="max-w-6xl mx-auto space-y-6">
-        <div
-          id="loading-overlay"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/90 transition-opacity duration-500"
-        >
-          <svg
-            class="animate-spin h-12 w-12 text-gray-100"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            ></path>
-          </svg>
-        </div>
+
         <!-- Header card -->
         <div
           class="bg-neutral-950 border border-neutral-900 rounded-2xl px-6 py-4 flex items-center justify-between"
@@ -142,31 +118,42 @@
 
         <!-- Custom Terminal + Charts -->
         <div class="flex gap-4 h-96">
-          <!-- Terminal -->
-          <div
-            id="terminal"
-            class="flex-1 bg-[#080808] border border-[#d4d4d4]/20 rounded-2xl flex flex-col overflow-hidden"
-          >
-            <div
-              id="logContainer"
-              class="flex-1 p-4 text-[#d4d4d4] text-sm space-y-1"
-            ></div>
+      <!-- Terminal -->
+<div
+  id="terminal"
+  class="flex-1 bg-[#080808] border border-[#d4d4d4]/20 rounded-2xl flex flex-col overflow-hidden relative"
+>
+  <!-- Loading spinner inside terminal -->
+  <div
+    id="loading-overlay"
+    class="absolute inset-0 z-10 flex items-center justify-center bg-[#080808]/80"
+  >
+   <i data-lucide="loader" class="animate-spin w-8 h-8 text-gray-100"></i>
+  </div>
 
-            <div class="p-4 border-t border-[#d4d4d4]/20 flex gap-2">
-              <input
-                id="cmdInput"
-                type="text"
-                placeholder="Type a command..."
-                class="flex-1 bg-[#080808] border border-[#d4d4d4]/20 rounded px-3 py-2 text-[#d4d4d4] font-mono focus:outline-none focus:ring-2 focus:ring-[#d4d4d4]/50"
-              />
-              <button
-                id="sendBtn"
-                class="bg-[#d4d4d4]/20 text-[#080808] px-4 py-2 rounded font-semibold hover:bg-[#d4d4d4]/30 transition active:scale-95"
-              >
-                Send
-              </button>
-            </div>
-          </div>
+  <!-- Terminal log -->
+  <div
+    id="logContainer"
+    class="flex-1 p-4 text-[#d4d4d4] text-sm space-y-1 relative"
+  ></div>
+
+  <!-- Input -->
+  <div class="p-4 border-t border-[#d4d4d4]/20 flex gap-2">
+    <input
+      id="cmdInput"
+      type="text"
+      placeholder="Type a command..."
+      class="flex-1 bg-[#080808] border border-[#d4d4d4]/20 rounded px-3 py-2 text-[#d4d4d4] font-mono focus:outline-none focus:ring-2 focus:ring-[#d4d4d4]/50"
+    />
+    <button
+      id="sendBtn"
+      class="bg-[#d4d4d4]/20 text-[#080808] px-4 py-2 rounded font-semibold hover:bg-[#d4d4d4]/30 transition active:scale-95"
+    >
+      Send
+    </button>
+  </div>
+</div>
+
         </div>
 
           <!-- Charts -->
@@ -413,7 +400,9 @@
               try {
                 data = JSON.parse(evt.data);
               } catch (err) {
-                const fallback = parseServerMessage(evt.data);
+                let fallback = parseServerMessage(evt.data);
+                fallback.text = fallback.text.replace(/>....+/g, '');
+                fallback.text = fallback.text.replace(/\x1b=/g, '');
                 addLog(fallback?.type || "LOG", `${fallback?.text}`);
                 return;
               }
@@ -676,7 +665,6 @@
                   openConfirm(action);
                   return;
                 }
-
                 if (
                   typeof consoleWs !== "undefined" &&
                   consoleWs.readyState === WebSocket.OPEN
@@ -696,13 +684,13 @@
               });
             });
 
-          confirmActionBtn.addEventListener("click", () => {
+          confirmActionBtn.addEventListener("click", async () => {
             if (!pendingAction) {
               closeConfirm();
               return;
             }
 
-            sendPowerCommand(pendingAction);
+            await sendPowerCommand(pendingAction);
             closeConfirm();
           });
 

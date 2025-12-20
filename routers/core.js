@@ -369,8 +369,8 @@ router.get(
       );
       if (!response.ok) throw new Error(`Node returned ${response.status}`);
 
-      const stats = await response.json();
-      res.json({ stats });
+      const data = await response.json();
+      res.json({ stats: data.stats });
     } catch (err) {
       console.error("Failed to fetch node stats:", err);
       res.status(500).json({ error: "Failed to fetch node stats" });

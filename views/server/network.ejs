@@ -39,56 +39,57 @@
 
       <!-- Navigation -->
       <%- include('../components/server_nav', { server: server.id }) %>
+<div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
+  <table class="w-full table-auto text-left border-collapse">
+    <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
+      <tr>
+        <th class="px-4 py-2">Port</th>
+        <th class="px-4 py-2">Type</th>
+        <th class="px-4 py-2">Node</th>
+        <th class="px-4 py-2 text-right">Actions</th>
+      </tr>
+    </thead>
 
-      <!-- Current Ports -->
-      <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-xl font-semibold flex items-center gap-2">
-          <i data-lucide="plug" class="w-5 h-5"></i>
-          Exposed Ports
-        </h2>
+    <tbody>
+      <% if (!allocations || allocations.length === 0) { %>
+        <tr>
+          <td colspan="4" class="px-4 py-6 text-neutral-500 italic">
+            No allocations assigned to this server on its node.
+          </td>
+        </tr>
+      <% } else { %>
+        <% allocations.forEach(a => { %>
+          <tr class="border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
+            <td class="px-4 py-2 font-mono text-neutral-100"><%= a.port %></td>
 
-        <% const ports = server.ports || (server.port ? [server.port] : []); %>
+            <td class="px-4 py-2">
+              <% if (a.type === 'primary') { %>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400">Primary</span>
+              <% } else { %>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-neutral-600/20 text-neutral-400">Secondary</span>
+              <% } %>
+            </td>
 
-        <% if (ports.length === 0) { %>
-          <p class="text-gray-500 italic">No ports assigned.</p>
-        <% } else { %>
-          <div class="space-y-3">
-            <% ports.forEach(p => { %>
-              <div class="flex items-center justify-between bg-neutral-900 rounded-xl px-4 py-3 border border-neutral-800">
-                <div class="flex items-center gap-3">
-                  <span class="text-lg font-mono"><%= p %></span>
+            <td class="px-4 py-2 text-neutral-400"><%= server.node?.name || server.node?.ip || 'Unknown' %></td>
 
-                  <% if (p === server.port) { %>
-                    <span class="text-xs px-2 py-1 rounded-full bg-indigo-600/20 text-indigo-400">
-                      Primary
-                    </span>
+            <td class="px-4 py-2 text-right">
+              <div class="inline-flex gap-2">
+                <% if (a.type !== 'primary') { %>
+                  <form method="POST" action="/server/network/<%= server.id %>/setprimary/<%= a.port %>">
+                    <button class="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 transition">Set Primary</button>
+                  </form>
+                <form method="POST" action="/server/network/<%= server.id %>/remove/<%= a.port %>">
+                  <button class="px-3 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition">Remove</button>
+                </form>
                   <% } %>
-                </div>
-
-                <div class="flex gap-2">
-                  <% if (p !== server.port) { %>
-                    <form method="POST" action="/server/network/<%= server.id %>/setprimary/<%= p %>">
-                      <button
-                        class="px-3 py-1 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700">
-                        Set Primary
-                      </button>
-                    </form>
-                  <% } %>
-
-                  <% if (ports.length > 1) { %>
-                    <form method="POST" action="/server/network/<%= server.id %>/remove/<%= p %>">
-                      <button
-                        class="px-3 py-1 text-sm rounded-lg bg-red-600 hover:bg-red-700">
-                        Remove
-                      </button>
-                    </form>
-                  <% } %>
-                </div>
               </div>
-            <% }) %>
-          </div>
-        <% } %>
-      </div>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+</div>
 
       <!-- Add Port -->
       <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">

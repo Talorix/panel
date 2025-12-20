@@ -49,6 +49,47 @@
         <!-- Stats Content -->
         <div id="content-stats" class="space-y-6">
           <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-6">
+<div class="pt-4">
+  <div class="text-2xl font-semibold text-gray-100 mb-3">System Information</div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">OS Type</div>
+      <div class="text-sm mt-1" id="osType">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">OS Platform</div>
+      <div class="text-sm mt-1" id="osPlatform">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">OS Arch</div>
+      <div class="text-sm mt-1" id="osArch">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">OS Release</div>
+      <div class="text-sm mt-1" id="osRelease">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">CPU Model</div>
+      <div class="text-sm mt-1" id="cpuModel">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">CPU Speed</div>
+      <div class="text-sm mt-1" id="cpuSpeed">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">Uptime</div>
+      <div class="text-sm mt-1" id="uptime">-</div>
+    </div>
+    <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+      <div class="text-xs text-gray-500">Load Avg</div>
+      <div class="text-sm mt-1">
+        <span id="load1">-</span>, <span id="load5">-</span>, <span id="load15">-</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
             <h2 class="text-xl font-semibold mb-4">Node Usage</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- CPU Chart -->
@@ -303,26 +344,40 @@
       },
       options: { animation: false, responsive: true, scales: { y: { beginAtZero: true } } }
     });
+async function fetchStats() {
+  try {
+    const res = await fetch(`/admin/node/stats/${nodeId}`);
+    if (!res.ok) throw new Error('Failed to fetch stats');
+    const data = await res.json();
 
-    async function fetchStats() {
-      try {
-        const res = await fetch(`/admin/node/stats/${nodeId}`);
-        if (!res.ok) throw new Error('Failed to fetch stats');
-        const data = await res.json();
+    // CPU and RAM charts
+    const cpuPercent = data.stats.cpuUsagePercent || 0;
+    const ramUsed = parseFloat(data.stats.usedRamGB) || 0;
 
-        const cpuPercent = Math.min((data.stats.totalCpuCores ? 100 : 0), 100);
-        const ramUsed = parseFloat(data.stats.usedRamGB);
+    cpuChart.data.datasets[0].data.shift();
+    cpuChart.data.datasets[0].data.push(cpuPercent);
+    cpuChart.update('none');
 
-        cpuChart.data.datasets[0].data.shift();
-        cpuChart.data.datasets[0].data.push(cpuPercent);
-        cpuChart.update('none');
+    ramChart.data.datasets[0].data.shift();
+    ramChart.data.datasets[0].data.push(ramUsed);
+    ramChart.update('none');
 
-        ramChart.data.datasets[0].data.shift();
-        ramChart.data.datasets[0].data.push(ramUsed);
-        ramChart.update('none');
+    // System info
+    document.getElementById("osType").textContent = data.stats.osType;
+    document.getElementById("osPlatform").textContent = data.stats.osPlatform;
+    document.getElementById("osArch").textContent = data.stats.osArch;
+    document.getElementById("osRelease").textContent = data.stats.osRelease;
+    document.getElementById("cpuModel").textContent = data.stats.cpuModel;
+    document.getElementById("cpuSpeed").textContent = data.stats.cpuSpeed;
+    document.getElementById("uptime").textContent = data.stats.uptime;
+    document.getElementById("load1").textContent = data.stats.load1;
+    document.getElementById("load5").textContent = data.stats.load5;
+    document.getElementById("load15").textContent = data.stats.load15;
 
-      } catch (err) { console.error(err); }
-    }
+  } catch (err) {
+    console.error(err);
+  }
+}
 
     setInterval(fetchStats, 5000);
     fetchStats();

@@ -5,10 +5,17 @@
     <title><%= name %> - <%= server.name %> Files</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
       button,
       a {
         transition: all 0.2s ease-in-out;
+      }
+      .file-name mark {
+        transition: background-color 0.15s ease, color 0.15s ease;
+        padding-left: 2px;
+        padding-right: 2px;
+        border-radius: 2px;
       }
     </style>
   </head>
@@ -39,36 +46,76 @@
         </div>
 
         <%- include('../components/server_nav', { server: server.id }) %>
-
-        <!-- File Actions -->
         <div
-          class="bg-neutral-950 border border-neutral-800 rounded-3xl p-4 flex gap-3 flex-wrap"
+          class="bg-neutral-950 border border-neutral-800 rounded-xl p-2 flex items-center"
         >
-          <button
-            id="newFileBtn"
-            class="px-5 py-2 bg-neutral-900 hover:bg-neutral-700 rounded-2xl flex items-center gap-2 shadow hover:shadow-lg"
+          <!-- LEFT: Current Path -->
+          <div
+            class="flex items-center gap-1 text-sm font-medium text-gray-200"
           >
-            <i data-lucide="file" class="text-neutral-100"></i> New File
-          </button>
-          <button
-            id="newFolderBtn"
-            class="px-5 py-2 bg-neutral-900 hover:bg-neutral-700 rounded-2xl flex items-center gap-2 shadow hover:shadow-lg"
-          >
-            <i data-lucide="folder-plus" class="text-neutral-100"></i> New
-            Folder
-          </button>
-          <button
-            id="uploadFileBtn"
-            class="px-5 py-2 bg-neutral-900 hover:bg-neutral-700 rounded-2xl flex items-center gap-2 shadow hover:shadow-lg"
-          >
-            <i data-lucide="upload"></i> Upload File
-          </button>
-          <input type="file" id="uploadFileInput" class="hidden" multiple />
+            <i data-lucide="folder" class="w-3 h-3"></i>
+            <% const pathParts = path.split('/').filter(Boolean); let
+            accumulatedPath = ''; %>
+            <span class="flex items-center gap-1">
+              <a href="?path=/" class="hover:underline">root</a>
+              <% pathParts.forEach((part, index) => { accumulatedPath += '/' +
+              part; %>
+              <span>/</span>
+              <% if (index < pathParts.length - 1) { %>
+              <a
+                href="?path=<%= encodeURIComponent(accumulatedPath) %>"
+                class="hover:underline text-sm"
+                ><%= part %></a
+              >
+              <% } else { %>
+              <span class="text-gray-400 text-sm"><%= part %></span>
+              <% } %> <% }) %>
+            </span>
+          </div>
+
+          <!-- RIGHT side actions + search -->
+          <div class="ml-auto flex items-center gap-2 flex-wrap">
+            <button
+              id="newFileBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md"
+            >
+              <i data-lucide="file" class="w-4 h-4"></i> New File
+            </button>
+
+            <button
+              id="newFolderBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md"
+            >
+              <i data-lucide="folder-plus" class="w-4 h-4"></i> New Folder
+            </button>
+
+            <button
+              id="uploadFileBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md"
+            >
+              <i data-lucide="upload" class="w-4 h-4"></i> Upload File
+            </button>
+
+            <input type="file" id="uploadFileInput" class="hidden" multiple />
+
+            <!-- Search -->
+            <div class="relative">
+              <i
+                data-lucide="search"
+                class="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 w-3 h-3"
+              ></i>
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Search..."
+                class="pl-7 pr-2 py-1.5 text-sm bg-neutral-900 border border-neutral-800 rounded-md text-gray-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700"
+              />
+            </div>
+          </div>
         </div>
 
-        <!-- Files Table -->
         <div
-          class="bg-neutral-950 border border-neutral-800 rounded-3xl p-4 overflow-auto"
+          class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden"
         >
           <table class="w-full table-auto text-left border-collapse">
             <thead
@@ -81,57 +128,69 @@
                 <th class="px-4 py-2">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="filesTbody">
               <% const sortedFiles = files.sort((a,b) => (a.type === 'folder' &&
               b.type !== 'folder') ? -1 : (a.type !== 'folder' && b.type ===
               'folder') ? 1 : 0); sortedFiles.forEach(file => { %>
               <tr
-                class="border-b border-neutral-800 hover:bg-neutral-800/50 transition-colors"
+                class="file-row border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors"
+                data-name="<%= (file.name || '').toLowerCase() %>"
+                data-type="<%= file.type %>"
               >
                 <td class="px-4 py-2 flex items-center gap-2">
                   <% if (file.type === 'folder') { %>
+                  <!-- Folder: navigate -->
                   <a
                     href="?path=<%= encodeURIComponent(path + '/' + file.name) %>"
                     class="text-neutral-100 hover:text-neutral-300 hover:underline flex items-center gap-2 font-medium"
                   >
-                    <i data-lucide="folder-closed"></i> <%= file.name %>
+                    <i data-lucide="folder-closed"></i>
+                    <span class="file-name"><%= file.name %></span>
                   </a>
-                  <% } else { %> <% const ext = file.name.includes('.') ?
+
+                  <% } else { const isJar =
+                  file.name.toLowerCase().endsWith('.jar'); const ext =
+                  file.name.includes('.') ?
                   file.name.split('.').pop().toLowerCase() : ''; const
                   fileIconsMap = { js:'code', ts:'code', json:'file-braces',
                   html:'code', css:'file-css', scss:'file-css', md:'file-text',
-                  py:'file-text', sh:'terminal', txt:'file-text', default:'file'
-                  }; const fileIcon = fileIconsMap[ext] ||
-                  fileIconsMap['default']; %>
-                  <span
-                    class="flex items-center gap-2 text-neutral-100 hover:text-neutral-300"
+                  py:'file-text', sh:'terminal', txt:'file-text', jar:'archive',
+                  default:'file' }; const fileIcon = fileIconsMap[ext] ||
+                  fileIconsMap.default; %> <% if (!isJar) { %>
+                  <!-- File: click opens editor -->
+                  <a
+                    href="/server/files/<%= server.id %>/content?location=<%= encodeURIComponent(path + '/' + file.name) %>"
+                    class="flex items-center gap-2 text-neutral-100 hover:text-neutral-300 hover:underline cursor-pointer"
                   >
-                    <i data-lucide="<%= fileIcon %>"></i> <%= file.name %>
+                    <i data-lucide="<%= fileIcon %>"></i>
+                    <span class="file-name"><%= file.name %></span>
+                  </a>
+                  <% } else { %>
+                  <!-- JAR: not editable -->
+                  <span
+                    class="flex items-center gap-2 text-neutral-400 cursor-not-allowed"
+                  >
+                    <i data-lucide="<%= fileIcon %>"></i>
+                    <span class="file-name"><%= file.name %></span>
                   </span>
-                  <% } %>
+                  <% } %> <% } %>
                 </td>
+
                 <td class="px-4 py-2 capitalize">
-                  <%= (()=>{let b=file.size;if(b==null)return'';let s=['B','KB','MB','GB','TB'],i=0;while(b>=1024&&i<s.length-1)b/=1024,i++;return b.toFixed(2)+' '+s[i];})() %>
+                  <%= formatSize(file.size) %>
                 </td>
                 <td class="px-4 py-2">
                   <%= new Date(file.createdAt).toLocaleString() %>
                 </td>
                 <td class="px-4 py-2 relative">
                   <button
-                    class="dropdownBtn px-3 py-1 bg-neutral-800 hover:bg-neutral-700 rounded-xl text-neutral-100 shadow hover:shadow-lg transition"
+                    class="dropdownBtn px-3 py-1 rounded-xl text-neutral-100 shadow hover:shadow-lg transition"
                   >
                     <i data-lucide="more-vertical"></i>
                   </button>
                   <div
-                    class="dropdownMenu absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg hidden flex flex-col z-50 min-w-[120px]"
+                    class="dropdownMenu transition-all scale-95 opacity-0 absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg hidden flex flex-col z-50 min-w-[120px]"
                   >
-                    <% if(file.type === 'file'){ %>
-                    <a
-                      href="/server/files/<%= server.id %>/content?location=<%= encodeURIComponent(path + '/' + file.name) %>"
-                      class="px-4 py-2 hover:bg-neutral-800 rounded-xl"
-                      >View</a
-                    >
-                    <% } %>
                     <form
                       method="POST"
                       action="/server/files/<%= server.id %>/<%= file.type %>/delete?location=<%= encodeURIComponent(path + '/' + file.name) %>"
@@ -156,6 +215,13 @@
                 </td>
               </tr>
               <% }) %>
+
+              <!-- No results row (hidden by default) -->
+              <tr id="noResultsRow" class="hidden">
+                <td colspan="4" class="px-4 py-6 text-neutral-500 italic">
+                  No files match your search.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -164,26 +230,21 @@
     <!-- Rename/Create Modal -->
     <div
       id="modalOverlay"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center z-50"
     >
       <div
         id="modalPanel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modalTitle"
-        class="relative z-10 max-w-lg w-full mx-4 rounded-2xl bg-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0"
+        class="relative z-10 max-w-lg w-full mx-4 rounded-lg bg-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0"
       >
         <div class="p-6">
           <div class="flex items-start gap-4">
-            <div class="flex-shrink-0 mt-1">
-              <i data-lucide="edit-2" class="w-8 h-8 text-blue-500"></i>
-            </div>
-
             <div class="flex-1">
               <h2 id="modalTitle" class="text-lg font-semibold">New File</h2>
               <p class="mt-1 text-sm text-neutral-400">
-                Enter a name for your file or folder. For files, you can also
-                add content.
+                Enter a name for your file or folder.
               </p>
             </div>
           </div>
@@ -204,15 +265,14 @@
           <div class="mt-6 flex justify-end gap-3">
             <button
               id="modalCancel"
-              class="px-4 py-2 rounded-lg text-sm bg-neutral-100 hover:bg-neutral-200 text-neutral-950"
+              class="px-4 py-2 rounded-lg text-sm text-stone-500 hover:text-gray-300 hover:bg-neutral-800"
             >
               Cancel
             </button>
             <button
               id="modalConfirm"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-red-600 hover:bg-red-700 text-white"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-red-300 text-stone-900"
             >
-              <i data-lucide="check" class="w-4 h-4"></i>
               Confirm
             </button>
           </div>
@@ -236,7 +296,151 @@
 
     <script>
       lucide.createIcons();
+      (function () {
+        const searchInput = document.getElementById("searchInput");
+        const tbody = document.getElementById("filesTbody");
+        const rows = Array.from(tbody.querySelectorAll("tr.file-row"));
+        const noResultsRow = document.getElementById("noResultsRow");
+        const DEBOUNCE_MS = 200;
 
+        // utilities
+        function escapeRegExp(str) {
+          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+        function escapeHtml(s) {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          };
+          return String(s).replace(/[&<>"']/g, (m) => map[m]);
+        }
+
+        // Highlight match inside .file-name spans
+        function highlightMatch(el, query) {
+          const nameSpan = el.querySelector(".file-name");
+          if (!nameSpan) return;
+          const raw = nameSpan.textContent || "";
+          if (!query) {
+            nameSpan.innerHTML = escapeHtml(raw);
+            return;
+          }
+          try {
+            const re = new RegExp("(" + escapeRegExp(query) + ")", "ig");
+            const replaced = escapeHtml(raw).replace(
+              re,
+              '<mark class="bg-yellow-400/20 text-yellow-300 rounded px-0.5">$1</mark>'
+            );
+            nameSpan.innerHTML = replaced;
+          } catch (err) {
+            // fallback: no highlighting if regex fails
+            nameSpan.innerHTML = escapeHtml(raw);
+          }
+        }
+
+        // filter pattern: support "ext:js", "type:folder" and plain text
+        function parseQuery(q) {
+          const res = { text: "", ext: null, type: null };
+          if (!q) return res;
+          q = q.trim();
+          // tokens like ext:js and type:folder
+          const tokens = q.split(/\s+/);
+          const remaining = [];
+          tokens.forEach((tok) => {
+            const lower = tok.toLowerCase();
+            if (lower.startsWith("ext:")) {
+              res.ext = lower.slice(4);
+            } else if (lower.startsWith("type:")) {
+              res.type = lower.slice(5);
+            } else {
+              remaining.push(tok);
+            }
+          });
+          res.text = remaining.join(" ");
+          return res;
+        }
+
+        function filterRows(rawQuery) {
+          const q = parseQuery(rawQuery);
+          const queryText = (q.text || "").toLowerCase();
+          let visibleCount = 0;
+
+          rows.forEach((row) => {
+            const name = (row.dataset.name || "").toLowerCase();
+            const type = (row.dataset.type || "").toLowerCase();
+
+            // extension check
+            let extMatch = true;
+            if (q.ext) {
+              const dotIndex = name.lastIndexOf(".");
+              const ext = dotIndex !== -1 ? name.slice(dotIndex + 1) : "";
+              extMatch = ext === q.ext;
+            }
+
+            // type check
+            let typeCheck = true;
+            if (q.type) {
+              typeCheck = type === q.type;
+            }
+
+            // text search
+            let textMatch = true;
+            if (queryText) {
+              textMatch = name.includes(queryText);
+            }
+
+            const show = extMatch && typeCheck && textMatch;
+
+            if (show) {
+              row.classList.remove("hidden");
+              row.classList.remove("opacity-0");
+              // highlight the matched part (only with text query)
+              if (queryText) highlightMatch(row, queryText);
+              else highlightMatch(row, null);
+              visibleCount++;
+            } else {
+              // hide row
+              row.classList.add("hidden");
+            }
+          });
+
+          // show/hide no results row
+          if (visibleCount === 0) {
+            noResultsRow.classList.remove("hidden");
+          } else {
+            noResultsRow.classList.add("hidden");
+          }
+        }
+
+        // debounce
+        let timer = null;
+        function onInput() {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            filterRows(searchInput.value || "");
+          }, DEBOUNCE_MS);
+        }
+
+        if (searchInput) {
+          searchInput.addEventListener("input", onInput);
+
+          // helpful UX: press Escape to clear, Enter to focus first visible row
+          searchInput.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              searchInput.value = "";
+              filterRows("");
+            } else if (e.key === "Enter") {
+              const first = tbody.querySelector(
+                "tr.file-row:not(.hidden) .file-name"
+              );
+              if (first)
+                first.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+          });
+        }
+      })();
       const modalOverlay = document.getElementById("modalOverlay");
       const modalPanel = document.getElementById("modalPanel");
       const modalTitle = document.getElementById("modalTitle");
@@ -266,7 +470,7 @@
         modalTitle.textContent = type === "file" ? "New File" : "New Folder";
         modalInput.value = "";
         modalContent.value = "";
-        modalContent.classList.toggle("hidden", type !== "file");
+        // modalContent.classList.toggle("hidden", type !== "file");
         modalConfirm.dataset.type = type;
         showModal();
       }
@@ -318,26 +522,51 @@
       };
       document.querySelectorAll(".dropdownBtn").forEach((btn) => {
         const menu = btn.nextElementSibling;
+
         btn.onclick = (e) => {
           e.stopPropagation();
+
+          // Close other dropdowns with animation
           document.querySelectorAll(".dropdownMenu").forEach((m) => {
-            if (m !== menu) m.classList.add("hidden");
+            if (m !== menu && !m.classList.contains("hidden")) {
+              m.classList.add("scale-95", "opacity-0");
+              setTimeout(() => m.classList.add("hidden"), 150);
+            }
           });
-          menu.classList.toggle("hidden");
+
+          if (menu.classList.contains("hidden")) {
+            menu.classList.remove("hidden");
+            requestAnimationFrame(() => {
+              menu.classList.remove("scale-95", "opacity-0");
+              menu.classList.add("scale-100", "opacity-100");
+            });
+          } else {
+            menu.classList.add("scale-95", "opacity-0");
+            setTimeout(() => menu.classList.add("hidden"), 150);
+          }
         };
       });
 
+      // Click outside to close dropdown
       document.addEventListener("click", () => {
-        document
-          .querySelectorAll(".dropdownMenu")
-          .forEach((menu) => menu.classList.add("hidden"));
+        document.querySelectorAll(".dropdownMenu").forEach((menu) => {
+          if (!menu.classList.contains("hidden")) {
+            menu.classList.add("scale-95", "opacity-0");
+            setTimeout(() => menu.classList.add("hidden"), 150);
+          }
+        });
       });
+
+      // Rename buttons
       document.querySelectorAll(".renameBtn").forEach((btn) => {
         btn.onclick = () => {
           openRenameModal(btn.dataset.type, btn.dataset.name, btn.dataset.path);
-          btn.closest(".dropdownMenu").classList.add("hidden");
+          const menu = btn.closest(".dropdownMenu");
+          menu.classList.add("scale-95", "opacity-0");
+          setTimeout(() => menu.classList.add("hidden"), 150);
         };
       });
+
       let lastSnapshot = null;
       async function pollFiles() {
         try {
@@ -429,6 +658,31 @@
         uploadModal.classList.add("hidden");
         uploadStatus.textContent = "";
       }
+      document.addEventListener("keydown", (e) => {
+        const isMac = navigator.platform.toUpperCase().includes("MAC");
+        const isFindShortcut = isMac
+          ? e.metaKey && e.key === "f"
+          : e.ctrlKey && e.key === "f";
+
+        if (!isFindShortcut) return;
+
+        const activeTag = document.activeElement?.tagName?.toLowerCase();
+        const isTyping =
+          activeTag === "input" ||
+          activeTag === "textarea" ||
+          document.activeElement?.isContentEditable;
+
+        // Don't hijack if user is already typing somewhere else
+        if (isTyping && document.activeElement.id !== "searchInput") return;
+
+        e.preventDefault();
+
+        const searchInput = document.getElementById("searchInput");
+        if (!searchInput) return;
+
+        searchInput.focus();
+        searchInput.select();
+      });
     </script>
   </body>
 </html>

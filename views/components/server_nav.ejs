@@ -1,21 +1,20 @@
-<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-wrap items-center justify-between">
+<div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-2 flex flex-wrap items-center justify-between">
 
   <!-- Tabs -->
-  <div class="flex gap-2 flex-wrap">
-    <a href="/server/manage/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-console">
-      <i data-lucide="terminal"></i> Console
+  <div class="flex gap-1 flex-wrap">
+    <a href="/server/manage/<%= server %>" class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-1.5 hover:bg-neutral-900" id="tab-console">
+      <i data-lucide="square-terminal" class="w-4 h-4"></i> Console
     </a>
-    <a href="/server/files/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-files">
-      <i data-lucide="folder"></i> Files
+    <a href="/server/files/<%= server %>" class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-1.5 hover:bg-neutral-900" id="tab-files">
+      <i data-lucide="folder-open" class="w-4 h-4"></i> Files
     </a>
-    <a href="/server/settings/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-settings">
-      <i data-lucide="settings"></i> Settings
+    <a href="/server/network/<%= server %>" class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-1.5 hover:bg-neutral-900" id="tab-network">
+      <i data-lucide="network" class="w-4 h-4"></i> Network
     </a>
-    <a href="/server/network/<%= server %>" class="px-4 py-2 rounded-xl text-sm flex items-center gap-2 hover:bg-neutral-900" id="tab-settings">
-      <i data-lucide="network"></i> Network
+    <a href="/server/settings/<%= server %>" class="px-3 py-1.5 rounded-xl text-sm flex items-center gap-1.5 hover:bg-neutral-900" id="tab-settings">
+      <i data-lucide="cog" class="w-4 h-4"></i> Settings
     </a>
   </div>
- 
 
 </div>
 

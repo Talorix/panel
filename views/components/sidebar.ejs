@@ -1,3 +1,12 @@
+<script src="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800;900&display=swap"></script>
+
+<style>
+  body {
+    font-family: 'Figtree', ui-sans-serif, system-ui, -apple-system,
+      BlinkMacSystemFont;
+  }
+</style>
+
 <aside class="w-64 bg-neutral-950 border-r border-neutral-800 flex flex-col justify-between h-screen">
 
   <!-- Top App Name -->
@@ -8,18 +17,18 @@
   <!-- Navigation Links -->
   <nav class="flex-1 px-4 py-6 space-y-2">
     <a href="/dashboard" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
-      <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="home"></svg>
+      <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="layout-dashboard"></svg>
       Dashboard
     </a>
     <% if (user.admin) { %>
     <div class="space-y-1">
       <a href="/admin/settings" class="flex items-center px-4 py-3 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors">
-        <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="user-star"></svg>
+        <svg class="w-5 h-5 mr-3 text-gray-300" data-lucide="sliders-horizontal"></svg>
         Admin
       </a>
       <!-- Admin Sub-links -->
       <a href="/admin/nodes" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
-        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="server"></svg>
+        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="boxes"></svg>
         Nodes
       </a>
       <a href="/admin/images" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
@@ -27,7 +36,7 @@
         Images
       </a>
       <a href="/admin/servers" class="flex items-center px-6 py-2 rounded-2xl hover:bg-neutral-900 border border-neutral-900 transition-colors text-sm text-gray-400">
-        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="cpu"></svg>
+        <svg class="w-4 h-4 mr-2 text-gray-400" data-lucide="server"></svg>
         Servers
       </a>
     </div>

@@ -1,164 +1,527 @@
 <!DOCTYPE html>
 <html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
-<head>
-  <meta charset="UTF-8">
-  <title><%= name %> - <%= server.name %> Settings</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="min-h-screen flex">
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= name %> - <%= server.name %> Settings</title>
 
-  <!-- Sidebar -->
-  <%- include('../components/sidebar', { name: name, user: user }) %>
+    <!-- Tailwind (kept your CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <!-- small helper styles for transitions (Tailwind utilities used too) -->
+    <style>
+      /* ensure panels transition opacity */
+      .tab-panel {
+        transition: opacity 200ms ease, transform 200ms ease;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex">
+    <!-- Sidebar -->
+    <%- include('../components/sidebar', { name: name, user: user }) %>
 
-      <!-- Server Header -->
-      <div class="bg-neutral-950 border border-neutral-950 p-6 rounded-2xl shadow-lg flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold">🛠 <%= server.name %> Settings</h1>
-          <p class="text-gray-400 mt-1">
-            Node: <%= server.node?.name || 'Unknown' %> | IP: <%= server.node?.ip || '0.0.0.0' %>:<%= server.port %>
-          </p>
-        </div>
-        <div>
-          <% if (server.status === "online") { %>
-            <span class="flex items-center gap-2 text-green-400">
-              <i data-lucide="heart-pulse" class="w-5 h-5 animate-pulse"></i> Online
-            </span>
-          <% } else { %>
-            <span class="flex items-center gap-2 text-red-400">
-              <i data-lucide="x-circle" class="w-5 h-5"></i> Offline
-            </span>
-          <% } %>
-        </div>
-      </div>
-
-      <!-- Navigation -->
-      <%- include('../components/server_nav', { server: server.id }) %>
-
-      <!-- Rename Server -->
-      <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-xl font-semibold">Rename Server</h2>
-        <form action="/server/settings/<%= server.id %>/rename" method="POST" class="flex gap-2">
-          <input type="text" name="newName" placeholder="New server name" class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-700 text-gray-100" required>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl">Rename</button>
-        </form>
-      </div>
-
-      <!-- Reinstall Server -->
-      <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-xl font-semibold">Reinstall Server</h2>
-        <p class="text-gray-400">This will reinstall the server and replace its files with the latest versions.</p>
-        <form id="reinstall-form" action="/server/settings/reinstall/<%= server.id %>" method="POST">
-          <button type="button" id="reinstall-btn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-xl">
-            Reinstall Server
-          </button>
-        </form>
-      </div>
-
-      <!-- Environment Variables (Edit Only) -->
-      <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-xl font-semibold">Environment Variables</h2>
-
-        <% if (!server.env || Object.keys(server.env).length === 0) { %>
-          <p class="text-gray-500 italic">No environment variables available.</p>
-        <% } else { %>
-          <form method="POST" action="/server/settings/<%= server.id %>/envs" class="space-y-3">
-            <% Object.entries(server.env).forEach(([key, value]) => { %>
-              <div class="flex gap-3 items-center">
-                <input
-                  type="text"
-                  value="<%= key %>"
-                  disabled
-                  class="w-1/3 p-2 rounded-lg bg-neutral-950 border border-neutral-700 text-gray-400 cursor-not-allowed"
-                />
-                <input
-                  type="text"
-                  name="env[<%= key %>]"
-                  value="<%= value %>"
-                  class="flex-1 p-2 rounded-lg bg-neutral-950 border border-neutral-700 text-gray-100"
-                />
-              </div>
-            <% }) %>
-
-            <button
-              type="submit"
-              class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl"
-            >
-              Save ENVs
-            </button>
-          </form>
-        <% } %>
-      </div>
-
-    </div>
-  </main>
-
-  <!-- Reinstall Confirmation Modal -->
-  <div id="reinstall-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm transition-opacity duration-200"></div>
-    <div class="relative z-10 max-w-lg w-full mx-4 rounded-2xl bg-neutral-950 text-gray-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0 border border-neutral-900">
-      <div class="p-6">
-        <div class="flex items-start gap-4">
-          <i data-lucide="alert-triangle" class="w-8 h-8 text-yellow-600"></i>
-          <div class="flex-1">
-            <h2 class="text-lg font-semibold">Confirm Reinstall</h2>
-            <p class="mt-1 text-sm text-neutral-300">
-              Are you sure you want to REINSTALL this server? This will overwrite all server files.
-            </p>
+    <main class="flex-1 p-8 overflow-auto">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Server Header -->
+         <div
+          class="bg-neutral-950 border border-neutral-900 rounded-2xl px-6 py-4 flex items-center justify-between"
+        >
+          <!-- LEFT INFO -->
+          <div class="flex items-start gap-3">
+            <!-- Status dot -->
+            <span id="status-dot" class="mt-2"></span>
+            <div class="leading-tight">
+              <p class="text-lg font-semibold text-gray-100">
+                <%= server.name %>
+              </p>
+              <p class="text-sm text-gray-400">
+                <%= server.node?.ip || '0.0.0.0' %>:<%= server.port %>
+                <span class="mx-1"></span>
+                <%= server.node?.name || 'unknown' %>
+              </p>
+            </div>
           </div>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button id="reinstall-cancel" class="px-4 py-2 rounded-lg text-neutral-800 bg-gray-100 hover:bg-gray-200">Cancel</button>
-          <button id="reinstall-confirm" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-yellow-600 hover:bg-yellow-700 text-white">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Reinstall
-          </button>
+
+
+        <!-- Navigation -->
+        <%- include('../components/server_nav', { server: server.id }) %>
+
+        <!-- TAB LAYOUT -->
+        <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
+          <!-- Tab buttons -->
+          <div
+            role="tablist"
+            aria-label="Server settings tabs"
+            class="inline-flex items-center gap-1 rounded-lg bg-neutral-900 p-1 text-neutral-400"
+          >
+            <button
+              type="button"
+              role="tab"
+              data-target="tab-general"
+              data-state="active"
+              aria-selected="true"
+              class="tab-btn inline-flex h-7 items-center justify-center rounded-md px-3 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 data-[state=active]:bg-neutral-700 data-[state=active]:text-neutral-100"
+              id="tabbtn-general"
+            >
+              General
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              data-target="tab-sftp"
+              data-state="inactive"
+              aria-disabled="true"
+              disabled
+              title="SFTP not implemented"
+              class="tab-btn inline-flex h-7 items-center justify-center rounded-md px-3 text-sm font-medium transition opacity-50 cursor-not-allowed"
+              id="tabbtn-sftp"
+            >
+              SFTP
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              data-target="tab-danger"
+              data-state="inactive"
+              aria-selected="false"
+              class="tab-btn inline-flex h-7 items-center justify-center rounded-md px-3 text-sm font-medium transition text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 data-[state=active]:bg-neutral-700 data-[state=active]:text-neutral-100"
+              id="tabbtn-danger"
+            >
+              Danger
+            </button>
+          </div>
+
+          <div class="mt-4">
+            <!-- Panels container (panels will be hidden/shown with opacity + hidden class) -->
+
+            <!-- GENERAL TAB (default active) -->
+            <section
+              id="tab-general"
+              role="tabpanel"
+              aria-labelledby="tabbtn-general"
+              class="tab-panel opacity-100"
+            >
+              <!-- Grid layout: 1 col on mobile, 2 on md+, gap between cards -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Rename Server (span 1 col) -->
+                <div
+                  class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4"
+                >
+                  <h2 class="text-xl font-semibold">Rename Server</h2>
+                  <form
+                    action="/server/settings/<%= server.id %>/rename"
+                    method="POST"
+                    class="flex gap-2"
+                  >
+                    <input
+                      type="text"
+                      name="newName"
+                      placeholder="New server name"
+                      class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-700 text-gray-100"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+                    >
+                      Rename
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Server Metadata (span 1 col) -->
+                <div
+                  class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6"
+                >
+                  <h3 class="text-lg font-semibold">Server Metadata</h3>
+                  <div class="mt-2 text-sm text-gray-400 space-y-1">
+                    <div>
+                      Node:
+                      <span class="text-gray-100"><%= server.node.name %></span>
+                    </div>
+                    <div>
+                      Identifer:
+                      <span
+                        class="text-gray-100"
+                      >
+                        <%= server.idt %>
+                      </span>
+                    </div>
+                    <div>
+                      Server Id:
+                      <span class="text-gray-100"
+                        ><%= server.id || 'Unknown' %></span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Environment Variables (span full width on md: both columns) -->
+                <div
+                  class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 space-y-4 md:col-span-2"
+                >
+                  <h2 class="text-xl font-semibold">Environment Variables</h2>
+
+                  <% if (!server.env || Object.keys(server.env).length === 0) {
+                  %>
+                  <p class="text-gray-500 italic">
+                    No environment variables available.
+                  </p>
+                  <% } else { %>
+                  <form
+                    method="POST"
+                    action="/server/settings/<%= server.id %>/envs"
+                    class="space-y-3"
+                  >
+                    <% Object.entries(server.env).forEach(([key, value]) => { %>
+                    <div class="flex gap-3 items-center">
+                      <input
+                        type="text"
+                        value="<%= key %>"
+                        disabled
+                        class="w-1/3 p-2 rounded-lg bg-neutral-950 border border-neutral-700 text-gray-400 cursor-not-allowed"
+                      />
+                      <input
+                        type="text"
+                        name="env[<%= key %>]"
+                        value="<%= value %>"
+                        class="flex-1 p-2 rounded-lg bg-neutral-950 border border-neutral-700 text-gray-100"
+                      />
+                    </div>
+                    <% }) %>
+
+                    <button
+                      type="submit"
+                      class="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl"
+                    >
+                      Save ENVs
+                    </button>
+                  </form>
+                  <% } %>
+                </div>
+              </div>
+            </section>
+
+            <!-- SFTP TAB (disabled) -->
+            <section
+              id="tab-sftp"
+              role="tabpanel"
+              aria-labelledby="tabbtn-sftp"
+              class="tab-panel hidden opacity-0"
+              aria-hidden="true"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 md:col-span-2"
+                >
+                  <h2 class="text-xl font-semibold">SFTP (Not implemented)</h2>
+                  <p class="text-gray-400 mt-1">
+                    SFTP functionality is not implemented yet. This tab is
+                    intentionally disabled.
+                  </p>
+                </div>
+
+                <div
+                  class="bg-neutral-950 border border-neutral-800 rounded-2xl p-6 md:col-span-2"
+                >
+                  <div class="mt-4 grid grid-cols-1 gap-3">
+                    <input
+                      class="p-3 rounded-lg bg-neutral-950 border border-neutral-800 text-gray-500 cursor-not-allowed"
+                      placeholder="Host"
+                      disabled
+                    />
+                    <input
+                      class="p-3 rounded-lg bg-neutral-950 border border-neutral-800 text-gray-500 cursor-not-allowed"
+                      placeholder="Username"
+                      disabled
+                    />
+                    <input
+                      class="p-3 rounded-lg bg-neutral-950 border border-neutral-800 text-gray-500 cursor-not-allowed"
+                      placeholder="Password / Key"
+                      disabled
+                    />
+                    <button
+                      class="px-4 py-2 rounded-lg bg-gray-700 text-gray-400 cursor-not-allowed"
+                      disabled
+                    >
+                      Connect
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- DANGER TAB -->
+            <section
+              id="tab-danger"
+              role="tabpanel"
+              aria-labelledby="tabbtn-danger"
+              class="tab-panel hidden opacity-0"
+              aria-hidden="true"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Reinstall Server (span md:2 for emphasis) -->
+                <div
+                  class="bg-red-900/30 rounded-2xl p-6 space-y-4 md:col-span-2"
+                >
+                  <h2 class="text-xl font-semibold text-red-100">
+                    Reinstall Server
+                  </h2>
+                  <p class="text-red-200">
+                    This will reinstall the server and replace its files with
+                    the latest versions.
+                  </p>
+                  <form
+                    id="reinstall-form"
+                    action="/server/settings/reinstall/<%= server.id %>"
+                    method="POST"
+                  >
+                    <button
+                      type="button"
+                      id="reinstall-btn"
+                      class="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-md font-semibold tracking-tight text-white bg-red-600 hover:bg-red-700 transition-all cursor-pointer disabled:opacity-60"
+                    >
+                      Reinstall Server
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Reinstall Confirmation Modal -->
+    <div
+      id="reinstall-modal"
+      class="fixed inset-0 z-50 hidden flex items-center justify-center"
+    >
+      <div
+        class="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm transition-opacity duration-200"
+      ></div>
+      <div
+        class="relative z-10 max-w-lg w-full mx-4 rounded-2xl bg-neutral-950 text-gray-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0 border border-neutral-900"
+      >
+        <div class="p-6">
+          <div class="flex items-start gap-4">
+            <div class="flex-1">
+              <h2 class="text-lg font-semibold">Confirm Reinstall</h2>
+              <p class="mt-1 text-sm text-neutral-300">
+                This action stops the server and reruns the installation
+                scripts. Some files may be deleted or modified. Continue?
+              </p>
+            </div>
+          </div>
+          <div class="mt-6 flex justify-end gap-3">
+            <button
+              id="reinstall-cancel"
+              class="px-4 py-2 rounded-lg text-neutral-800 bg-gray-100 hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              id="reinstall-confirm"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-red-600 hover:bg-red-700 text-white"
+            >
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Reinstall
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    lucide.createIcons();
+    <script>
+      lucide.createIcons();
 
-    const reinstallBtn = document.getElementById('reinstall-btn');
-    const reinstallModal = document.getElementById('reinstall-modal');
-    const reinstallCancel = document.getElementById('reinstall-cancel');
-    const reinstallConfirm = document.getElementById('reinstall-confirm');
-    const reinstallForm = document.getElementById('reinstall-form');
+      // ---- Tab logic with 200ms delay ----
+      const tabButtons = Array.from(document.querySelectorAll(".tab-btn"));
+      const panels = Array.from(document.querySelectorAll(".tab-panel"));
+      const SWITCH_DELAY = 200; // ms
 
-    reinstallBtn.addEventListener('click', () => {
-      reinstallModal.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        reinstallModal.querySelector('div.relative').classList.remove('scale-95', 'opacity-0');
-        reinstallModal.querySelector('div.relative').classList.add('scale-100', 'opacity-100');
+      function setActiveButton(activeBtn) {
+        tabButtons.forEach((btn) => {
+          if (btn === activeBtn) {
+            btn.dataset.state = "active";
+            btn.setAttribute("aria-selected", "true");
+          } else {
+            btn.dataset.state = "inactive";
+            btn.setAttribute("aria-selected", "false");
+          }
+        });
+      }
+
+      function showPanelImmediate(targetId, btn) {
+        panels.forEach((p) => {
+          if (p.id === targetId) {
+            p.classList.remove("hidden");
+            p.classList.remove("opacity-0");
+            p.classList.add("opacity-100");
+            p.setAttribute("aria-hidden", "false");
+          } else {
+            p.classList.add("hidden");
+            p.classList.remove("opacity-100");
+            p.classList.add("opacity-0");
+            p.setAttribute("aria-hidden", "true");
+          }
+        });
+        setActiveButton(btn);
+      }
+
+      // initialize default (General)
+      const defaultBtn = document.querySelector('[data-target="tab-general"]');
+      // ensure panels have correct base classes
+      panels.forEach((p) => {
+        if (p.id === "tab-general") {
+          p.classList.remove("hidden");
+          p.classList.remove("opacity-0");
+          p.classList.add("opacity-100");
+          p.setAttribute("aria-hidden", "false");
+        } else {
+          p.classList.add("hidden");
+          p.classList.remove("opacity-100");
+          p.classList.add("opacity-0");
+          p.setAttribute("aria-hidden", "true");
+        }
       });
-      document.documentElement.style.overflow = 'hidden';
-    });
+      setActiveButton(defaultBtn);
 
-    function closeReinstallModal() {
-      reinstallModal.querySelector('div.relative').classList.remove('scale-100', 'opacity-100');
-      reinstallModal.querySelector('div.relative').classList.add('scale-95', 'opacity-0');
-      setTimeout(() => {
-        reinstallModal.classList.add('hidden');
-        document.documentElement.style.overflow = '';
-      }, 200);
-    }
+      // helper to perform delayed switch
+      function switchToTab(targetId, btn) {
+        const current = panels.find(
+          (p) =>
+            p.classList.contains("opacity-100") &&
+            !p.classList.contains("hidden")
+        );
+        const target = panels.find((p) => p.id === targetId);
+        if (!target || target === current) return;
 
-    reinstallCancel.addEventListener('click', closeReinstallModal);
-    reinstallConfirm.addEventListener('click', () => {
-      reinstallForm.submit();
-    });
+        // Start fade-out of current
+        if (current) {
+          current.classList.remove("opacity-100");
+          current.classList.add("opacity-0");
+          current.setAttribute("aria-hidden", "true");
+        }
 
-    // Close on overlay click
-    reinstallModal.querySelector('div.absolute').addEventListener('click', closeReinstallModal);
-    // Close on Escape key
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !reinstallModal.classList.contains('hidden')) closeReinstallModal();
-    });
-  </script>
+        // After delay, hide current and show target (fade-in)
+        setTimeout(() => {
+          if (current) current.classList.add("hidden");
 
-</body>
+          // show target initially hidden -> remove hidden then fade in
+          target.classList.remove("hidden");
+          // force reflow so transition runs
+          void target.offsetWidth;
+          target.classList.remove("opacity-0");
+          target.classList.add("opacity-100");
+          target.setAttribute("aria-hidden", "false");
+
+          // update tab button states
+          setActiveButton(btn);
+        }, SWITCH_DELAY);
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          // ignore disabled or aria-disabled
+          if (btn.disabled || btn.getAttribute("aria-disabled") === "true")
+            return;
+          const target = btn.dataset.target;
+          switchToTab(target, btn);
+        });
+
+        // keyboard support: Left/Right to switch (skips disabled)
+        btn.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+            e.preventDefault();
+            const list = tabButtons;
+            const idx = list.indexOf(btn);
+            let nextIdx = idx + (e.key === "ArrowRight" ? 1 : -1);
+            if (nextIdx < 0) nextIdx = list.length - 1;
+            if (nextIdx >= list.length) nextIdx = 0;
+
+            // skip disabled buttons
+            let attempts = 0;
+            while (
+              (list[nextIdx].disabled ||
+                list[nextIdx].getAttribute("aria-disabled") === "true") &&
+              attempts < list.length
+            ) {
+              nextIdx =
+                (nextIdx + (e.key === "ArrowRight" ? 1 : -1) + list.length) %
+                list.length;
+              attempts++;
+            }
+            const nextBtn = list[nextIdx];
+            if (
+              !nextBtn.disabled &&
+              nextBtn.getAttribute("aria-disabled") !== "true"
+            ) {
+              nextBtn.focus();
+              // use same delayed switch logic
+              switchToTab(nextBtn.dataset.target, nextBtn);
+            }
+          }
+        });
+      });
+
+      // ---- Reinstall modal logic ----
+      const reinstallBtn = document.getElementById("reinstall-btn");
+      const reinstallModal = document.getElementById("reinstall-modal");
+      const reinstallCancel = document.getElementById("reinstall-cancel");
+      const reinstallConfirm = document.getElementById("reinstall-confirm");
+      const reinstallForm = document.getElementById("reinstall-form");
+
+      if (reinstallBtn) {
+        reinstallBtn.addEventListener("click", () => {
+          reinstallModal.classList.remove("hidden");
+          requestAnimationFrame(() => {
+            reinstallModal
+              .querySelector("div.relative")
+              .classList.remove("scale-95", "opacity-0");
+            reinstallModal
+              .querySelector("div.relative")
+              .classList.add("scale-100", "opacity-100");
+          });
+          document.documentElement.style.overflow = "hidden";
+        });
+      }
+
+      function closeReinstallModal() {
+        reinstallModal
+          .querySelector("div.relative")
+          .classList.remove("scale-100", "opacity-100");
+        reinstallModal
+          .querySelector("div.relative")
+          .classList.add("scale-95", "opacity-0");
+        setTimeout(() => {
+          reinstallModal.classList.add("hidden");
+          document.documentElement.style.overflow = "";
+        }, 200);
+      }
+
+      if (reinstallCancel)
+        reinstallCancel.addEventListener("click", closeReinstallModal);
+      if (reinstallConfirm)
+        reinstallConfirm.addEventListener("click", () => {
+          reinstallForm.submit();
+        });
+
+      // Close on overlay click
+      if (reinstallModal) {
+        const overlay = reinstallModal.querySelector("div.absolute");
+        if (overlay) overlay.addEventListener("click", closeReinstallModal);
+      }
+
+      // Close on Escape key
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (!reinstallModal.classList.contains("hidden"))
+            closeReinstallModal();
+        }
+      });
+    </script>
+  </body>
 </html>
