@@ -85,7 +85,7 @@ const Logger = require("../modules/logger.js");
         if (!imageResp.ok) continue;
         const imageData = await imageResp.json();
 
-        const { dockerImage, name, description, envs, files } = imageData;
+        const { dockerImage, name, description, envs, files, features } = imageData;
         if (!dockerImage || !name) continue;
 
         // Check if an identical image already exists
@@ -113,6 +113,7 @@ const Logger = require("../modules/logger.js");
           description: description || "",
           envs: envs || {},
           files: files || [],
+          features: Array.isArray(features) ? features : [], 
           createdAt: Date.now(),
         };
 

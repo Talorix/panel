@@ -28,7 +28,7 @@
       }
 
       .heartbeat {
-        animation: heartbeat 2s infinite;
+       /* animation: heartbeat 10s infinite; */
       }
 
       /* Modal animations */
@@ -92,9 +92,9 @@
               <% if (node.status === "online") { %>
                 <i data-lucide="heart-pulse" class="w-5 h-5 text-green-400 heartbeat" data-node-id="<%= node.id %>" title="Loading version..."></i>
               <% } else if (node.status === "dockernotrunning") { %>
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-400"></i>
+               <i data-lucide="heart-pulse" class="w-5 h-5 text-yellow-400"></i>
               <% } else { %>
-                <i data-lucide="x-circle" class="w-5 h-5 text-red-400"></i>
+                <i data-lucide="heart-pulse" class="w-5 h-5 text-red-400"></i>
               <% } %>
               <%= node.name %>
             </td>

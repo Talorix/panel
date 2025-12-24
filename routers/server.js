@@ -31,26 +31,27 @@ function withServer(req, res, next) {
   if (server.suspended) return res.redirect("/dashboard?error=SUSPENDED");
   next();
 }
-function syncServerPorts(user, server, ports, primary = null) {
-  if (!ports || ports.length === 0) ports = [server.port || 25565];
 
-  server.ports = ports;
+/**
+ * Create a new file on a server node
+ * @param {Object} server - The server object
+ * @param {Object} node - The node object
+ * @param {string} filename - Name of the file to create
+ * @param {string} content - Content of the file
+ * @param {string} pathQuery - Path on the server where file should be created (default "/")
+ */
+async function createFileOnServer(server, node, filename, content, pathQuery = "/") {
+  if (!server) throw new Error("Server not provided");
+  if (!node) throw new Error("Node not provided");
+  if (!filename) throw new Error("Filename required");
 
-  if (primary && ports.includes(primary)) {
-    server.port = primary;
-  } else {
-    server.port = ports[0];
-  }
+  const response = await axios.post(
+    `${getNodeUrl(node)}/server/fs/${server.idt}/file/new`,
+    { filename, content },
+    { params: { path: pathQuery, key: node.key } }
+  );
 
-  user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
-  unsqh.put("users", user.id, user);
-
-  const adminServer = unsqh.get("servers", server.id);
-  if (adminServer) {
-    adminServer.ports = ports;
-    adminServer.port = server.port;
-    unsqh.put("servers", server.id, adminServer);
-  }
+  return response.data;
 }
 
 /* =========================
@@ -66,7 +67,7 @@ router.get("/server/manage/:id", requireAuth, withServer, (req, res) => {
   if (!user) return res.redirect("/");
 
   const server = getServerForUser(req.session.userId, req.params.id);
-
+  const image = unsqh.get("images", server.imageId);
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
 
@@ -74,6 +75,7 @@ router.get("/server/manage/:id", requireAuth, withServer, (req, res) => {
     name: appName,
     user,
     server,
+    image,
   });
 });
 
@@ -105,6 +107,62 @@ router.post("/server/size/:id", requireAuth, withServer, async (req, res) => {
 
   res.json({ size });
 });
+
+/**
+ * POST /server/features/:id/eula/accept
+ * Creates eula.txt with content "eula=true"
+ */
+router.post("/server/features/:id/eula/accept", requireAuth, withServer, async (req, res) => {
+  const server = getServerForUser(req.session.userId, req.params.id);
+  if (!server) return res.status(404).send("Server not found");
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  try {
+    await createFileOnServer(server, node, "eula.txt", "eula=true");
+    res.send({ success: true, message: "EULA accepted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: "Failed to create EULA file" });
+  }
+});
+
+/**
+ * GET /server/features/:id/eula/currentState
+ * Returns whether EULA is accepted (true/false)
+ */
+router.get(
+  "/server/features/:id/eula/currentState",
+  requireAuth,
+  withServer,
+  async (req, res) => {
+    const server = getServerForUser(req.session.userId, req.params.id);
+    if (!server) return res.status(404).send({ success: false, message: "Server not found" });
+    if (!server.node) return res.status(500).send({ success: false, message: "Server node not assigned" });
+
+    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+    if (!node) return res.status(404).send({ success: false, message: "Node not found" });
+
+    try {
+      const response = await axios.get(
+        `${getNodeUrl(node)}/server/fs/${server.idt}/file/content`,
+        {
+          params: { location: "eula.txt", key: node.key },
+        }
+      );
+
+      const content = response.data?.content || "";
+      const accepted = content.trim().toLowerCase() === "eula=true";
+
+      res.json({ success: true, eulaAccepted: accepted });
+    } catch (err) {
+      // If file doesn't exist, consider EULA not accepted
+      res.json({ success: true, eulaAccepted: false });
+    }
+  }
+);
 
 /**
  * GET /server/files/:id

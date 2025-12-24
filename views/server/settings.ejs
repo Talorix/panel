@@ -46,6 +46,22 @@
         <!-- Navigation -->
         <%- include('../components/server_nav', { server: server.id }) %>
 
+          <% if (req.query.rs === 'true') { %>
+    <div class="mb-4 p-4 rounded-xl bg-green-800 text-green-100 border border-green-700">
+      Reinstallation Successful
+    </div>
+  <% } else if (req.query.rs === 'false') { %>
+    <div class="mb-4 p-4 rounded-xl bg-red-800 text-red-100 border border-red-700">
+      Reinstallation Unsuccessful
+    </div>
+  <% } %>
+
+  <% if (req.query.env === 'saved') { %>
+    <div class="mb-4 p-4 rounded-xl bg-indigo-800 text-indigo-100 border border-indigo-700">
+      ENVs Saved Successfully
+    </div>
+  <% } %>
+
         <!-- TAB LAYOUT -->
         <div class="bg-neutral-950 border border-neutral-800 rounded-2xl p-4">
           <!-- Tab buttons -->

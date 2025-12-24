@@ -294,221 +294,193 @@
       <p id="uploadStatus" class="text-white font-medium"></p>
     </div>
 
-    <script>
-      lucide.createIcons();
-      (function () {
-        const searchInput = document.getElementById("searchInput");
-        const tbody = document.getElementById("filesTbody");
-        const rows = Array.from(tbody.querySelectorAll("tr.file-row"));
-        const noResultsRow = document.getElementById("noResultsRow");
-        const DEBOUNCE_MS = 200;
+   <script>
+  lucide.createIcons();
+  function escapeHtml(s) {
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return String(s).replace(/[&<>"']/g, (m) => map[m]);
+}
 
-        // utilities
-        function escapeRegExp(str) {
-          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        }
-        function escapeHtml(s) {
-          const map = {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#039;",
-          };
-          return String(s).replace(/[&<>"']/g, (m) => map[m]);
-        }
 
-        // Highlight match inside .file-name spans
-        function highlightMatch(el, query) {
-          const nameSpan = el.querySelector(".file-name");
-          if (!nameSpan) return;
-          const raw = nameSpan.textContent || "";
-          if (!query) {
-            nameSpan.innerHTML = escapeHtml(raw);
-            return;
-          }
-          try {
-            const re = new RegExp("(" + escapeRegExp(query) + ")", "ig");
-            const replaced = escapeHtml(raw).replace(
-              re,
-              '<mark class="bg-yellow-400/20 text-yellow-300 rounded px-0.5">$1</mark>'
-            );
-            nameSpan.innerHTML = replaced;
-          } catch (err) {
-            // fallback: no highlighting if regex fails
-            nameSpan.innerHTML = escapeHtml(raw);
-          }
-        }
+  (function () {
+    // --- File search/filter ---
+    const searchInput = document.getElementById("searchInput");
+    const tbody = document.getElementById("filesTbody");
+    const rows = Array.from(tbody.querySelectorAll("tr.file-row"));
+    const noResultsRow = document.getElementById("noResultsRow");
+    const DEBOUNCE_MS = 200;
 
-        // filter pattern: support "ext:js", "type:folder" and plain text
-        function parseQuery(q) {
-          const res = { text: "", ext: null, type: null };
-          if (!q) return res;
-          q = q.trim();
-          // tokens like ext:js and type:folder
-          const tokens = q.split(/\s+/);
-          const remaining = [];
-          tokens.forEach((tok) => {
-            const lower = tok.toLowerCase();
-            if (lower.startsWith("ext:")) {
-              res.ext = lower.slice(4);
-            } else if (lower.startsWith("type:")) {
-              res.type = lower.slice(5);
-            } else {
-              remaining.push(tok);
-            }
-          });
-          res.text = remaining.join(" ");
-          return res;
-        }
-
-        function filterRows(rawQuery) {
-          const q = parseQuery(rawQuery);
-          const queryText = (q.text || "").toLowerCase();
-          let visibleCount = 0;
-
-          rows.forEach((row) => {
-            const name = (row.dataset.name || "").toLowerCase();
-            const type = (row.dataset.type || "").toLowerCase();
-
-            // extension check
-            let extMatch = true;
-            if (q.ext) {
-              const dotIndex = name.lastIndexOf(".");
-              const ext = dotIndex !== -1 ? name.slice(dotIndex + 1) : "";
-              extMatch = ext === q.ext;
-            }
-
-            // type check
-            let typeCheck = true;
-            if (q.type) {
-              typeCheck = type === q.type;
-            }
-
-            // text search
-            let textMatch = true;
-            if (queryText) {
-              textMatch = name.includes(queryText);
-            }
-
-            const show = extMatch && typeCheck && textMatch;
-
-            if (show) {
-              row.classList.remove("hidden");
-              row.classList.remove("opacity-0");
-              // highlight the matched part (only with text query)
-              if (queryText) highlightMatch(row, queryText);
-              else highlightMatch(row, null);
-              visibleCount++;
-            } else {
-              // hide row
-              row.classList.add("hidden");
-            }
-          });
-
-          // show/hide no results row
-          if (visibleCount === 0) {
-            noResultsRow.classList.remove("hidden");
-          } else {
-            noResultsRow.classList.add("hidden");
-          }
-        }
-
-        // debounce
-        let timer = null;
-        function onInput() {
-          clearTimeout(timer);
-          timer = setTimeout(() => {
-            filterRows(searchInput.value || "");
-          }, DEBOUNCE_MS);
-        }
-
-        if (searchInput) {
-          searchInput.addEventListener("input", onInput);
-
-          // helpful UX: press Escape to clear, Enter to focus first visible row
-          searchInput.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-              searchInput.value = "";
-              filterRows("");
-            } else if (e.key === "Enter") {
-              const first = tbody.querySelector(
-                "tr.file-row:not(.hidden) .file-name"
-              );
-              if (first)
-                first.scrollIntoView({ block: "nearest", behavior: "smooth" });
-            }
-          });
-        }
-      })();
-      const modalOverlay = document.getElementById("modalOverlay");
-      const modalPanel = document.getElementById("modalPanel");
-      const modalTitle = document.getElementById("modalTitle");
-      const modalInput = document.getElementById("modalInput");
-      const modalContent = document.getElementById("modalContent");
-      const modalConfirm = document.getElementById("modalConfirm");
-      const modalCancel = document.getElementById("modalCancel");
-
-      let modalMode = null;
-      let modalTarget = null;
-      function showModal() {
-        modalOverlay.classList.remove("hidden");
-        requestAnimationFrame(() => {
-          modalPanel.classList.remove("scale-95", "opacity-0");
-          modalPanel.classList.add("scale-100", "opacity-100");
-        });
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+    function highlightMatch(el, query) {
+      const nameSpan = el.querySelector(".file-name");
+      if (!nameSpan) return;
+      const raw = nameSpan.textContent || "";
+      if (!query) {
+        nameSpan.innerHTML = escapeHtml(raw);
+        return;
       }
-
-      function hideModal() {
-        modalPanel.classList.remove("scale-100", "opacity-100");
-        modalPanel.classList.add("scale-95", "opacity-0");
-        setTimeout(() => modalOverlay.classList.add("hidden"), 200);
+      try {
+        const re = new RegExp("(" + escapeRegExp(query) + ")", "ig");
+        nameSpan.innerHTML = escapeHtml(raw).replace(
+          re,
+          '<mark class="bg-yellow-400/20 text-yellow-300 rounded px-0.5">$1</mark>'
+        );
+      } catch {
+        nameSpan.innerHTML = escapeHtml(raw);
       }
-      function openModal(type) {
-        modalMode = type;
-        modalTarget = null;
-        modalTitle.textContent = type === "file" ? "New File" : "New Folder";
-        modalInput.value = "";
-        modalContent.value = "";
-        // modalContent.classList.toggle("hidden", type !== "file");
-        modalConfirm.dataset.type = type;
-        showModal();
-      }
-      function openRenameModal(type, name, relPath) {
-        modalMode = "rename";
-        modalTarget = { type, name, path: relPath };
-        modalTitle.textContent = `Rename ${type}`;
-        modalInput.value = name;
-        modalContent.classList.add("hidden");
-        modalConfirm.dataset.type = type;
-        showModal();
-      }
+    }
 
-      modalCancel.onclick = hideModal;
-      document.getElementById("newFileBtn").onclick = () => openModal("file");
-      document.getElementById("newFolderBtn").onclick = () =>
-        openModal("folder");
+    function parseQuery(q) {
+      const res = { text: "", ext: null, type: null };
+      if (!q) return res;
+      q = q.trim();
+      const tokens = q.split(/\s+/);
+      const remaining = [];
+      tokens.forEach((tok) => {
+        const lower = tok.toLowerCase();
+        if (lower.startsWith("ext:")) res.ext = lower.slice(4);
+        else if (lower.startsWith("type:")) res.type = lower.slice(5);
+        else remaining.push(tok);
+      });
+      res.text = remaining.join(" ");
+      return res;
+    }
 
-      modalConfirm.onclick = () => {
-        if (!modalInput.value.trim()) return alert("Name required");
-        if (modalMode === "rename" && modalTarget) {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/server/files/<%= server.id %>/${modalTarget.type}/rename`;
-          form.innerHTML = `
+    function filterRows(rawQuery) {
+      const q = parseQuery(rawQuery);
+      const queryText = (q.text || "").toLowerCase();
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const name = (row.dataset.name || "").toLowerCase();
+        const type = (row.dataset.type || "").toLowerCase();
+        let extMatch = true;
+        if (q.ext) {
+          const dotIndex = name.lastIndexOf(".");
+          const ext = dotIndex !== -1 ? name.slice(dotIndex + 1) : "";
+          extMatch = ext === q.ext;
+        }
+        let typeCheck = true;
+        if (q.type) typeCheck = type === q.type;
+        let textMatch = true;
+        if (queryText) textMatch = name.includes(queryText);
+        const show = extMatch && typeCheck && textMatch;
+
+        if (show) {
+          row.classList.remove("hidden");
+          row.classList.remove("opacity-0");
+          if (queryText) highlightMatch(row, queryText);
+          else highlightMatch(row, null);
+          visibleCount++;
+        } else {
+          row.classList.add("hidden");
+        }
+      });
+
+      if (visibleCount === 0) noResultsRow.classList.remove("hidden");
+      else noResultsRow.classList.add("hidden");
+    }
+
+    let timer = null;
+    function onInput() {
+      clearTimeout(timer);
+      timer = setTimeout(() => filterRows(searchInput.value || ""), DEBOUNCE_MS);
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", onInput);
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          searchInput.value = "";
+          filterRows("");
+        } else if (e.key === "Enter") {
+          const first = tbody.querySelector(
+            "tr.file-row:not(.hidden) .file-name"
+          );
+          if (first) first.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      });
+    }
+  })();
+
+  // --- Modal logic ---
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalPanel = document.getElementById("modalPanel");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalInput = document.getElementById("modalInput");
+  const modalContent = document.getElementById("modalContent");
+  const modalConfirm = document.getElementById("modalConfirm");
+  const modalCancel = document.getElementById("modalCancel");
+
+  let modalMode = null;
+  let modalTarget = null;
+
+  function showModal() {
+    modalOverlay.classList.remove("hidden");
+    requestAnimationFrame(() => {
+      modalPanel.classList.remove("scale-95", "opacity-0");
+      modalPanel.classList.add("scale-100", "opacity-100");
+    });
+  }
+
+  function hideModal() {
+    modalPanel.classList.remove("scale-100", "opacity-100");
+    modalPanel.classList.add("scale-95", "opacity-0");
+    setTimeout(() => modalOverlay.classList.add("hidden"), 200);
+  }
+
+  function openModal(type) {
+    modalMode = type;
+    modalTarget = null;
+    modalTitle.textContent = type === "file" ? "New File" : "New Folder";
+    modalInput.value = "";
+    modalContent.value = "";
+    modalConfirm.dataset.type = type;
+    showModal();
+  }
+
+  function openRenameModal(type, name, relPath) {
+    modalMode = "rename";
+    modalTarget = { type, name, path: relPath };
+    modalTitle.textContent = `Rename ${type}`;
+    modalInput.value = name;
+    modalContent.classList.add("hidden");
+    modalConfirm.dataset.type = type;
+    showModal();
+  }
+
+  modalCancel.onclick = hideModal;
+  document.getElementById("newFileBtn").onclick = () => openModal("file");
+  document.getElementById("newFolderBtn").onclick = () => openModal("folder");
+
+  modalConfirm.onclick = () => {
+    if (!modalInput.value.trim()) return alert("Name required");
+    if (modalMode === "rename" && modalTarget) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `/server/files/<%= server.id %>/${modalTarget.type}/rename`;
+      form.innerHTML = `
         <input type="hidden" name="location" value="${modalTarget.path}">
         <input type="hidden" name="newName" value="${modalInput.value}">
       `;
-          document.body.appendChild(form);
-          form.submit();
-        } else {
-          const type = modalConfirm.dataset.type;
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/server/files/<%= server.id %>/${
-            type === "file" ? "new-file" : "new-folder"
-          }?path=<%= encodeURIComponent(path) %>`;
-          form.innerHTML = `
+      document.body.appendChild(form);
+      form.submit();
+    } else {
+      const type = modalConfirm.dataset.type;
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `/server/files/<%= server.id %>/${
+        type === "file" ? "new-file" : "new-folder"
+      }?path=<%= encodeURIComponent(path) %>`;
+      form.innerHTML = `
         <input type="hidden" name="filename" value="${modalInput.value}">
         ${
           type === "file"
@@ -516,173 +488,241 @@
             : ""
         }
       `;
-          document.body.appendChild(form);
-          form.submit();
+      document.body.appendChild(form);
+      form.submit();
+    }
+  };
+
+  // --- Dropdown buttons ---
+  document.querySelectorAll(".dropdownBtn").forEach((btn) => {
+    const menu = btn.nextElementSibling;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelectorAll(".dropdownMenu").forEach((m) => {
+        if (m !== menu && !m.classList.contains("hidden")) {
+          m.classList.add("scale-95", "opacity-0");
+          setTimeout(() => m.classList.add("hidden"), 150);
         }
-      };
-      document.querySelectorAll(".dropdownBtn").forEach((btn) => {
-        const menu = btn.nextElementSibling;
-
-        btn.onclick = (e) => {
-          e.stopPropagation();
-
-          // Close other dropdowns with animation
-          document.querySelectorAll(".dropdownMenu").forEach((m) => {
-            if (m !== menu && !m.classList.contains("hidden")) {
-              m.classList.add("scale-95", "opacity-0");
-              setTimeout(() => m.classList.add("hidden"), 150);
-            }
-          });
-
-          if (menu.classList.contains("hidden")) {
-            menu.classList.remove("hidden");
-            requestAnimationFrame(() => {
-              menu.classList.remove("scale-95", "opacity-0");
-              menu.classList.add("scale-100", "opacity-100");
-            });
-          } else {
-            menu.classList.add("scale-95", "opacity-0");
-            setTimeout(() => menu.classList.add("hidden"), 150);
-          }
-        };
       });
-
-      // Click outside to close dropdown
-      document.addEventListener("click", () => {
-        document.querySelectorAll(".dropdownMenu").forEach((menu) => {
-          if (!menu.classList.contains("hidden")) {
-            menu.classList.add("scale-95", "opacity-0");
-            setTimeout(() => menu.classList.add("hidden"), 150);
-          }
+      if (menu.classList.contains("hidden")) {
+        menu.classList.remove("hidden");
+        requestAnimationFrame(() => {
+          menu.classList.remove("scale-95", "opacity-0");
+          menu.classList.add("scale-100", "opacity-100");
         });
-      });
-
-      // Rename buttons
-      document.querySelectorAll(".renameBtn").forEach((btn) => {
-        btn.onclick = () => {
-          openRenameModal(btn.dataset.type, btn.dataset.name, btn.dataset.path);
-          const menu = btn.closest(".dropdownMenu");
-          menu.classList.add("scale-95", "opacity-0");
-          setTimeout(() => menu.classList.add("hidden"), 150);
-        };
-      });
-
-      let lastSnapshot = null;
-      async function pollFiles() {
-        try {
-          const res = await fetch(location.href, {
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-          });
-          const text = await res.text();
-          const snapshot = text.length;
-          if (lastSnapshot !== null && snapshot !== lastSnapshot)
-            location.reload();
-          lastSnapshot = snapshot;
-        } catch (e) {
-          console.error(e);
-        }
+      } else {
+        menu.classList.add("scale-95", "opacity-0");
+        setTimeout(() => menu.classList.add("hidden"), 150);
       }
-      //  setInterval(pollFiles, 3000);
-      const uploadBtn = document.getElementById("uploadFileBtn");
-      const uploadInput = document.getElementById("uploadFileInput");
-      const uploadModal = document.getElementById("uploadModal");
-      const uploadBar = document.getElementById("uploadBar");
-      const uploadStatus = document.getElementById("uploadStatus");
+    };
+  });
 
-      let uploadQueue = [];
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".dropdownMenu").forEach((menu) => {
+      if (!menu.classList.contains("hidden")) {
+        menu.classList.add("scale-95", "opacity-0");
+        setTimeout(() => menu.classList.add("hidden"), 150);
+      }
+    });
+  });
 
-      uploadBtn.onclick = () => uploadInput.click();
-      uploadInput.onchange = (e) => {
-        const files = Array.from(e.target.files);
-        if (!files.length) return;
-        enqueueFiles(files);
+  document.querySelectorAll(".renameBtn").forEach((btn) => {
+    btn.onclick = () => {
+      openRenameModal(btn.dataset.type, btn.dataset.name, btn.dataset.path);
+      const menu = btn.closest(".dropdownMenu");
+      menu.classList.add("scale-95", "opacity-0");
+      setTimeout(() => menu.classList.add("hidden"), 150);
+    };
+  });
+
+  // --- Upload logic ---
+  const uploadBtn = document.getElementById("uploadFileBtn");
+  const uploadInput = document.getElementById("uploadFileInput");
+  const uploadModal = document.getElementById("uploadModal");
+  const uploadBar = document.getElementById("uploadBar");
+  const uploadStatus = document.getElementById("uploadStatus");
+
+  let uploadQueue = [];
+
+  uploadBtn.onclick = () => uploadInput.click();
+  uploadInput.onchange = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    enqueueFiles(files);
+  };
+
+  function enqueueFiles(files) {
+    uploadQueue.push(...files);
+    if (uploadQueue.length === files.length) startUploadQueue();
+  }
+
+  async function startUploadQueue() {
+    if (!uploadQueue.length) return location.reload();
+    showUploadModal();
+    const file = uploadQueue.shift();
+    uploadStatus.textContent = `Uploading ${file.name}...`;
+    try {
+      await uploadFile(file);
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to upload ${file.name}: ${err.message}`);
+    }
+    uploadBar.style.width = "0%";
+    startUploadQueue();
+  }
+
+  function uploadFile(file) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append("file", file);
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          uploadBar.style.width = percent + "%";
+        }
+      });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Server responded with status ${xhr.status}`));
       };
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.open(
+        "POST",
+        `/server/files/<%= server.id %>/upload?path=<%= encodeURIComponent(path) %>`
+      );
+      xhr.send(formData);
+    });
+  }
 
-      function enqueueFiles(files) {
-        uploadQueue.push(...files);
-        if (uploadQueue.length === files.length) startUploadQueue();
-      }
+  function showUploadModal() {
+    uploadModal.classList.remove("hidden");
+  }
 
-      async function startUploadQueue() {
-        if (!uploadQueue.length) return location.reload();
-        showUploadModal();
+  function hideUploadModal() {
+    uploadModal.classList.add("hidden");
+    uploadStatus.textContent = "";
+  }
 
-        const file = uploadQueue.shift();
-        uploadStatus.textContent = `Uploading ${file.name}...`;
+  // --- Keyboard find shortcut (Ctrl/Cmd+F) ---
+  document.addEventListener("keydown", (e) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const isFindShortcut = isMac
+      ? e.metaKey && e.key === "f"
+      : e.ctrlKey && e.key === "f";
 
-        try {
-          await uploadFile(file);
-        } catch (err) {
-          console.error(err);
-          alert(`Failed to upload ${file.name}: ${err.message}`);
+    if (!isFindShortcut) return;
+    const activeTag = document.activeElement?.tagName?.toLowerCase();
+    const isTyping =
+      activeTag === "input" ||
+      activeTag === "textarea" ||
+      document.activeElement?.isContentEditable;
+
+    if (isTyping && document.activeElement.id !== "searchInput") return;
+    e.preventDefault();
+    const searchInput = document.getElementById("searchInput");
+    if (!searchInput) return;
+    searchInput.focus();
+    searchInput.select();
+  });
+
+  // --- Right-click context menu ---
+  (function () {
+    const serverId = '<%= server.id %>';
+    const currentPath = '<%= path %>';
+    const relPrefix = currentPath === '/' ? '' : currentPath + '/';
+
+    const contextMenu = document.createElement('div');
+    contextMenu.id = 'context-menu';
+    contextMenu.className =
+      'dropdownMenu transition-all scale-95 opacity-0 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg hidden flex flex-col z-50 min-w-[140px] fixed';
+    contextMenu.style.right = 'auto';
+    contextMenu.style.left = '0px';
+    contextMenu.style.top = '0px';
+    contextMenu.style.padding = '6px 0';
+    document.body.appendChild(contextMenu);
+
+    function hideAllMenus() {
+      document.querySelectorAll('.dropdownMenu').forEach((m) => {
+        if (!m.classList.contains('hidden')) {
+          m.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => m.classList.add('hidden'), 150);
         }
-
-        uploadBar.style.width = "0%";
-        startUploadQueue();
-      }
-
-      function uploadFile(file) {
-        return new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          const formData = new FormData();
-          formData.append("file", file);
-
-          xhr.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-              const percent = (e.loaded / e.total) * 100;
-              uploadBar.style.width = percent + "%";
-            }
-          });
-
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else
-              reject(new Error(`Server responded with status ${xhr.status}`));
-          };
-
-          xhr.onerror = () => reject(new Error("Upload failed"));
-
-          xhr.open(
-            "POST",
-            `/server/files/<%= server.id %>/upload?path=<%= encodeURIComponent(path) %>`
-          );
-          xhr.send(formData);
-        });
-      }
-
-      function showUploadModal() {
-        uploadModal.classList.remove("hidden");
-      }
-
-      function hideUploadModal() {
-        uploadModal.classList.add("hidden");
-        uploadStatus.textContent = "";
-      }
-      document.addEventListener("keydown", (e) => {
-        const isMac = navigator.platform.toUpperCase().includes("MAC");
-        const isFindShortcut = isMac
-          ? e.metaKey && e.key === "f"
-          : e.ctrlKey && e.key === "f";
-
-        if (!isFindShortcut) return;
-
-        const activeTag = document.activeElement?.tagName?.toLowerCase();
-        const isTyping =
-          activeTag === "input" ||
-          activeTag === "textarea" ||
-          document.activeElement?.isContentEditable;
-
-        // Don't hijack if user is already typing somewhere else
-        if (isTyping && document.activeElement.id !== "searchInput") return;
-
-        e.preventDefault();
-
-        const searchInput = document.getElementById("searchInput");
-        if (!searchInput) return;
-
-        searchInput.focus();
-        searchInput.select();
       });
-    </script>
+    }
+
+    function showContextMenuAt(x, y) {
+      hideAllMenus();
+      contextMenu.classList.remove('hidden');
+      contextMenu.style.left = x + 'px';
+      contextMenu.style.top = y + 'px';
+      requestAnimationFrame(() => {
+        contextMenu.classList.remove('scale-95', 'opacity-0');
+        contextMenu.classList.add('scale-100', 'opacity-100');
+      });
+      requestAnimationFrame(() => {
+        const rect = contextMenu.getBoundingClientRect();
+        const PAD = 8;
+        let left = rect.left;
+        let top = rect.top;
+        if (rect.right > window.innerWidth) left = Math.max(PAD, window.innerWidth - rect.width - PAD);
+        if (rect.bottom > window.innerHeight) top = Math.max(PAD, window.innerHeight - rect.height - PAD);
+        contextMenu.style.left = left + 'px';
+        contextMenu.style.top = top + 'px';
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function hideContextMenu() {
+      if (contextMenu.classList.contains('hidden')) return;
+      contextMenu.classList.remove('scale-100', 'opacity-100');
+      contextMenu.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => contextMenu.classList.add('hidden'), 150);
+    }
+
+    function buildMenuFor(row) {
+      const name = row.querySelector('.file-name')?.textContent?.trim() || '';
+      const type = row.dataset.type || 'file';
+      const relPath = (currentPath === '/' ? '' : currentPath + '/') + name;
+      const safeName = escapeHtml(name);
+      const deleteUrl = '/server/files/' + encodeURIComponent(serverId) + '/' + encodeURIComponent(type) + '/delete?location=' + encodeURIComponent(relPath);
+
+      contextMenu.innerHTML = `
+        <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Delete ${safeName}?');" style="margin:0">
+          <button type="submit" class="text-left px-4 py-2 hover:bg-red-700 rounded-xl text-red-500">Delete</button>
+        </form>
+        <button class="renameBtn text-left px-4 py-2 hover:bg-neutral-800 rounded-xl" data-type="${escapeHtml(type)}" data-name="${escapeHtml(name)}" data-path="${escapeHtml(relPath)}">Rename</button>
+      `;
+
+      const renameBtn = contextMenu.querySelector('.renameBtn');
+      if (renameBtn) {
+        renameBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          openRenameModal(renameBtn.dataset.type, renameBtn.dataset.name, renameBtn.dataset.path);
+          hideContextMenu();
+        };
+      }
+    }
+
+    document.addEventListener('contextmenu', (e) => {
+      const row = e.target.closest('tr.file-row');
+      if (!row) return;
+      e.preventDefault();
+      buildMenuFor(row);
+      showContextMenuAt(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#context-menu')) hideContextMenu();
+    });
+    window.addEventListener('blur', hideContextMenu);
+    window.addEventListener('resize', hideContextMenu);
+    window.addEventListener('scroll', hideContextMenu, true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideContextMenu();
+    });
+  })();
+</script>
+
   </body>
 </html>

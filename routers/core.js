@@ -212,18 +212,107 @@ router.get("/admin/node/:id", requireAuth, requireAdmin, async (req, res) => {
     req,
   });
 });
-
 /**
- * DELETE /admin/node/:id/delete
+ * POST /admin/node/:id/delete
+ * Delete a node and clean up all servers that live on it (sequentially).
  */
-router.post("/admin/node/:id/delete", requireAuth, requireAdmin, (req, res) => {
-  const node = unsqh.get("nodes", req.params.id);
-  if (!node) return res.status(404).json({ error: "Node not found" });
+router.post(
+  "/admin/node/:id/delete",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const node = unsqh.get("nodes", req.params.id);
+    if (!node) return res.status(404).json({ error: "Node not found" });
 
-  unsqh.delete("nodes", req.params.id);
+    const allServers = unsqh.list("servers") || [];
+    const serversToRemove = allServers.filter(
+      (s) =>
+        s &&
+        s.node &&
+        (s.node.id === node.id || s.node.ip === node.ip || s.node.name === node.name)
+    );
 
-  res.json({ success: true });
-});
+    let deletedCount = 0;
+    for (const server of serversToRemove) {
+      try {
+        // Determine the node record that actually hosts this server (defensive)
+        const serverNode =
+          unsqh
+            .list("nodes")
+            .find((n) => n.id === server.node?.id || n.ip === server.node?.ip) ||
+          node; // fallback to node being deleted
+
+        // If we have an idt (node container id) try to instruct the node to remove it.
+        if (server.idt && serverNode && serverNode.ip && serverNode.port && serverNode.key) {
+          try {
+            // call node API to delete the container (sequential)
+            await axios.delete(
+              `http://${serverNode.ip}:${serverNode.port}/server/delete/${server.idt}?key=${serverNode.key}`,
+              { timeout: 5000 }
+            );
+          } catch (err) {
+            // best-effort: log and continue
+            console.warn(
+              `Failed to instruct node ${serverNode.ip}:${serverNode.port} to delete server ${server.id}:`,
+              err?.message || err
+            );
+          }
+        }
+
+        // Free allocations on the node that match this server
+        if (serverNode && Array.isArray(serverNode.allocations)) {
+          let changed = false;
+          serverNode.allocations.forEach((a) => {
+            if (a.allocationOwnedto?.serverId === server.id) {
+              a.allocationOwnedto = null;
+              a.type = "";
+              changed = true;
+            }
+          });
+          if (changed) {
+            unsqh.update("nodes", serverNode.id, { allocations: serverNode.allocations });
+          }
+        }
+
+        // Remove server entry from the owner's user.servers (if present)
+        if (server.userId) {
+          const owner = unsqh.get("users", server.userId);
+          if (owner && Array.isArray(owner.servers)) {
+            const before = owner.servers.length;
+            owner.servers = owner.servers.filter((s) => s.id !== server.id);
+            if (owner.servers.length !== before) {
+              unsqh.update("users", owner.id, { servers: owner.servers });
+            }
+          }
+        }
+
+        // Remove server from global servers store (best-effort)
+        try {
+          unsqh.delete("servers", server.id);
+        } catch (err) {
+          // continue even if deletion fails
+          console.warn(`Failed to delete server ${server.id} from store:`, err?.message || err);
+        }
+
+        deletedCount++;
+      } catch (err) {
+        // do not abort the whole operation for a single server's failure
+        console.error(`Error while cleaning server ${server.id}:`, err?.message || err);
+      }
+    }
+
+    // Finally delete the node itself
+    try {
+      unsqh.delete("nodes", req.params.id);
+    } catch (err) {
+      console.error("Failed to delete node from store:", err?.message || err);
+      return res.redirect('/admin/nodes?success=false&err='+ err.message);
+    }
+
+    res.redirect('/admin/nodes?success=true');
+  }
+);
+
 /**
  * POST /admin/node/:id/allocations/add
  * body: { ip, domain, port }

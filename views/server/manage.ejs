@@ -135,7 +135,6 @@
     id="logContainer"
     class="flex-1 p-4 text-[#d4d4d4] text-sm space-y-1 relative"
   ></div>
-
   <!-- Input -->
   <div class="p-4 border-t border-[#d4d4d4]/20 flex gap-2">
     <input
@@ -242,6 +241,53 @@
             </div>
           </div>
         </div>
+        <% if (image && Array.isArray(image.features) && image.features.includes('EULA')) { %>
+<div
+  id="eula-modal"
+  class="fixed inset-0 z-50 hidden flex items-center justify-center"
+>
+  <!-- Overlay -->
+  <div
+    id="eula-overlay"
+    class="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm transition-opacity duration-200"
+  ></div>
+
+  <!-- Modal panel -->
+  <div
+    id="eula-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eula-title"
+    class="relative z-10 max-w-lg w-full mx-4 rounded-2xl bg-neutral-950 text-gray-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0 border border-neutral-900"
+  >
+    <div class="p-6">
+      <div class="flex flex-col gap-4">
+        <h2 id="eula-title" class="text-lg font-semibold">Accept EULA</h2>
+        <p class="text-sm text-neutral-300">
+          To start this server, you must accept the Minecraft EULA.
+        </p>
+
+        <div class="flex justify-end gap-3 mt-4">
+          <button
+            id="eula-decline"
+            class="px-4 py-2 rounded-lg text-neutral-800 bg-gray-100 hover:bg-gray-200"
+          >
+            Decline
+          </button>
+          <button
+            id="eula-accept"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-green-600 hover:bg-green-700 text-white"
+          >
+            <i data-lucide="check" class="w-4 h-4"></i>
+            Accept
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -824,6 +870,73 @@
               });
           }
 
+           <% if (image && Array.isArray(image.features) && image.features.includes('EULA')) { %>
+  const eulaModal = document.getElementById("eula-modal");
+  const eulaPanel = document.getElementById("eula-panel");
+  const eulaOverlay = document.getElementById("eula-overlay");
+  const eulaAcceptBtn = document.getElementById("eula-accept");
+  const eulaDeclineBtn = document.getElementById("eula-decline");
+
+  async function checkEula() {
+    try {
+      const res = await fetch(`/server/features/<%= server.id %>/eula/currentState`);
+      const data = await res.json();
+
+      if (!data.eulaAccepted) {
+        openEulaModal();
+      }
+    } catch (err) {
+      console.error("Failed to check EULA state:", err);
+    }
+  }
+
+  function openEulaModal() {
+    eulaModal.classList.remove("hidden");
+    requestAnimationFrame(() => {
+      eulaPanel.classList.remove("scale-95", "opacity-0");
+      eulaPanel.classList.add("scale-100", "opacity-100");
+    });
+    document.documentElement.style.overflow = "hidden";
+  }
+
+  function closeEulaModal() {
+    eulaPanel.classList.remove("scale-100", "opacity-100");
+    eulaPanel.classList.add("scale-95", "opacity-0");
+    setTimeout(() => {
+      eulaModal.classList.add("hidden");
+      document.documentElement.style.overflow = "";
+    }, 200);
+  }
+
+  eulaAcceptBtn.addEventListener("click", async () => {
+    try {
+      const res = await fetch(`/server/features/<%= server.id %>/eula/accept`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.success) closeEulaModal();
+      else alert("Failed to accept EULA: " + data.message);
+    } catch (err) {
+      console.error("Error accepting EULA:", err);
+    }
+  });
+
+  eulaDeclineBtn.addEventListener("click", () => {
+    closeEulaModal();
+    alert("You must accept the EULA to start the server.");
+  });
+
+  eulaOverlay.addEventListener("click", closeEulaModal);
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !eulaModal.classList.contains("hidden")) {
+      closeEulaModal();
+    }
+  });
+
+  checkEula();
+  <% } %>
           if (window.lucide) lucide.createIcons();
         </script>
       </div>

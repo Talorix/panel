@@ -49,7 +49,6 @@
       <% }) %>
     </select>
 
-    <!-- Server Info in a single row -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
       <input id="name" placeholder="Server Name" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
       <input id="ram" placeholder="RAM (MB)" type="number" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
@@ -57,7 +56,6 @@
       <input id="disk" placeholder="Disk (GB)" type="number" class="p-3 rounded-xl bg-neutral-950 border border-neutral-800" />
     </div>
 
-    <!-- Environment Variables -->
     <div class="space-y-2">
       <label class="text-sm text-gray-400">Environment Variables</label>
       <div id="envList" class="space-y-2"></div>
@@ -71,9 +69,42 @@
     </div>
     </div>
   </main>
-
+<!-- Modal at the bottom of body -->
+  <div id="creating-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm opacity-0 transition-opacity duration-200" id="creating-overlay"></div>
+    <div id="creating-panel" class="border border-neutral-900 relative z-10 max-w-md w-full mx-4 rounded-2xl bg-neutral-950 text-gray-100 shadow-xl ring-1 ring-black/10 overflow-hidden p-6 flex items-center gap-4 transform scale-95 opacity-0 transition-all duration-200">
+      <i data-lucide="loader" class="w-6 h-6 animate-spin text-indigo-500"></i>
+      <div>
+        <h2 class="text-lg font-semibold">Creating Server</h2>
+        <p class="text-sm text-neutral-300">Please wait…</p>
+      </div>
+    </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
+    const creatingModal = document.getElementById("creating-modal");
+  const creatingOverlay = document.getElementById("creating-overlay");
+  const creatingPanel = document.getElementById("creating-panel");
+
+  function showCreatingModal() {
+    creatingModal.classList.remove("hidden");
+
+    requestAnimationFrame(() => {
+      creatingOverlay.classList.remove("opacity-0");
+      creatingPanel.classList.remove("scale-95", "opacity-0");
+      creatingPanel.classList.add("scale-100", "opacity-100");
+    });
+  }
+
+  function hideCreatingModal() {
+    creatingOverlay.classList.add("opacity-0");
+    creatingPanel.classList.add("scale-95", "opacity-0");
+    creatingPanel.classList.remove("scale-100", "opacity-100");
+
+    setTimeout(() => {
+      creatingModal.classList.add("hidden");
+    }, 200); // matches transition duration
+  }
     function loadAllocations() {
       const nodeSelect = document.getElementById("node");
       const allocSelect = document.getElementById("allocation");
@@ -118,33 +149,41 @@
       return env;
     }
 
-    async function createServer() {
-      const btn = document.getElementById("createBtn");
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = "Creating…";
+ async function createServer() {
+    const btn = document.getElementById("createBtn");
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = "Creating…";
 
-      try {
-        const res = await axios.post("/admin/servers/new", {
-          userId: document.getElementById("user").value,
-          nodeId: document.getElementById("node").value,
-          allocationId: document.getElementById("allocation").value,
-          imageId: document.getElementById("image").value,
-          name: document.getElementById("name").value,
-          ram: parseInt(document.getElementById("ram").value),
-          core: parseInt(document.getElementById("core").value),
-          disk: parseInt(document.getElementById("disk").value),
-          env: collectEnv(),
-        });
-        if (res.data.success) window.location.href = "/admin/servers";
-        else throw new Error("Server creation failed");
-      } catch (err) {
-        alert("Failed to create server");
-        console.error(err);
-        btn.disabled = false;
-        btn.textContent = originalText;
+    showCreatingModal();
+
+    try {
+      const res = await axios.post("/admin/servers/new", {
+        userId: document.getElementById("user").value,
+        nodeId: document.getElementById("node").value,
+        allocationId: document.getElementById("allocation").value,
+        imageId: document.getElementById("image").value,
+        name: document.getElementById("name").value,
+        ram: parseInt(document.getElementById("ram").value),
+        core: parseInt(document.getElementById("core").value),
+        disk: parseInt(document.getElementById("disk").value),
+        env: collectEnv(),
+      });
+
+      if (res.data.success) {
+        window.location.href = "/admin/servers";
+      } else {
+        throw new Error("Server creation failed");
+        hideCreatingModal();
       }
+    } catch (err) {
+      alert("Failed to create server");
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = originalText;
+      hideCreatingModal();
     }
+  }
 
     lucide.createIcons();
   </script>
