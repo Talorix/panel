@@ -122,8 +122,12 @@
   const mainNav = document.getElementById('mainSidebarNav');
   const serverNav = document.getElementById('serverSidebarNav');
 
+  if (!isServerPage && mainNav.classList.contains('hidden')) {
+    mainNav.classList.remove('hidden');
+  }
   if (isServerPage && serverNav) {
     mainNav.classList.add('hidden');
+    serverNav.classList.remove('hidden');
   }
   </script>
   <script>
