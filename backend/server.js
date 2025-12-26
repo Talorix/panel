@@ -222,48 +222,30 @@ router.get("/server/files/:id", requireAuth, withServer, async (req, res) => {
   });
 });
 
-/**
- * GET /server/files/:id/content
- * Query: ?location=/file.txt
- */
-router.get(
-  "/server/files/:id/content",
-  requireAuth,
-  withServer,
-  async (req, res) => {
-    const server = getServerForUser(req.session.userId, req.params.id);
-    if (!server) return res.status(404).send("Server not found");
-    if (!server.node) return res.status(500).send("Server node not assigned");
+router.get('/server/files/:id/raw', requireAuth, withServer, async (req, res) => {
+  const server = getServerForUser(req.session.userId, req.params.id);
+  if (!server) return res.status(404).send('Server not found');
+  if (!server.node) return res.status(500).send('Server node not assigned');
 
-    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
-    if (!node) return res.status(404).send("Node not found");
+  const node = unsqh.list('nodes').find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send('Node not found');
 
-    const location = req.query.location;
-    if (!location) return res.status(400).send("Missing location");
+  const location = req.query.location;
+  if (!location) return res.status(400).send('Missing location');
 
-    try {
-      const response = await axios.get(
-        `${getNodeUrl(node)}/server/fs/${server.idt}/file/content`,
-        {
-          params: { location, key: node.key },
-        }
-      );
-      const settings = unsqh.get("settings", "app") || {};
-      const appName = settings.name || "App";
-      const user = unsqh.get("users", req.session.userId);
+  try {
+    const response = await axios.get(
+      `${getNodeUrl(node)}/server/fs/${server.idt}/file/content`,
+      { params: { location, key: node.key } }
+    );
 
-      res.render("server/files/edit", {
-        server,
-        content: response.data.content,
-        location,
-        user,
-        name: appName,
-      });
-    } catch (err) {
-      res.status(500).send(err.message);
-    }
+    const content = response.data && response.data.content != null ? response.data.content : '';
+    res.type('text/plain').send(content);
+  } catch (err) {
+    console.error('raw fetch error', err?.message || err);
+    res.status(500).send('Failed to fetch file content');
   }
-);
+});
 
 /**
  * POST /server/files/:id/new-file
@@ -297,6 +279,7 @@ router.post(
         `/server/files/${server.id}?path=${encodeURIComponent(pathQuery)}`
       );
     } catch (err) {
+      console.log(err)
       res.status(500).send(err.message);
     }
   }

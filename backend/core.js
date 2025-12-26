@@ -1061,7 +1061,7 @@ router.post(
       /* -------------------------
        SERVER DATA
     ------------------------- */
-      const serverId = crypto.randomUUID();
+      const serverId = crypto.randomUUID().replace(/-/g, '').slice(0, 7);
       const serverData = {
         id: serverId,
         userId,

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>404 - <%= name %></title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+</head>
+<body class="min-h-screen bg-neutral-950 text-gray-100 font-Figtree flex items-center justify-center">
+  <div class="relative w-full max-w-3xl mx-4">
+    <div class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-800 opacity-60"></div>
+    <div class="flex items-center gap-8 p-8 bg-neutral-900/40 rounded-2xl backdrop-blur-md border border-neutral-800 shadow-xl">
+      <div class="flex-shrink-0">
+        <div class="text-[8rem] sm:text-[10rem] font-extrabold leading-none tracking-tight text-gray-100 drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)]">
+          404
+        </div>
+      </div>
+      <div class="text-left">
+        <h2 class="text-3xl sm:text-4xl font-bold text-gray-100 mb-2">Page not found</h2>
+        <p class="text-gray-400 mb-4">We can’t find <span class="text-gray-100 font-semibold">this page</span> — maybe it moved or never existed.</p>
+        <div class="flex gap-3">
+          <a href="/dashboard" class="inline-flex items-center px-5 py-3 bg-neutral-800 text-gray-100 rounded-lg shadow hover:bg-neutral-700 transition transform hover:-translate-y-0.5">
+            Home
+          </a>
+          <a href="javascript:history.back()" class="inline-flex items-center px-5 py-3 bg-transparent border border-neutral-700 text-gray-100 rounded-lg hover:bg-neutral-800/40 transition">
+            Go Back
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="mt-6 text-center text-sm text-gray-500">If this is unexpected, contact support.</div>
+  </div>
+  <svg class="absolute right-8 bottom-8 w-40 h-40 opacity-30 -z-10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0" stop-color="#6b7280" stop-opacity="0.2"/>
+        <stop offset="1" stop-color="#111827" stop-opacity="0.05"/>
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="url(#g)"/>
+  </svg>
+  <script>
+    const el=document.querySelector('.font-extrabold')||document.querySelector('h2');
+    if(el)el.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:2200,iterations:Infinity});
+  </script>
+  <noscript>
+    <div class="fixed bottom-4 right-4 text-sm text-gray-400">JavaScript off — <a href="/" class="underline text-gray-100">Home</a></div>
+  </noscript>
+</body>
+</html>

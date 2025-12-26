@@ -4,7 +4,7 @@
   "description": "can we replace pterodactyl forever? like can we? everything is not impossible",
   "main": "index.js",
   "scripts": {
-    "admin": "node exec/adminsys",
+    "admin": "node cli/adminsys",
     "tmkc": "npx @tailwindcss/cli -i ./public/tw.conf -o ./public/assets/tailwind.css --watch"
   },
   "repository": {

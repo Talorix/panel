@@ -41,10 +41,11 @@ app.use(sessionMiddleware);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "/views"));
+app.set("views", path.join(__dirname, "/frontend"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use((req, res, next) => {
   res.locals.config = config;
+  res.locals.req = req;
   next();
 });
 
@@ -57,11 +58,11 @@ const consoleWS = require("./modules/websocket.js");
 consoleWS(app);
 // --- Load backend routes ---
 const routeFiles = fs
-  .readdirSync("./routers")
+  .readdirSync("./backend")
   .filter((file) => file.endsWith(".js"));
 
 for (const file of routeFiles) {
-  const routeModule = require(path.join(__dirname, "routers", file));
+  const routeModule = require(path.join(__dirname, "backend", file));
   const router = routeModule;
   app.use("/", router);
 }

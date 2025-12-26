@@ -7,9 +7,11 @@
     <%= name %> - <%= server.name %> Files
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <!-- Tailwind script (included as requested) -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- preconnect + preload to reduce cold start of the CDN loader -->
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preload" href="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js" as="script">
+
 
   <style>
     button,
@@ -72,50 +74,50 @@
             </div>
           </div>
         </div>
-          <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-2 flex items-center">
-            <!-- LEFT: Current Path -->
-            <div class="flex items-center gap-1 text-sm font-medium text-gray-200">
-              <i data-lucide="folder" class="w-3 h-3"></i>
-              <% const pathParts=path.split('/').filter(Boolean); let accumulatedPath='' ; %>
-                <span class="flex items-center gap-1">
-                  <a href="?path=/" class="hover:underline">root</a>
-                  <% pathParts.forEach((part, index)=> { accumulatedPath += '/' +
-                    part; %>
-                    <span>/</span>
-                    <% if (index < pathParts.length - 1) { %>
-                      <a href="?path=<%= encodeURIComponent(accumulatedPath) %>" class="hover:underline text-sm">
+        <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-2 flex items-center">
+          <!-- LEFT: Current Path -->
+          <div class="flex items-center gap-1 text-sm font-medium text-gray-200">
+            <i data-lucide="folder" class="w-3 h-3"></i>
+            <% const pathParts=path.split('/').filter(Boolean); let accumulatedPath='' ; %>
+              <span class="flex items-center gap-1">
+                <a href="?path=/" class="hover:underline">root</a>
+                <% pathParts.forEach((part, index)=> { accumulatedPath += '/' +
+                  part; %>
+                  <span>/</span>
+                  <% if (index < pathParts.length - 1) { %>
+                    <a href="?path=<%= encodeURIComponent(accumulatedPath) %>" class="hover:underline text-sm">
+                      <%= part %>
+                    </a>
+                    <% } else { %>
+                      <span class="text-gray-400 text-sm">
                         <%= part %>
-                      </a>
-                      <% } else { %>
-                        <span class="text-gray-400 text-sm">
-                          <%= part %>
-                        </span>
-                        <% } %>
-                          <% }) %>
-                </span>
-            </div>
+                      </span>
+                      <% } %>
+                        <% }) %>
+              </span>
+          </div>
 
-            <!-- RIGHT side actions + search -->
-            <div class="ml-auto flex items-center gap-2 flex-wrap">
-              <button id="newFileBtn"
-                class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-                <i data-lucide="file" class="w-4 h-4"></i> New File
-              </button>
+          <!-- RIGHT side actions + search -->
+          <div class="ml-auto flex items-center gap-2 flex-wrap">
+            <button id="newFileBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
+              <i data-lucide="file" class="w-4 h-4"></i> New File
+            </button>
 
-              <button id="newFolderBtn"
-                class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-                <i data-lucide="folder-plus" class="w-4 h-4"></i> New Folder
-              </button>
+            <button id="newFolderBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
+              <i data-lucide="folder-plus" class="w-4 h-4"></i> New Folder
+            </button>
 
-              <button id="uploadFileBtn"
-                class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-                <i data-lucide="upload" class="w-4 h-4"></i> Upload File
-              </button>
+            <button id="uploadFileBtn"
+              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
+              <i data-lucide="upload" class="w-4 h-4"></i> Upload File
+            </button>
 
-              <input type="file" id="uploadFileInput" class="hidden" multiple />
+            <input type="file" id="uploadFileInput" class="hidden" multiple />
 
-              <!-- Selection toggle + count -->
-              <!--button id="toggleSelectBtn"
+            <!-- Selection toggle + count -->
+            <!--button id="toggleSelectBtn"
                 class="flex items-center gap-2 px-3 py-1.5 border border-neutral-800 rounded-md text-sm hover:bg-neutral-900"
                 title="Toggle multi-select">
                 <i data-lucide="check-square" class="w-4 h-4"></i>
@@ -124,116 +126,117 @@
                   class="ml-1 px-2 py-0.5 rounded-full text-xs bg-neutral-800 text-neutral-300 hidden">0</span>
               </button-->
 
-              <!-- Search -->
-              <div class="relative">
-                <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 w-3 h-3"></i>
-                <input id="searchInput" type="text" placeholder="Search..."
-                  class="pl-7 pr-2 py-1.5 text-sm bg-neutral-900 border border-neutral-800 rounded-md text-gray-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700" />
-              </div>
+            <!-- Search -->
+            <div class="relative">
+              <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 w-3 h-3"></i>
+              <input id="searchInput" type="text" placeholder="Search..."
+                class="pl-7 pr-2 py-1.5 text-sm bg-neutral-900 border border-neutral-800 rounded-md text-gray-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700" />
             </div>
           </div>
+        </div>
 
-          <div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
-            <table class="w-full table-auto text-left border-collapse">
-              <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
-                <tr>
-                  <th class="px-4 py-2 w-12">
-                    <input id="selectAllCheckbox" type="checkbox" class="w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
-                  </th>
-                  <th class="px-4 py-2">Name</th>
-                  <th class="px-4 py-2">Size</th>
-                  <th class="px-4 py-2">Created</th>
-                  <th class="px-4 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="filesTbody">
-                <% const sortedFiles=files.sort((a,b)=> (a.type === 'folder' &&
-                  b.type !== 'folder') ? -1 : (a.type !== 'folder' && b.type ===
-                  'folder') ? 1 : 0); sortedFiles.forEach(file => { %>
-                  <tr class="file-row border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors"
-                    data-name="<%= (file.name || '').toLowerCase() %>" data-type="<%= file.type %>"
-                    data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
-                    <!-- NEW: checkbox cell -->
-                    <td class="px-4 py-2">
-                      <input type="checkbox" class="row-checkbox w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
-                    </td>
+        <div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
+          <table class="w-full table-auto text-left border-collapse">
+            <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
+              <tr>
+                <th class="px-4 py-2 w-12">
+                  <input id="selectAllCheckbox" type="checkbox"
+                    class="w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
+                </th>
+                <th class="px-4 py-2">Name</th>
+                <th class="px-4 py-2">Size</th>
+                <th class="px-4 py-2">Created</th>
+                <th class="px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="filesTbody">
+              <% const sortedFiles=files.sort((a,b)=> (a.type === 'folder' &&
+                b.type !== 'folder') ? -1 : (a.type !== 'folder' && b.type ===
+                'folder') ? 1 : 0); sortedFiles.forEach(file => { %>
+                <tr class="file-row border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors"
+                  data-name="<%= (file.name || '').toLowerCase() %>" data-type="<%= file.type %>"
+                  data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
+                  <!-- NEW: checkbox cell -->
+                  <td class="px-4 py-2">
+                    <input type="checkbox"
+                      class="row-checkbox w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
+                  </td>
 
-                    <td class="px-4 py-2 flex items-center gap-2">
-                      <% if (file.type==='folder' ) { %>
-                        <!-- Folder: navigate -->
-                        <a href="?path=<%= encodeURIComponent(path + '/' + file.name) %>"
-                          class="text-neutral-100 hover:text-neutral-300 hover:underline flex items-center gap-2 font-medium">
-                          <i data-lucide="folder-closed"></i>
-                          <span class="file-name">
-                            <%= file.name %>
-                          </span>
-                        </a>
+                  <td class="px-4 py-2 flex items-center gap-2">
+                    <% if (file.type==='folder' ) { %>
+                      <!-- Folder: navigate -->
+                      <a href="?path=<%= encodeURIComponent(path + '/' + file.name) %>"
+                        class="text-neutral-100 hover:text-neutral-300 hover:underline flex items-center gap-2 font-medium">
+                        <i data-lucide="folder-closed"></i>
+                        <span class="file-name">
+                          <%= file.name %>
+                        </span>
+                      </a>
 
-                        <% } else { const isJar=file.name.toLowerCase().endsWith('.jar'); const
-                          ext=file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '' ; const
-                          fileIconsMap={ js:'code', ts:'code', json:'file-braces', html:'code', css:'file-css',
-                          scss:'file-css', md:'file-text', py:'file-text', sh:'terminal', txt:'file-text',
-                          jar:'archive', default:'file' }; const fileIcon=fileIconsMap[ext] || fileIconsMap.default; %>
-                          <% if (!isJar) { %>
-                            <!-- File: click opens editor -->
-                            <a href="/server/files/<%= server.id %>/content?location=<%= encodeURIComponent(path + '/' + file.name) %>"
-                              class="flex items-center gap-2 text-neutral-100 hover:text-neutral-300 hover:underline cursor-pointer">
+                      <% } else { const isJar=file.name.toLowerCase().endsWith('.jar'); const
+                        ext=file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '' ; const
+                        fileIconsMap={ js:'code', ts:'code', json:'file-braces', html:'code', css:'file-css',
+                        scss:'file-css', md:'file-text', py:'file-text', sh:'terminal', txt:'file-text', jar:'archive',
+                        default:'file' }; const fileIcon=fileIconsMap[ext] || fileIconsMap.default; %>
+                        <% if (!isJar) { %>
+                          <a href="#"
+                            class="open-editor flex items-center gap-2 text-neutral-100 hover:text-neutral-300 hover:underline cursor-pointer"
+                            data-path="<%= (path === '/' ? '' : path + '/') + file.name %>">
+                            <i data-lucide="<%= fileIcon %>"></i>
+                            <span class="file-name">
+                              <%= file.name %>
+                            </span>
+                          </a>
+                          <% } else { %>
+                            <!-- JAR: not editable -->
+                            <span class="flex items-center gap-2 text-neutral-400 cursor-not-allowed">
                               <i data-lucide="<%= fileIcon %>"></i>
                               <span class="file-name">
                                 <%= file.name %>
                               </span>
-                            </a>
-                            <% } else { %>
-                              <!-- JAR: not editable -->
-                              <span class="flex items-center gap-2 text-neutral-400 cursor-not-allowed">
-                                <i data-lucide="<%= fileIcon %>"></i>
-                                <span class="file-name">
-                                  <%= file.name %>
-                                </span>
-                              </span>
+                            </span>
+                            <% } %>
                               <% } %>
-                                <% } %>
-                    </td>
+                  </td>
 
-                    <td class="px-4 py-2 capitalize">
-                      <%= formatSize(file.size) %>
-                    </td>
-                    <td class="px-4 py-2">
-                      <%= new Date(file.createdAt).toLocaleString() %>
-                    </td>
-                    <td class="px-4 py-2 relative">
-                      <button
-                        class="dropdownBtn px-3 py-1 rounded-xl text-neutral-100 shadow hover:shadow-lg transition">
-                        <i data-lucide="more-vertical"></i>
-                      </button>
-                      <div
-                        class="dropdownMenu transition-all scale-95 opacity-0 absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg hidden flex flex-col z-50 min-w-[120px]">
-                        <form method="POST"
-                          action="/server/files/<%= server.id %>/<%= file.type %>/delete?location=<%= encodeURIComponent(path + '/' + file.name) %>"
-                          onsubmit="return confirm('Delete <%= file.name %>?');">
-                          <button type="submit" class="text-left px-4 py-2 hover:bg-red-700 rounded-xl text-red-500">
-                            Delete
-                          </button>
-                        </form>
-                        <button class="renameBtn text-left px-4 py-2 hover:bg-neutral-800 rounded-xl"
-                          data-type="<%= file.type %>" data-name="<%= file.name %>"
-                          data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
-                          Rename
+                  <td class="px-4 py-2 capitalize">
+                    <%= formatSize(file.size) %>
+                  </td>
+                  <td class="px-4 py-2">
+                    <%= new Date(file.createdAt).toLocaleString() %>
+                  </td>
+                  <td class="px-4 py-2 relative">
+                    <button class="dropdownBtn px-3 py-1 rounded-xl text-neutral-100 shadow hover:shadow-lg transition">
+                      <i data-lucide="more-vertical"></i>
+                    </button>
+                    <div
+                      class="dropdownMenu transition-all scale-95 opacity-0 absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-lg hidden flex flex-col z-50 min-w-[120px]">
+                      <form method="POST"
+                        action="/server/files/<%= server.id %>/<%= file.type %>/delete?location=<%= encodeURIComponent(path + '/' + file.name) %>"
+                        onsubmit="return confirm('Delete <%= file.name %>?');">
+                        <button type="submit" class="text-left px-4 py-2 hover:bg-red-700 rounded-xl text-red-500">
+                          Delete
                         </button>
-                      </div>
+                      </form>
+                      <button class="renameBtn text-left px-4 py-2 hover:bg-neutral-800 rounded-xl"
+                        data-type="<%= file.type %>" data-name="<%= file.name %>"
+                        data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
+                        Rename
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <% }) %>
+
+                  <!-- No results row (hidden by default) -->
+                  <tr id="noResultsRow" class="hidden">
+                    <td colspan="5" class="px-4 py-6 text-neutral-500 italic">
+                      No files match your search.
                     </td>
                   </tr>
-                  <% }) %>
-
-                    <!-- No results row (hidden by default) -->
-                    <tr id="noResultsRow" class="hidden">
-                      <td colspan="5" class="px-4 py-6 text-neutral-500 italic">
-                        No files match your search.
-                      </td>
-                    </tr>
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
+        </div>
       </div>
     </main>
 
@@ -274,7 +277,36 @@
         </div>
       </div>
     </div>
+    <div id="editorModalOverlay"
+      class="fixed inset-0 bg-black bg-neutral-950/50 backdrop-blur-sm hidden flex items-center justify-center z-60">
+      <div id="editorModal" role="dialog" aria-modal="true" aria-labelledby="editorModalTitle"
+        class="relative z-10 w-[95%] max-w-6xl mx-4 rounded-2xl bg-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
+          <div class="flex items-center gap-3">
+            <h3 id="editorModalTitle" class="text-lg font-semibold">Edit file</h3>
+            <span id="editorFilename" class="text-sm text-neutral-400"></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="editorModalDownload"
+              class="px-3 py-1.5 rounded-md text-sm bg-neutral-800 hover:bg-neutral-700">Download</button>
+            <button id="editorModalClose" class="px-3 py-1.5 rounded-md text-sm hover:bg-neutral-800">Close</button>
+            <button id="editorModalSave"
+              class="px-4 py-1.5 rounded-lg text-sm bg-gray-100 hover:bg-red-300 text-stone-900 flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i> Save
+            </button>
+          </div>
+        </div>
 
+        <!-- editor container -->
+        <div id="modalEditorContainer" class="h-[70vh] bg-neutral-900"></div>
+
+        <!-- small footer with status -->
+        <div class="px-4 py-2 border-t border-neutral-800 flex items-center justify-between text-sm text-neutral-400">
+          <div id="editorStatus">Ready</div>
+          <div id="editorLanguage" class="italic"></div>
+        </div>
+      </div>
+    </div>
     <!-- Upload Modal -->
     <div id="uploadModal"
       class="fixed inset-0 bg-black bg-opacity-50 hidden flex flex-col items-center justify-center z-50 p-6">
@@ -317,36 +349,36 @@
     </div>
 
     <!-- Sliding (blowing) action bar -->
-   <div id="actionBar"
-  class="fixed inset-x-0 bottom-6 z-50 translate-y-32 opacity-0 pointer-events-none transition-all duration-300 flex justify-center">
-  
-  <div
-    class="w-full max-w-3xl mx-4 bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3 shadow-lg flex items-center justify-between gap-4">
+    <div id="actionBar"
+      class="fixed inset-x-0 bottom-6 z-50 translate-y-32 opacity-0 pointer-events-none transition-all duration-300 flex justify-center">
 
-    <div class="flex items-center gap-3">
-      <div class="flex flex-col">
-        <span id="actionSelectedCount" class="text-sm font-semibold text-gray-100">
-          0 selected
-        </span>
-        <span id="actionSelectedList" class="text-xs text-neutral-400 hidden"></span>
+      <div
+        class="w-full max-w-3xl mx-4 bg-neutral-900 border border-neutral-800 rounded-2xl px-4 py-3 shadow-lg flex items-center justify-between gap-4">
+
+        <div class="flex items-center gap-3">
+          <div class="flex flex-col">
+            <span id="actionSelectedCount" class="text-sm font-semibold text-gray-100">
+              0 selected
+            </span>
+            <span id="actionSelectedList" class="text-xs text-neutral-400 hidden"></span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="deleteSelectedBtn"
+            class="flex items-center gap-2 whitespace-nowrap px-6 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            Delete Files
+          </button>
+
+          <button id="clearSelectionBtn"
+            class="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200">
+            Clear
+          </button>
+        </div>
+
       </div>
     </div>
-
-    <div class="flex items-center gap-3">
-      <button id="deleteSelectedBtn"
-        class="flex items-center gap-2 whitespace-nowrap px-6 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-        Delete Files
-      </button>
-
-      <button id="clearSelectionBtn"
-        class="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200">
-        Clear
-      </button>
-    </div>
-
-  </div>
-</div>
 
 
     <script>
@@ -961,6 +993,197 @@
           if (e.key === 'Escape') hideContextMenu();
         });
       })();
+      // ===== Monaco + editor modal script =====
+      function getLanguageFromFilename(filename) {
+        if (!filename || !filename.includes('.')) return 'plaintext';
+        const ext = filename.split('.').pop().toLowerCase();
+        const map = { js: 'javascript', ts: 'typescript', json: 'json', html: 'html', css: 'css', scss: 'scss', md: 'markdown', yml: 'yaml', yaml: 'yaml', py: 'python', sh: 'shell', bash: 'shell', php: 'php', go: 'go', java: 'java', c: 'c', cpp: 'cpp', rs: 'rust', sql: 'sql', txt: 'plaintext' };
+        return map[ext] || 'plaintext';
+      }
+
+      const editorModalOverlay = document.getElementById('editorModalOverlay');
+      const editorModal = document.getElementById('editorModal');
+      const editorFilename = document.getElementById('editorFilename');
+      const modalEditorContainer = document.getElementById('modalEditorContainer');
+      const editorModalSave = document.getElementById('editorModalSave');
+      const editorModalClose = document.getElementById('editorModalClose');
+      const editorModalDownload = document.getElementById('editorModalDownload');
+      const editorStatus = document.getElementById('editorStatus');
+      const editorLanguage = document.getElementById('editorLanguage');
+
+      let monacoEditorInstance = null;
+      let monacoLoaded = false;
+      let currentEditPath = null;
+      let currentFilename = null;
+      let monacoLoadPromise = null;
+
+      function loadMonacoOnce() {
+        if (monacoLoadPromise) return monacoLoadPromise;
+
+        monacoLoadPromise = new Promise((resolve, reject) => {
+          const loaderSrc = 'https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js';
+          const s = document.createElement('script');
+          s.src = loaderSrc;
+          s.onload = () => {
+            require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+            require(['vs/editor/editor.main'], () => resolve());
+          };
+          s.onerror = reject;
+          document.body.appendChild(s);
+        });
+
+        return monacoLoadPromise;
+      }
+
+      loadMonacoOnce();
+
+      // proactive background preload on idle so clicking is faster
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => loadMonacoOnce().catch(() => { }), { timeout: 2000 });
+      } else {
+        // fallback short delay
+        setTimeout(() => loadMonacoOnce().catch(() => { }), 1500);
+      }
+
+      function showEditorModal() {
+        editorModalOverlay.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          editorModal.classList.remove('scale-95', 'opacity-0');
+          editorModal.classList.add('scale-100', 'opacity-100');
+        });
+      }
+      function hideEditorModal() {
+        editorModal.classList.remove('scale-100', 'opacity-100');
+        editorModal.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => editorModalOverlay.classList.add('hidden'), 180);
+      }
+      async function fetchFileContent(relPath) {
+        const serverId = '<%= server.id %>';
+        const url = `/server/files/${encodeURIComponent(serverId)}/raw?location=${encodeURIComponent(relPath)}`;
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed to fetch file');
+        return await res.text();
+      }
+
+      async function saveFileContent(relPath, content) {
+        const serverId = '<%= server.id %>';
+        const url = `/server/files/${encodeURIComponent(serverId)}/new-file?path=${relPath.split("/").slice(0, -1).join("/") || "/"}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: relPath.split('/').pop(), content }),
+          credentials: 'same-origin'
+        });
+        const bodyText = await res.text();
+        if (!res.ok) {
+          const txt = await res.text().catch(() => null);
+          throw new Error(txt || 'Save failed');
+        }
+
+        try {
+          return JSON.parse(bodyText);
+        } catch {
+          return bodyText;
+        }
+      }
+
+      async function openEditorFor(path) {
+        currentEditPath = path;
+        currentFilename = path.split('/').pop();
+        editorFilename.textContent = ' — ' + currentFilename;
+        editorStatus.textContent = 'Loading…';
+        editorLanguage.textContent = '';
+
+        let content;
+        try {
+          content = await fetchFileContent(path);
+        } catch (err) {
+          console.error(err);
+          editorStatus.textContent = 'Failed to load file';
+          alert('Failed to load file content.');
+          return;
+        }
+
+        const language = getLanguageFromFilename(currentFilename);
+
+        if (!monacoEditorInstance) {
+          monacoEditorInstance = monaco.editor.create(modalEditorContainer, {
+            value: content,
+            language,
+            theme: 'vs-dark',
+            automaticLayout: true,
+            fontSize: 13,
+            minimap: { enabled: false }
+          });
+        } else {
+          // reuse editor, create new model
+          const model = monaco.editor.createModel(content, language);
+          monacoEditorInstance.setModel(model);
+        }
+
+        editorLanguage.textContent = language;
+        editorStatus.textContent = 'Loaded';
+        showEditorModal();
+        monacoEditorInstance.focus();
+      }
+
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a.open-editor');
+        if (!a) return;
+        e.preventDefault();
+        const relPath = a.dataset.path;
+        if (!relPath) return;
+        openEditorFor(relPath);
+      });
+
+      editorModalSave.addEventListener('click', async () => {
+        if (!monacoEditorInstance) return;
+        editorModalSave.disabled = true;
+        const prev = editorModalSave.textContent;
+        editorModalSave.textContent = 'Saving…';
+        editorStatus.textContent = 'Saving…';
+        try {
+          const content = monacoEditorInstance.getValue();
+          await saveFileContent(currentEditPath, content);
+          editorStatus.textContent = 'Saved';
+          setTimeout(hideEditorModal, 1500)
+        } catch (err) {
+          console.error(err);
+          editorStatus.textContent = 'Save failed';
+          alert('Save failed: ' + (err.message || 'unknown'));
+        } finally {
+          editorModalSave.disabled = false;
+          editorModalSave.textContent = prev;
+        }
+      });
+
+      editorModalClose.addEventListener('click', hideEditorModal);
+      editorModalOverlay.addEventListener('click', (e) => {
+        if (e.target === editorModalOverlay) hideEditorModal();
+      });
+
+      editorModalDownload.addEventListener('click', () => {
+        if (!monacoEditorInstance) return;
+        const content = monacoEditorInstance.getValue();
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentFilename || 'file.txt';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      // Keyboard shortcut to save
+      document.addEventListener('keydown', (e) => {
+        const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's';
+        if (!isSave) return;
+        if (editorModalOverlay.classList.contains('hidden')) return;
+        e.preventDefault();
+        editorModalSave.click();
+      });
     </script>
 
 </body>
