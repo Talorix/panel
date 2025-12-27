@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
   <head>
     <meta charset="UTF-8" />
     <title><%= name %> - Servers</title>
@@ -45,7 +45,7 @@
         <% servers.forEach(server => { 
              const owner = users.find(u => u.id === server.userId);
         %>
-          <tr class="border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
+          <tr onclick="window.location.href='/admin/server/<%= server.id %>'"class="cursor-pointer border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
             
             <!-- Name -->
             <td class="px-4 py-3 font-semibold text-gray-100 flex items-center gap-2">

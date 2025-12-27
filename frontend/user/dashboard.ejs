@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
 
 <head>
   <meta charset="UTF-8" />
@@ -76,59 +76,59 @@
                           <% } %>
                     </td>
                   </tr>
-               <script>
-(function () {
-  const serverId = "<%= server.id %>";
-  const statusEl = document.getElementById(`server-${serverId}-status`);
-  const uptimeEl = document.getElementById(`server-${serverId}-uptime`);
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${protocol}://${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/stats/${serverId}`);
+                  <script>
+                    (function () {
+                      const serverId = "<%= server.id %>";
+                      const statusEl = document.getElementById(`server-${serverId}-status`);
+                      const uptimeEl = document.getElementById(`server-${serverId}-uptime`);
+                      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                      const ws = new WebSocket(`${protocol}://${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/stats/${serverId}`);
 
-  let uptimeSeconds = 0; // local counter
+                      let uptimeSeconds = 0; // local counter
 
-  function formatUptime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    const parts = [];
-    if (h) parts.push(`${h}h`);
-    if (m) parts.push(`${m}m`);
-    parts.push(`${s}s`);
-    return parts.join(" ");
-  }
+                      function formatUptime(seconds) {
+                        const h = Math.floor(seconds / 3600);
+                        const m = Math.floor((seconds % 3600) / 60);
+                        const s = seconds % 60;
+                        const parts = [];
+                        if (h) parts.push(`${h}h`);
+                        if (m) parts.push(`${m}m`);
+                        parts.push(`${s}s`);
+                        return parts.join(" ");
+                      }
 
-  ws.onmessage = (evt) => {
-    try {
-      const data = JSON.parse(evt.data);
-      const stats = data.stats;
-      uptimeSeconds = data.uptimeSeconds || uptimeSeconds; // sync with server
+                      ws.onmessage = (evt) => {
+                        try {
+                          const data = JSON.parse(evt.data);
+                          const stats = data.stats;
+                          uptimeSeconds = data.uptimeSeconds || uptimeSeconds; // sync with server
 
-      // Update server status
-      if ((stats.memory_stats?.usage || 0) > 1) {
-        statusEl.className = "flex items-center gap-2 text-emerald-400";
-        statusEl.innerHTML = `<i data-lucide="server" class="w-4 h-4"></i> Online`;
-      } else {
-        statusEl.className = "flex items-center gap-2 text-red-700";
-        statusEl.innerHTML = `<i data-lucide="server-off" class="w-4 h-4"></i> Offline`;
-      }
+                          // Update server status
+                          if ((stats.memory_stats?.usage || 0) > 1) {
+                            statusEl.className = "flex items-center gap-2 text-emerald-400";
+                            statusEl.innerHTML = `<i data-lucide="server" class="w-4 h-4"></i> Online`;
+                          } else {
+                            statusEl.className = "flex items-center gap-2 text-red-700";
+                            statusEl.innerHTML = `<i data-lucide="server-off" class="w-4 h-4"></i> Offline`;
+                          }
 
-      lucide.createIcons();
-    } catch (err) {
-      console.error(`Error updating server ${serverId}:`, err);
-    }
-  };
+                          lucide.createIcons();
+                        } catch (err) {
+                          console.error(`Error updating server ${serverId}:`, err);
+                        }
+                      };
 
-  // Increment uptime locally every second
-  setInterval(() => {
-  if (statusEl.textContent.includes("Online")) {
-    uptimeSeconds++;
-  } else {
-    uptimeSeconds = 0;
-  }
-    uptimeEl.textContent = formatUptime(uptimeSeconds);
-  }, 1000);
-})();
-</script>
+                      // Increment uptime locally every second
+                      setInterval(() => {
+                        if (statusEl.textContent.includes("Online")) {
+                          uptimeSeconds++;
+                        } else {
+                          uptimeSeconds = 0;
+                        }
+                        uptimeEl.textContent = formatUptime(uptimeSeconds);
+                      }, 1000);
+                    })();
+                  </script>
 
 
                   <% }) %>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
 
 <head>
   <meta charset="UTF-8" />
@@ -15,7 +15,7 @@
     /* Combined log container styles */
     #logContainer {
       scroll-behavior: smooth;
-      font-family: Figtree, monospace;
+      font-family: 'Space Grotesk', sans-serif;
       overflow-y: auto;
       overflow-x: auto;
       scrollbar-width: none;
@@ -44,9 +44,9 @@
 
             <div class="leading-tight">
               <p class="text-lg font-semibold text-gray-100">
-                <%= server.name %> <span id="written-status"
+                <%= server.name %> <span id="uptime"
                     class="inline-flex items-center rounded-full bg-stone-500/10 px-2 py-0.5 text-xs font-medium text-stone-400">
-                    Loading
+                    0h 0m 0s
                   </span>
               </p>
               <p class="text-sm text-gray-400">
@@ -90,6 +90,28 @@
         </div>
 
         <!-- Custom Terminal + Charts -->
+        <style>
+          /* Terminal styling */
+          .terminal {
+            padding: 1rem;
+            border-radius: 0.5rem;
+          }
+
+          /* Custom selection color for the terminal */
+          .terminal::selection {
+            background-color: rgba(15, 15, 15, 0.5);
+            /* bg-neutral-900/50 approx */
+            color: inherit;
+            /* Keep text color the same */
+          }
+
+          /* For Firefox */
+          .terminal::-moz-selection {
+            background-color: rgba(15, 15, 15, 0.5);
+            color: inherit;
+          }
+        </style>
+
         <div class="flex gap-4 h-96">
           <!-- Terminal -->
           <div id="terminal"
@@ -100,7 +122,7 @@
             </div>
 
             <!-- Terminal log -->
-            <div id="logContainer" class="flex-1 p-4 text-[#d4d4d4] text-sm space-y-1 relative"></div>
+            <div id="logContainer" class="terminal flex-1 p-4 text-[#d4d4d4] text-sm space-y-1 relative"></div>
             <!-- Input -->
             <div class="flex items-center bg-[#080808] border border-[#d4d4d4]/20 rounded">
               <!-- Input wrapper -->
@@ -127,8 +149,8 @@
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-white">Server Usage</h2>
               <span id="written-status2"
-                class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
-                Running
+                class="inline-flex items-center rounded-full bg-stone-500/10 px-2 py-0.5 text-xs font-medium text-stone-400">
+                Loading
               </span>
             </div>
 
@@ -353,7 +375,7 @@
               logLine.classList.add("whitespace-pre-wrap", "break-all", "leading-tight");
 
               const text = document.createElement("span");
-              text.classList.add('font-mono');
+              text.classList.add("font-mono");
               text.innerHTML = ansiToHtml(message);
 
               logLine.appendChild(text);
@@ -821,19 +843,35 @@
               usageChart.update();
 
               const online = ramPercent > 0;
-              const statusEl = document.getElementById('written-status');
               const statusEl2 = document.getElementById('written-status2');
               const statusDot = document.getElementById('status-dot');
+              function formatUptime(seconds) {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                const parts = [];
+                if (h) parts.push(`${h}h`);
+                if (m) parts.push(`${m}m`);
+                parts.push(`${s}s`);
+                return parts.join(" ");
+              }
+              let uptimeSeconds = 0;
+              const data = payload;
+              uptimeSeconds = data.uptimeSeconds || uptimeSeconds;
+              setInterval(() => {
+                if (statusEl2.textContent.includes("Running")) {
+                  uptimeSeconds++;
+                } else {
+                  uptimeSeconds = 0;
+                }
+                document.getElementById('uptime').textContent = formatUptime(uptimeSeconds);
+              }, 1000);
               if (statusDot) {
                 statusDot.innerHTML = online
                   ? `<span class="relative inline-flex h-3 w-3 items-center justify-center"><span class="absolute h-3 w-3 rounded-full bg-emerald-500 opacity-35"></span><span class="relative h-1.5 w-1.5 rounded-full bg-emerald-500"></span></span>`
                   : `<span class="relative inline-flex h-3 w-3 items-center justify-center"><span class="absolute h-3 w-3 rounded-full bg-gray-400 opacity-35"></span><span class="relative h-1.5 w-1.5 rounded-full bg-gray-400"></span></span>`;
               }
               if (online) {
-                statusEl.textContent = 'Running';
-                statusEl.classList.remove('bg-red-500/10', 'text-red-400');
-                statusEl.classList.remove('bg-stone-500/10', 'text-stone-400');
-                statusEl.classList.add('bg-green-500/10', 'text-green-400');
                 statusEl2.textContent = 'Running';
                 statusEl2.classList.remove('bg-red-500/10', 'text-red-400');
                 statusEl2.classList.remove('bg-stone-500/10', 'text-stone-400');
@@ -843,10 +881,6 @@
                 statusEl2.classList.remove('bg-stone-500/10', 'text-stone-400');
                 statusEl2.classList.remove('bg-green-500/10', 'text-green-400');
                 statusEl2.classList.add('bg-red-500/10', 'text-red-400');
-                statusEl.textContent = 'Offline';
-                statusEl.classList.remove('bg-stone-500/10', 'text-stone-400');
-                statusEl.classList.remove('bg-green-500/10', 'text-green-400');
-                statusEl.classList.add('bg-red-500/10', 'text-red-400');
               }
               document
                 .querySelectorAll('#power-actions button[data-action]')

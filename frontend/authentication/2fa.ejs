@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
 <head>
   <meta charset="UTF-8">
   <title><%= name %> - 2FA Verification</title>
   <link rel="stylesheet" href="/assets/tailwind.css">
   <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Figtree', sans-serif; }
-    input, button { border-radius: 0.25rem; }
-  </style>
+ <style>
+  /* Import Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+  /* Tailwind-style font class */
+  .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+  }
+</style>
+
 </head>
 <body class="min-h-screen flex">
 
@@ -35,7 +40,7 @@
 
       <button
         type="submit"
-        class="w-full px-3 py-1.5 text-xs font-semibold bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
+        class="w-full px-3 py-1.5 text-xs font-semibold bg-black dark:bg-white text-white rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
       >
         Verify
       </button>

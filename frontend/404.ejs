@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-Figtree">
+<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,7 +7,15 @@
   <link rel="stylesheet" href="/assets/tailwind.css">
   <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
 </head>
-<body class="min-h-screen bg-neutral-950 text-gray-100 font-Figtree flex items-center justify-center">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+  .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+  }
+</style>
+
+<body class="min-h-screen bg-neutral-950 text-gray-100 font-space-grotesk flex items-center justify-center">
   <div class="relative w-full max-w-3xl mx-4">
     <div class="absolute inset-0 -z-10 bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-800 opacity-60"></div>
     <div class="flex items-center gap-8 p-8 bg-neutral-900/40 rounded-2xl backdrop-blur-md border border-neutral-800 shadow-xl">
