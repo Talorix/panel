@@ -63,11 +63,12 @@
         Login
       </button>
     </form>
-
+<% if (registerEnabled) { %>
     <p class="mt-6 text-center text-gray-300">
       Don't have an account? 
       <a href="/register" class="text-blue-500 hover:underline font-semibold">Register</a>
     </p>
+    <% } %>
   </div>
 
   <!-- Right: Landscape -->

@@ -1391,13 +1391,17 @@ router.get("/admin/settings", requireAuth, requireAdmin, (req, res) => {
  * Update settings (e.g., app name)
  */
 router.post("/admin/settings", requireAuth, requireAdmin, (req, res) => {
-  const { name } = req.body;
+  const { name, registerEnabled } = req.body;
 
   if (!name || name.trim() === "") {
     return res.status(400).json({ error: "App name is required" });
   }
 
-  const updatedSettings = { name: name.trim() };
+  const updatedSettings = {
+    name: name.trim(),
+    registerEnabled: registerEnabled === true,
+  };
+
   unsqh.put("settings", "app", updatedSettings);
 
   res.json({ success: true, settings: updatedSettings });

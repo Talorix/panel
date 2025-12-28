@@ -19,6 +19,7 @@ expressWs(app);
 const currentSettings = unsqh.get("settings", "app") || {};
 const newSettings = {
   name: currentSettings.name || config.name,
+  registerEnabled: currentSettings.registerEnabled !== undefined ? currentSettings.registerEnabled : false,
   port: currentSettings.port || config.port,
 };
 unsqh.put("settings", "app", newSettings);

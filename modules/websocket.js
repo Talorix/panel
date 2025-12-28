@@ -13,7 +13,17 @@ module.exports = (app) => {
     const serverData = unsqh.get("servers", id);
     const user = unsqh.get("users", req.session.userId);
 
-    if (!serverData || serverData.userId !== user.id) {
+    if (!serverData) {
+      ws.close(1008, "Server not found");
+      return;
+    }
+
+    // Allow owner or subuser
+    let hasAccess = serverData.userId === user.id;
+    if (!hasAccess) {
+      hasAccess = user.servers?.some((s) => s.id === serverData.id);
+    }
+    if (!hasAccess) {
       ws.close(1008, "Forbidden");
       return;
     }
@@ -26,8 +36,6 @@ module.exports = (app) => {
       return;
     }
 
-    // IMPORTANT: send the TID (serverData.idt) to the node as containerId.
-    // The node will resolve this TID into the current containerId from data.json.
     const nodeWs = new WebSocket(`ws://${node.ip}:${node.port}`);
 
     nodeWs.on("open", () => {
@@ -37,19 +45,15 @@ module.exports = (app) => {
 
     nodeWs.on("message", (msg) => {
       if (ws.readyState !== WebSocket.OPEN) return;
-
-      let dataToSend;
       try {
-        if (msg instanceof Buffer) dataToSend = msg.toString();
-        else if (typeof msg === "string") dataToSend = msg;
-        else dataToSend = JSON.stringify(msg);
-        ws.send(dataToSend); // console messages only
+        const dataToSend = msg instanceof Buffer ? msg.toString() : typeof msg === "string" ? msg : JSON.stringify(msg);
+        ws.send(dataToSend);
       } catch (err) {
         console.error("Error sending message to client WS:", err);
       }
     });
 
-    nodeWs.on("close", (code, reason) => {
+    nodeWs.on("close", () => {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     });
 
@@ -61,7 +65,6 @@ module.exports = (app) => {
     });
 
     ws.on("message", (msg) => {
-      // forward client messages to node. The client should also send TID (not stale containerId).
       if (nodeWs.readyState === WebSocket.OPEN) nodeWs.send(msg);
     });
 
@@ -84,7 +87,17 @@ module.exports = (app) => {
     const serverData = unsqh.get("servers", id);
     const user = unsqh.get("users", req.session.userId);
 
-    if (!serverData || serverData.userId !== user.id) {
+    if (!serverData) {
+      ws.close(1008, "Server not found");
+      return;
+    }
+
+    // Allow owner or subuser
+    let hasAccess = serverData.userId === user.id;
+    if (!hasAccess) {
+      hasAccess = user.servers?.some((s) => s.id === serverData.id);
+    }
+    if (!hasAccess) {
       ws.close(1008, "Forbidden");
       return;
     }
@@ -101,27 +114,19 @@ module.exports = (app) => {
 
     nodeWs.on("open", () => {
       nodeWs.send(JSON.stringify({ event: "auth", payload: { key: node.key } }));
-
-      // send TID so node will stream stats for current container linked to that TID
       nodeWs.send(JSON.stringify({ event: "stats", payload: { containerId: serverData.idt } }));
     });
 
     nodeWs.on("message", (msg) => {
       if (ws.readyState !== WebSocket.OPEN) return;
-
-      let dataToSend;
       try {
-        if (msg instanceof Buffer) dataToSend = msg.toString();
-        else if (typeof msg === "string") dataToSend = msg;
-        else dataToSend = JSON.stringify(msg);
-
-        // Only forward JSON stats to client
+        const dataToSend = msg instanceof Buffer ? msg.toString() : typeof msg === "string" ? msg : JSON.stringify(msg);
         try {
           const parsed = JSON.parse(dataToSend);
           if (parsed.event === "stats") {
             ws.send(JSON.stringify(parsed.payload));
           }
-        } catch (err) {
+        } catch {
           // ignore non-stats messages
         }
       } catch (err) {

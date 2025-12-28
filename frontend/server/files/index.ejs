@@ -66,10 +66,14 @@
               <p class="text-lg font-semibold text-gray-100">
                 <%= server.name %>
               </p>
-              <p class="text-sm text-gray-400">
-                <%= server.node?.ip || '0.0.0.0' %>:<%= server.port %>
-                    <span class="mx-1"></span>
-                    <%= server.node?.name || 'unknown' %>
+                <p class="flex items-center gap-2 text-sm text-gray-400">
+                <i data-lucide="globe" class="w-4 h-4 text-gray-500"></i>
+                <span class="cursor-pointer " onclick="navigator.clipboard.writeText('<%= server.ip || '0.0.0.0' %>:<%= server.port %>'); 
+             alert('Copied to clipboard!')">
+                  <%= server.ip || '0.0.0.0' %>:<%= server.port %>
+                      <span class="mx-1">•</span>
+                      <%= server.node?.name || 'unknown' %>
+                </span>
               </p>
             </div>
           </div>
@@ -319,7 +323,7 @@
 
     <!-- DELETE PROGRESS MODAL -->
     <div id="deleteProgressModal"
-      class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-60 p-6" aria-hidden="true">
+      class="fixed inset-0 bg-black bg-neutral-900/50 hidden flex items-center justify-center z-60 p-6" aria-hidden="true">
       <div class="w-full max-w-2xl bg-neutral-950 rounded-2xl p-6 shadow-lg">
         <div class="flex items-start justify-between gap-4">
           <div>

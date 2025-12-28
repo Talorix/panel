@@ -1,35 +1,40 @@
 <!DOCTYPE html>
 <html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
-  <head>
-    <meta charset="UTF-8" />
-    <title><%= name %> - Settings</title>
-    <link rel="stylesheet" href="/assets/tailwind.css" />
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+<head>
+  <meta charset="UTF-8" />
+  <title>
+    <%= name %> - Settings
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css" />
 
-    <style>
-      .input {
-        width: 100%;
-        background: #0a0a0a;
-        border: 1px solid #262626;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.75rem;
-        color: #f5f5f5;
-      }
-      .tab-active {
-        background: #0a0a0a;
-        border-color: #262626;
-        color: #fff;
-      }
-      /* a little visual emphasis for large action buttons */
-      .big-btn {
-        @apply inline-flex items-center justify-center gap-3 px-6 py-3 rounded-2xl font-semibold text-lg;
-      }
-    </style>
-  </head>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <body class="min-h-screen flex">
-    <%- include('../components/sidebar', { name, user }) %>
+  <style>
+    .input {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #262626;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.75rem;
+      color: #f5f5f5;
+    }
+
+    .tab-active {
+      background: #0a0a0a;
+      border-color: #262626;
+      color: #fff;
+    }
+
+    /* a little visual emphasis for large action buttons */
+    .big-btn {
+      @apply inline-flex items-center justify-center gap-3 px-6 py-3 rounded-2xl font-semibold text-lg;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex">
+  <%- include('../components/sidebar', { name, user }) %>
 
     <main class="flex-1 p-8 overflow-auto">
       <div class="max-w-4xl mx-auto space-y-6">
@@ -43,30 +48,20 @@
 
         <!-- Tabs -->
         <div class="flex gap-2 border-b border-neutral-800">
-          <button
-            class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 tab-active"
-            data-tab="overview"
-          >
+          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 tab-active"
+            data-tab="overview">
             Overview
           </button>
-          <button
-            class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 text-gray-400"
-            data-tab="settings"
-          >
+          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 text-gray-400"
+            data-tab="settings">
             Settings
           </button>
         </div>
 
         <!-- Overview Tab -->
-        <div
-          id="overview"
-          class="tab-content bg-neutral-950 border border-neutral-800 rounded-b-2xl p-6 space-y-6"
-        >
+        <div id="overview" class="tab-content bg-neutral-950 border border-neutral-800 rounded-b-2xl p-6 space-y-6">
           <!-- Version banner (hidden by default) -->
-          <div
-            id="versionBanner"
-            class="hidden rounded-lg p-3 text-white bg-red-700 flex items-center gap-3"
-          >
+          <div id="versionBanner" class="hidden rounded-lg p-3 text-white bg-red-700 flex items-center gap-3">
             <i data-lucide="alert-circle" class="w-5 h-5"></i>
             <div>
               <div id="versionBannerText" class="font-medium">
@@ -79,18 +74,12 @@
             </div>
           </div>
 
-          <img
-            src="https://talorix.io/talorix-banner.png"
-            alt="Talorix Banner"
-            class="rounded-xl border border-neutral-800"
-          />
+          <img src="https://talorix.io/talorix-banner.png" alt="Talorix Banner"
+            class="rounded-xl border border-neutral-800" />
 
           <div class="space-y-3">
-            <a
-              href="https://talorix.io"
-              target="_blank"
-              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition"
-            >
+            <a href="https://talorix.io" target="_blank"
+              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition">
               <i data-lucide="globe" class="w-5 h-5 text-emerald-400"></i>
               <div>
                 <div class="font-medium">Website</div>
@@ -98,15 +87,9 @@
               </div>
             </a>
 
-            <a
-              href="https://discord.gg/kqvyDk5BKR"
-              target="_blank"
-              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition"
-            >
-              <i
-                data-lucide="messages-square"
-                class="w-5 h-5 text-indigo-400"
-              ></i>
+            <a href="https://discord.gg/kqvyDk5BKR" target="_blank"
+              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition">
+              <i data-lucide="messages-square" class="w-5 h-5 text-indigo-400"></i>
               <div>
                 <div class="font-medium">Discord</div>
                 <div class="text-sm text-gray-400">Join the community</div>
@@ -116,37 +99,40 @@
 
           <div class="text-gray-400">
             Version:
-            <span id="version" class="text-gray-100 font-medium mr-3"
-              >Loading...</span
-            >
-            <span class="text-sm text-gray-500"
-              >(<span id="latestLabel">checking latest…</span>)</span
-            >
+            <span id="version" class="text-gray-100 font-medium mr-3">Loading...</span>
+            <span class="text-sm text-gray-500">(<span id="latestLabel">checking latest…</span>)</span>
           </div>
         </div>
 
         <!-- Settings Tab -->
-        <div
-          id="settings"
-          class="tab-content hidden bg-neutral-950 border border-neutral-800 rounded-b-2xl p-6"
-        >
+        <div id="settings" class="tab-content hidden bg-neutral-950 border border-neutral-800 rounded-b-2xl p-6">
           <form id="settingsForm" class="space-y-4">
             <div>
               <label for="name" class="block text-gray-400 mb-1">
                 Application Name
               </label>
-              <input
-                id="name"
-                name="name"
-                value="<%= settings.name || '' %>"
-                class="input"
-              />
+              <input id="name" name="name" value="<%= settings.name || '' %>" class="input" />
             </div>
+            <div
+              class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3">
+              <div>
+                <p class="text-gray-100 font-medium">Register Enabled</p>
+                <p class="text-sm text-gray-400">Allow new users to create accounts</p>
+              </div>
 
-            <button
-              type="submit"
-              class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl font-medium text-white"
-            >
+              <label for="registerEnabled" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="registerEnabled" name="registerEnabled" class="sr-only peer"
+                  <%=settings.registerEnabled ? 'checked' : '' %>
+                />
+                <div class="w-11 h-6 bg-neutral-700 rounded-full peer 
+             peer-checked:bg-emerald-600
+             after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+             after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
+             peer-checked:after:translate-x-5"></div>
+              </label>
+            </div>
+            <button type="submit"
+              class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl font-medium text-white">
               Save
             </button>
           </form>
@@ -254,6 +240,7 @@
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = form.name.value.trim();
+        const registerEnabled = !!form.registerEnabled.checked;
 
         if (!name) {
           msg.textContent = "App name cannot be empty";
@@ -265,7 +252,7 @@
           const res = await fetch("/admin/settings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({ name, registerEnabled }),
           });
 
           const data = await res.json();
@@ -282,5 +269,6 @@
       });
       lucide.createIcons();
     </script>
-  </body>
+</body>
+
 </html>

@@ -11,12 +11,14 @@ function name() {
 };
 
 router.get("/", (req, res) => {
+  const settings = unsqh.get("settings", "app") || {};
   if (req.session.userId) {
     return res.redirect("/dashboard");
   }
 
   res.render("authentication/login", {
     name: name(),
+    registerEnabled: settings.registerEnabled || false,
   });
 })
 router.post("/login", (req, res) => {
@@ -40,6 +42,10 @@ router.post("/login", (req, res) => {
 });
 
 router.get("/register", (req, res) => {
+  const settings = unsqh.get("settings", "app") || {};
+  if (!settings.registerEnabled) {
+    return res.redirect("/?error=Registration_is_disabled");
+  }
   if (req.session.userId) {
     return res.redirect("/dashboard");
   }
@@ -48,6 +54,10 @@ router.get("/register", (req, res) => {
 
 // --- POST /register ---
 router.post("/register", (req, res) => {
+  const settings = unsqh.get("settings", "app") || {};
+  if (!settings.registerEnabled) {
+    return res.redirect("/?error=Registration_is_disabled");
+  }
   if (req.session.userId) {
     return res.redirect("/dashboard");
   }

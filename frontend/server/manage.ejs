@@ -49,10 +49,14 @@
                     0h 0m 0s
                   </span>
               </p>
-              <p class="text-sm text-gray-400">
-                <%= server.ip || '0.0.0.0' %>:<%= server.port %>
-                    <span class="mx-1">•</span>
-                    <%= server.node?.name || 'unknown' %>
+              <p class="flex items-center gap-2 text-sm text-gray-400">
+                <i data-lucide="globe" class="w-4 h-4 text-gray-500"></i>
+                <span class="cursor-pointer " onclick="navigator.clipboard.writeText('<%= server.ip || '0.0.0.0' %>:<%= server.port %>'); 
+             alert('Copied to clipboard!')">
+                  <%= server.ip || '0.0.0.0' %>:<%= server.port %>
+                      <span class="mx-1">•</span>
+                      <%= server.node?.name || 'unknown' %>
+                </span>
               </p>
             </div>
           </div>

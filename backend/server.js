@@ -18,7 +18,19 @@ function requireAuth(req, res, next) {
 function getServerForUser(userId, serverId) {
   const user = unsqh.get("users", userId);
   if (!user) return null;
-  return user.servers?.find((s) => s.id === serverId) || null;
+
+  // First, try to find the server in the user's own server list
+  const found = user.servers?.find((s) => s.id === serverId);
+  if (found) return found;
+
+  // Admin bypass: if the user is an admin (user.admin === true), allow access
+  // to the global server record even if it's not listed in user.servers.
+  if (user.admin) {
+    const adminServer = unsqh.get("servers", serverId);
+    if (adminServer) return adminServer;
+  }
+
+  return null;
 }
 
 function getNodeUrl(node) {
@@ -498,7 +510,7 @@ router.get("/server/settings/:id", requireAuth, withServer, (req, res) => {
 
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
-
+  server.subusers = (server.subusers || []).map(id => unsqh.get("users", id)).filter(Boolean);
   res.render("server/settings", {
     name: appName,
     user,
@@ -891,5 +903,129 @@ router.get("/server/network/:id", requireAuth, withServer, (req, res) => {
   });
 });
 
+
+/**
+ * POST add a subuser to a server
+ * body: { email }
+ * - Adds the server to the target user's `servers` array with `ou: true`
+ * - Adds the subuser's id to the admin/global server's `subusers` list
+ */
+router.post(
+  "/server/settings/:id/subuser/add",
+  requireAuth,
+  withServer,
+  (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).send("Missing email");
+
+      const me = unsqh.get("users", req.session.userId);
+      if (!me) return res.status(404).send("User not found");
+
+      const serverRef = getServerForUser(req.session.userId, req.params.id);
+      if (!serverRef) return res.status(404).send("Server not found");
+
+      const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
+
+      // Find the user by email
+      const subuser = unsqh.list("users").find(u => u.email === email);
+      if (!subuser) return res.status(404).send("Subuser not found");
+
+      // Prevent adding owner as subuser
+      if (subuser.id === globalServer.ownerId) {
+        return res.status(400).send("Cannot add the owner as a subuser");
+      }
+
+      subuser.servers = Array.isArray(subuser.servers) ? subuser.servers : [];
+
+      // If the subuser already has access, do nothing
+      if (subuser.servers.some((s) => s.id === globalServer.id)) {
+        return res.redirect(`/server/settings/${globalServer.id}?subuser=already`);
+      }
+
+      const subEntry = {
+        id: globalServer.id,
+        idt: globalServer.idt,
+        name: globalServer.name,
+        node: globalServer.node,
+        port: globalServer.port,
+        ports: globalServer.ports,
+        env: globalServer.env,
+        imageId: globalServer.imageId,
+        containerId: globalServer.containerId,
+        ou: true,
+        owner: globalServer.ownerId || null,
+      };
+
+      subuser.servers.push(subEntry);
+      unsqh.put("users", subuser.id, subuser);
+
+      globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
+      if (!globalServer.subusers.includes(subuser.id)) globalServer.subusers.push(subuser.id);
+      unsqh.put("servers", globalServer.id, globalServer);
+
+      res.redirect(`/server/settings/${globalServer.id}?subuser=added`);
+    } catch (err) {
+      console.error("Error adding subuser:", err);
+      res.status(500).send("Failed to add subuser");
+    }
+  }
+);
+
+/**
+ * POST remove a subuser from a server
+ * body: { subuserId }
+ * - Removes the server entry from the target user's `servers` array
+ * - Removes the subuser from the admin/global server's `subusers` list
+ */
+router.post(
+  "/server/settings/:id/subuser/remove",
+  requireAuth,
+  withServer,
+  (req, res) => {
+    try {
+      const { subuserId } = req.body;
+      if (!subuserId) return res.status(400).send("Missing subuserId");
+
+      const me = unsqh.get("users", req.session.userId);
+      if (!me) return res.status(404).send("User not found");
+
+      const serverRef = getServerForUser(req.session.userId, req.params.id);
+      if (!serverRef) return res.status(404).send("Server not found");
+
+      const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
+
+      if (subuserId === globalServer.ownerId) {
+        return res.redirect(`/server/settings/${globalServer.id}?subuser=owner`);
+      }
+      const subuser = unsqh.get("users", subuserId);
+      if (!subuser) return res.status(404).send("Subuser not found");
+
+      subuser.servers = Array.isArray(subuser.servers) ? subuser.servers : [];
+
+      // Remove server entry from the subuser
+      const before = subuser.servers.length;
+      subuser.servers = subuser.servers.filter((s) => s.id !== globalServer.id);
+      const after = subuser.servers.length;
+
+      if (before === after) {
+        // nothing removed
+        return res.redirect(`/server/settings/${globalServer.id}?subuser=notfound`);
+      }
+
+      unsqh.put("users", subuser.id, subuser);
+
+      // Remove subuser from canonical server's subusers list
+      globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
+      globalServer.subusers = globalServer.subusers.filter((u) => u !== subuser.id);
+      unsqh.put("servers", globalServer.id, globalServer);
+
+      res.redirect(`/server/settings/${globalServer.id}?subuser=removed`);
+    } catch (err) {
+      console.error("Error removing subuser:", err);
+      res.status(500).send("Failed to remove subuser");
+    }
+  }
+);
 
 module.exports = router;
