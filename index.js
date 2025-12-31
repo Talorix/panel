@@ -19,7 +19,10 @@ expressWs(app);
 const currentSettings = unsqh.get("settings", "app") || {};
 const newSettings = {
   name: currentSettings.name || config.name,
-  registerEnabled: currentSettings.registerEnabled !== undefined ? currentSettings.registerEnabled : false,
+  registerEnabled:
+    currentSettings.registerEnabled !== undefined
+      ? currentSettings.registerEnabled
+      : false,
   port: currentSettings.port || config.port,
 };
 unsqh.put("settings", "app", newSettings);
@@ -57,6 +60,12 @@ app.use((req, res, next) => {
 
 const consoleWS = require("./modules/websocket.js");
 consoleWS(app);
+
+const consoleWSAPI = require("./api/v1_ws.js");
+consoleWSAPI(app);
+
+const apirouter = require("./api/v1.js");
+app.use("/", apirouter);
 // --- Load backend routes ---
 const routeFiles = fs
   .readdirSync("./backend")
@@ -93,8 +102,8 @@ Copyright © %s Talon Project
 Website:  https://taloix.io
 Source:   https://github.com/talorix/panel
 `;
-  const gray = '\x1b[90m'
-  const reset = '\x1b[0m'; 
+  const gray = "\x1b[90m";
+  const reset = "\x1b[0m";
   const asciiWithColor = ascii.replace(version, reset + version + gray);
   console.log(gray + asciiWithColor + reset, new Date().getFullYear());
   return;

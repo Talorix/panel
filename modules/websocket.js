@@ -1,5 +1,5 @@
 const WebSocket = require("ws");
-const unsqh = require("../modules/db.js"); // your DB module
+const unsqh = require("../modules/db.js");
 
 module.exports = (app) => {
   // --- Console WebSocket ---
@@ -39,14 +39,26 @@ module.exports = (app) => {
     const nodeWs = new WebSocket(`ws://${node.ip}:${node.port}`);
 
     nodeWs.on("open", () => {
-      nodeWs.send(JSON.stringify({ event: "auth", payload: { key: node.key } }));
-      nodeWs.send(JSON.stringify({ event: "logs", payload: { containerId: serverData.idt } }));
+      nodeWs.send(
+        JSON.stringify({ event: "auth", payload: { key: node.key } })
+      );
+      nodeWs.send(
+        JSON.stringify({
+          event: "logs",
+          payload: { containerId: serverData.idt },
+        })
+      );
     });
 
     nodeWs.on("message", (msg) => {
       if (ws.readyState !== WebSocket.OPEN) return;
       try {
-        const dataToSend = msg instanceof Buffer ? msg.toString() : typeof msg === "string" ? msg : JSON.stringify(msg);
+        const dataToSend =
+          msg instanceof Buffer
+            ? msg.toString()
+            : typeof msg === "string"
+            ? msg
+            : JSON.stringify(msg);
         ws.send(dataToSend);
       } catch (err) {
         console.error("Error sending message to client WS:", err);
@@ -113,14 +125,26 @@ module.exports = (app) => {
     const nodeWs = new WebSocket(`ws://${node.ip}:${node.port}`);
 
     nodeWs.on("open", () => {
-      nodeWs.send(JSON.stringify({ event: "auth", payload: { key: node.key } }));
-      nodeWs.send(JSON.stringify({ event: "stats", payload: { containerId: serverData.idt } }));
+      nodeWs.send(
+        JSON.stringify({ event: "auth", payload: { key: node.key } })
+      );
+      nodeWs.send(
+        JSON.stringify({
+          event: "stats",
+          payload: { containerId: serverData.idt },
+        })
+      );
     });
 
     nodeWs.on("message", (msg) => {
       if (ws.readyState !== WebSocket.OPEN) return;
       try {
-        const dataToSend = msg instanceof Buffer ? msg.toString() : typeof msg === "string" ? msg : JSON.stringify(msg);
+        const dataToSend =
+          msg instanceof Buffer
+            ? msg.toString()
+            : typeof msg === "string"
+            ? msg
+            : JSON.stringify(msg);
         try {
           const parsed = JSON.parse(dataToSend);
           if (parsed.event === "stats") {
