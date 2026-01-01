@@ -218,7 +218,7 @@ router.get("/admin/node/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const response = await fetch(
       `http://${node.ip}:${node.port}/stats?key=${node.key}`,
-      { timeout: 3000 }
+      { timeout: 10000 }
     );
 
     if (response.ok) {
