@@ -1,111 +1,208 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
     <%= name %> - Image Details
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
-<body class="min-h-screen flex">
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name, user }) %>
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-4xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+
+        <!-- Breadcrumbs -->
+        <a href="/admin/images"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Images
+        </a>
 
         <!-- Header -->
-        <div class="flex justify-between items-center bg-neutral-950 border border-neutral-900 p-6 rounded-md">
-          <h1 class="text-3xl font-bold">🖼 Image Details</h1>
-          <div class="flex gap-2">
-            <button onclick="deleteImage('<%= image.id %>')"
-              class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl font-medium">
-              <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
-            </button>
+        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div class="flex items-center gap-4 text-4xl font-bold tracking-tight text-white mb-2">
+              <h1>
+                <%= image.name %>
+              </h1>
+            </div>
+            <p class="mt-2 text-neutral-400 font-mono text-sm bg-neutral-900 rounded-md px-2 py-1 w-fit">
+              <%= image.dockerImage %>
+            </p>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
             <a href="/admin/images/export/<%= image.id %>" target="_blank"
-              class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl font-medium">
-              <i data-lucide="download" class="w-4 h-4"></i> Export
+              class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.02] hover:bg-neutral-800 active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M12 9.75V1.5m0 0l3 3m-3-3l-3 3" />
+              </svg>
+              Export JSON
             </a>
+            <button onclick="deleteImage('<%= image.id %>')"
+              class="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.02] hover:bg-red-700 active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Delete
+            </button>
           </div>
         </div>
 
-        <!-- Image Details -->
-        <div class="bg-neutral-950 border border-neutral-800 p-6 rounded-md space-y-4">
-          <p><strong>Name:</strong>
-            <%= image.name %>
-          </p>
-          <p><strong>Docker Image:</strong>
-            <%= image.dockerImage %>
-          </p>
-          <p><strong>Description:</strong>
-            <%= image.description || 'No description' %>
-          </p>
-          <p><strong>Created At:</strong>
-            <%= new Date(image.createdAt).toLocaleString() %>
-          </p>
-           <p><strong>Stop Command:</strong>
-              <code class="bg-neutral-950 border border-neutral-700 rounded-md p-1 text-sm text-red-400 overflow-x-auto"><%= image.stopCmd || 'No stop command' %></code>
-          </p>
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-          <div>
-            <h2 class="font-semibold mb-2">Environment Variables</h2>
-            <% if (image.envs && Object.keys(image.envs).length) { %>
-              <ul class="list-disc list-inside text-gray-400">
-                <% Object.entries(image.envs).forEach(([key, value])=> { %>
-                  <li><strong>
-                      <%= key %>:
-                    </strong>
-                    <%= value %>
-                  </li>
-                  <% }) %>
-              </ul>
-              <% } else { %>
-                <p class="text-gray-500">No environment variables set.</p>
-                <% } %>
-          </div>
+          <!-- Details Column -->
+          <div class="space-y-8 lg:col-span-2">
 
-          <div>
-            <h2 class="font-semibold mb-2">Files</h2>
-            <% if (image.files && image.files.length) { %>
-              <ul class="list-disc list-inside text-gray-400">
-                <% image.files.forEach(file=> { %>
-                  <li>
-                    <a href="<%= file.url %>" target="_blank" class="text-indigo-400 hover:underline">
-                      <%= file.filename %>
-                    </a>
-                  </li>
-                  <% }) %>
-              </ul>
-              <% } else { %>
-                <p class="text-gray-500">No files uploaded.</p>
-                <% } %>
-          </div>
-          <div>
-            <h2 class="font-semibold mb-2">Features</h2>
-
-            <% if (image.features && image.features.length) { %>
-              <div class="flex flex-wrap gap-2">
-                <% image.features.forEach(feature=> { %>
-                  <span class="px-3 py-1 rounded-xl bg-indigo-600/20 text-indigo-400 text-sm font-medium">
-                    <%= feature %>
-                  </span>
-                  <% }) %>
+            <!-- Description -->
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Image Description</h2>
+              <div class="text-neutral-300">
+                <%= image.description || 'No description provided.' %>
               </div>
-              <% } else { %>
-                <p class="text-gray-500">No features defined.</p>
-                <% } %>
+            </div>
+
+            <!-- Environment Variables -->
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Environment Variables</h2>
+              <% if (image.envs && Object.keys(image.envs).length) { %>
+                <div class="grid grid-cols-1 gap-2">
+                  <% Object.entries(image.envs).forEach(([key, value])=> { %>
+                    <div
+                      class="flex items-center justify-between rounded-lg border border-neutral-900 bg-neutral-900/50 px-4 py-3">
+                      <span class="font-mono text-sm font-bold text-white">
+                        <%= key %>
+                      </span>
+                      <span class="font-mono text-sm text-neutral-400 break-all ml-4 truncate">
+                        <%= value %>
+                      </span>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                  <p class="text-sm italic text-neutral-500">No variables configured.</p>
+                  <% } %>
+            </div>
+
+            <!-- Files -->
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Startup Files</h2>
+              <% if (image.files && image.files.length) { %>
+                <div class="grid grid-cols-1 gap-2">
+                  <% image.files.forEach(file=> { %>
+                    <a href="<%= file.url %>" target="_blank"
+                      class="flex items-center justify-between rounded-lg border border-neutral-900 bg-neutral-900/50 px-4 py-3 hover:bg-neutral-800 transition-colors group">
+                      <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                          stroke="currentColor" class="h-5 w-5 text-neutral-500 group-hover:text-white">
+                          <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        <span class="font-mono text-sm text-neutral-300">
+                          <%= file.filename %>
+                        </span>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor"
+                        class="h-4 w-4 text-neutral-600 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                      </svg>
+                    </a>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                  <p class="text-sm italic text-neutral-500">No files configured.</p>
+                  <% } %>
+            </div>
+
+          </div>
+
+          <!-- Meta Sidebar -->
+          <div class="space-y-6">
+
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Configuration</h2>
+
+              <div class="space-y-4">
+                <div>
+                  <p class="text-xs text-neutral-500 mb-1">Created At</p>
+                  <p class="text-sm font-medium text-white">
+                    <%= new Date(image.createdAt).toLocaleDateString() %>
+                  </p>
+                </div>
+                <div>
+                  <p class="text-xs text-neutral-500 mb-1">Stop Command</p>
+                  <code
+                    class="block rounded bg-neutral-900 px-2 py-1 text-xs text-red-400 font-mono"><%= image.stopCmd || 'N/A' %></code>
+                </div>
+                <div>
+                  <p class="text-xs text-neutral-500 mb-1">ID</p>
+                  <p class="text-xs font-mono text-neutral-600 truncate">
+                    <%= image.id %>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Features</h2>
+              <% if (image.features && image.features.length) { %>
+                <div class="flex flex-wrap gap-2">
+                  <% image.features.forEach(feature=> { %>
+                    <span
+                      class="inline-flex items-center rounded-full bg-indigo-900/30 px-3 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-700/30">
+                      <%= feature %>
+                    </span>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                  <p class="text-sm italic text-neutral-500">No features.</p>
+                  <% } %>
+            </div>
+
           </div>
 
         </div>
+
       </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-      lucide.createIcons();
-
       async function deleteImage(id) {
         if (!confirm("Are you sure you want to delete this image?")) return;
         try {

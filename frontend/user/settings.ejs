@@ -1,72 +1,203 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
-  <meta charset="UTF-8">
-  <title><%= name %> - Settings</title>
-  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Settings
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
+
+<body class="flex h-full w-full overflow-hidden">
 
   <!-- Sidebar -->
   <%- include('../components/sidebar', { name: name, user: user }) %>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Main Content -->
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-4xl px-6 py-12 md:px-12">
 
-      <div class="bg-neutral-950 border border-neutral-950 p-6 rounded-md shadow-lg">
-        <h1 class="text-3xl font-bold mb-4">Settings</h1>
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Account Settings</h1>
+          <p class="mt-2 text-neutral-400">Manage your profile, security, and preferences.</p>
+        </div>
 
         <!-- Messages -->
-        <% if (message) { %>
-          <p class="text-green-500 mb-2"><%= message %></p>
-        <% } %>
-        <% if (error) { %>
-          <p class="text-red-500 mb-2"><%= error %></p>
-        <% } %>
-
-        <!-- Password Change -->
-        <div class="bg-neutral-950 border border-neutral-900 rounded-md p-6 mb-6">
-          <h2 class="text-xl font-semibold mb-4">Change Password</h2>
-          <form action="/settings/password" method="POST" class="space-y-3">
-            <input type="password" name="currentPassword" placeholder="Current Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
-            <input type="password" name="newPassword" placeholder="New Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
-            <input type="password" name="confirmPassword" placeholder="Confirm New Password" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
-            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Change Password</button>
-          </form>
-        </div>
-
-        <!-- Two-Factor Authentication -->
-        <div class="bg-neutral-950 border border-neutral-900 rounded-md p-6">
-          <h2 class="text-xl font-semibold mb-4">Two-Factor Authentication</h2>
-
-          <% if (user.twoFactorEnabled) { %>
-            <p class="mb-3">2FA is currently <strong>enabled</strong>.</p>
-            <form action="/settings/2fa/disable" method="POST">
-              <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-white font-semibold shadow">Disable 2FA</button>
-            </form>
-          <% } else if (qrCodeUrl) { %>
-            <p class="mb-3">Scan this QR code with your authenticator app:</p>
-            <img src="<%= qrCodeUrl %>" alt="2FA QR Code" class="mb-4 rounded-xl border border-neutral-700">
-            <form action="/settings/2fa/verify" method="POST" class="space-y-3">
-              <input type="text" name="token" placeholder="Enter token from app" class="w-full p-3 rounded-xl bg-neutral-900 border border-neutral-700 text-gray-100" required>
-              <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Verify & Enable 2FA</button>
-            </form>
-          <% } else { %>
-            <form action="/settings/2fa/setup" method="POST">
-              <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-white font-semibold shadow">Enable 2FA</button>
-            </form>
+        <% if (typeof message !=='undefined' && message) { %>
+          <div
+            class="mb-8 flex items-center gap-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-5 w-5 shrink-0 text-emerald-500">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <%= message %>
+          </div>
           <% } %>
-        </div>
+
+            <% if (typeof error !=='undefined' && error) { %>
+              <div
+                class="mb-8 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="h-5 w-5 shrink-0 text-red-500">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <%= error %>
+              </div>
+              <% } %>
+
+                <!-- Password Card -->
+                <div class="mb-8 overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950">
+                  <div class="border-b border-neutral-900 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">Change Password</h2>
+                  </div>
+                  <div class="p-6">
+                    <form action="/settings/password" method="POST" class="space-y-4 max-w-md">
+
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium uppercase tracking-wider text-neutral-500">Current
+                          Password</label>
+                        <input type="password" name="currentPassword" placeholder="••••••••"
+                          class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                          required>
+                      </div>
+
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium uppercase tracking-wider text-neutral-500">New
+                          Password</label>
+                        <input type="password" name="newPassword" placeholder="••••••••"
+                          class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                          required>
+                      </div>
+
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium uppercase tracking-wider text-neutral-500">Confirm
+                          Password</label>
+                        <input type="password" name="confirmPassword" placeholder="••••••••"
+                          class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                          required>
+                      </div>
+
+                      <div class="pt-2">
+                        <button type="submit"
+                          class="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+                          Update Password
+                        </button>
+                      </div>
+
+                    </form>
+                  </div>
+                </div>
+
+                <!-- 2FA Card -->
+                <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950">
+                  <div class="border-b border-neutral-900 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-white">Two-Factor Authentication</h2>
+                  </div>
+                  <div class="p-6">
+                    <% if (user.twoFactorEnabled) { %>
+                      <div class="flex items-center gap-4">
+                        <div
+                          class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-900/20 text-emerald-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-6 w-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p class="font-medium text-white">2FA is currently enabled.</p>
+                          <p class="text-sm text-neutral-500">Your account is secured with two-factor authentication.
+                          </p>
+                        </div>
+                      </div>
+                      <form action="/settings/2fa/disable" method="POST" class="mt-6">
+                        <button type="submit"
+                          class="rounded-lg border border-red-900/30 bg-red-900/10 px-5 py-2.5 text-sm font-bold text-red-500 transition-colors hover:bg-red-900/20">
+                          Disable 2FA
+                        </button>
+                      </form>
+
+                      <% } else if (typeof qrCodeUrl !=='undefined' && qrCodeUrl) { %>
+                        <div class="flex flex-col md:flex-row gap-8">
+                          <div class="flex-none">
+                            <div class="rounded-xl border border-white p-2 bg-white">
+                              <img src="<%= qrCodeUrl %>" alt="2FA QR Code" class="h-40 w-40">
+                            </div>
+                          </div>
+                          <div class="flex-1 space-y-4">
+                            <div>
+                              <h3 class="font-medium text-white">Scan QR Code</h3>
+                              <p class="text-sm text-neutral-500">Use an authenticator app like Google Authenticator or
+                                Authy to scan the code.</p>
+                            </div>
+
+                            <form action="/settings/2fa/verify" method="POST" class="space-y-4 max-w-xs">
+                              <input type="text" name="token" placeholder="Enter 6-digit code"
+                                class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                                required autofocus>
+                              <button type="submit"
+                                class="w-full rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+                                Verify & Enable
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+
+                        <% } else { %>
+                          <div class="flex items-center gap-4 mb-6">
+                            <div
+                              class="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-900 text-neutral-400">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="h-6 w-6">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <p class="font-medium text-white">Secure your account</p>
+                              <p class="text-sm text-neutral-500">Protect your account from unauthorized access by
+                                enabling 2FA.</p>
+                            </div>
+                          </div>
+                          <form action="/settings/2fa/setup" method="POST">
+                            <button type="submit"
+                              class="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+                              Setup 2FA
+                            </button>
+                          </form>
+                          <% } %>
+                  </div>
+                </div>
 
       </div>
+    </main>
 
-    </div>
-  </main>
-
-  <script>
-    lucide.createIcons();
-  </script>
 </body>
+
 </html>

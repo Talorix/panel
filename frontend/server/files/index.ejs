@@ -1,508 +1,479 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-neutral-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
     <%= name %> - <%= server.name %> Files
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- preconnect + preload to reduce cold start of the CDN loader -->
-  <link rel="preconnect" href="https://unpkg.com" crossorigin>
-  <link rel="preload" href="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js" as="script">
-
-
   <style>
-    button,
-    a {
-      transition: all 0.2s ease-in-out;
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
     }
 
-    .file-name mark {
-      transition: background-color 0.15s ease, color 0.15s ease;
-      padding-left: 2px;
-      padding-right: 2px;
-      border-radius: 2px;
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* small helper for sliding bottom bar */
-    .blow-up-enter {
-      transform: translateY(120%);
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
+    mark {
+      @apply bg-yellow-500/30 text-yellow-200 rounded-sm px-0.5;
+    }
+
+    /* Transitions */
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity 0.2s;
+    }
+
+    .fade-enter-from,
+    .fade-leave-to {
       opacity: 0;
     }
 
-    .blow-up-enter-active {
-      transform: translateY(0);
-      opacity: 1;
-      transition: transform 220ms ease, opacity 220ms ease;
+    .slide-up-enter-active,
+    .slide-up-leave-active {
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
 
-    .blow-up-leave {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    .blow-up-leave-active {
-      transform: translateY(120%);
+    .slide-up-enter-from,
+    .slide-up-leave-to {
+      transform: translateY(100%);
       opacity: 0;
-      transition: transform 180ms ease, opacity 180ms ease;
     }
   </style>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preload" href="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js" as="script">
 </head>
 
-<body class="min-h-screen flex">
-  <!-- Sidebar -->
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name: name, user: user }) %>
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-6xl mx-auto space-y-6">
-        <div class="bg-neutral-950 border border-neutral-900 rounded-md px-6 py-4 flex items-center justify-between">
-          <!-- LEFT INFO -->
-          <div class="flex items-start gap-3">
-            <!-- Status dot -->
-            <span id="status-dot" class="mt-2"></span>
-            <div class="leading-tight">
-              <p class="text-lg font-semibold text-gray-100">
-                <%= server.name %>
-              </p>
-                <p class="flex items-center gap-2 text-sm text-gray-400">
-                <i data-lucide="globe" class="w-4 h-4 text-gray-500"></i>
-                <span class="cursor-pointer " onclick="navigator.clipboard.writeText('<%= server.ip || '0.0.0.0' %>:<%= server.port %>'); 
-             alert('Copied to clipboard!')">
-                  <%= server.ip || '0.0.0.0' %>:<%= server.port %>
-                      <span class="mx-1">•</span>
-                      <%= server.node?.name || 'unknown' %>
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="bg-neutral-950 border border-neutral-800 rounded-xl p-2 flex items-center">
-          <!-- LEFT: Current Path -->
-          <div class="flex items-center gap-1 text-sm font-medium text-gray-200">
-            <i data-lucide="folder" class="w-3 h-3"></i>
-            <% const pathParts=path.split('/').filter(Boolean); let accumulatedPath='' ; %>
-              <span class="flex items-center gap-1">
-                <a href="?path=/" class="hover:underline">root</a>
-                <% pathParts.forEach((part, index)=> { accumulatedPath += '/' +
-                  part; %>
-                  <span>/</span>
-                  <% if (index < pathParts.length - 1) { %>
-                    <a href="?path=<%= encodeURIComponent(accumulatedPath) %>" class="hover:underline text-sm">
-                      <%= part %>
-                    </a>
-                    <% } else { %>
-                      <span class="text-gray-400 text-sm">
-                        <%= part %>
-                      </span>
-                      <% } %>
-                        <% }) %>
-              </span>
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
+
+        <!-- Header -->
+        <div class="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">File Manager</h1>
+            <p class="mt-2 text-neutral-400">Manage your server's files and directories.</p>
           </div>
 
-          <!-- RIGHT side actions + search -->
-          <div class="ml-auto flex items-center gap-2 flex-wrap">
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap gap-2">
             <button id="newFileBtn"
-              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-              <i data-lucide="file" class="w-4 h-4"></i> New File
+              class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-white hover:bg-neutral-800 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              New File
             </button>
-
             <button id="newFolderBtn"
-              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-              <i data-lucide="folder-plus" class="w-4 h-4"></i> New Folder
+              class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-white hover:bg-neutral-800 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+              </svg>
+              New Folder
             </button>
-
             <button id="uploadFileBtn"
-              class="font-semibold px-3 py-1.5 bg-gray-100 text-stone-900 hover:bg-neutral-300 rounded-md flex items-center gap-1.5 text-sm shadow hover:shadow-md">
-              <i data-lucide="upload" class="w-4 h-4"></i> Upload File
+              class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-black hover:bg-neutral-200 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              Upload
             </button>
-
             <input type="file" id="uploadFileInput" class="hidden" multiple />
-
-            <!-- Selection toggle + count -->
-            <!--button id="toggleSelectBtn"
-                class="flex items-center gap-2 px-3 py-1.5 border border-neutral-800 rounded-md text-sm hover:bg-neutral-900"
-                title="Toggle multi-select">
-                <i data-lucide="check-square" class="w-4 h-4"></i>
-                <span id="selectBtnLabel">Select</span>
-                <span id="selectedCountBadge"
-                  class="ml-1 px-2 py-0.5 rounded-full text-xs bg-neutral-800 text-neutral-300 hidden">0</span>
-              </button-->
-
-            <!-- Search -->
-            <div class="relative">
-              <i data-lucide="search" class="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-400 w-3 h-3"></i>
-              <input id="searchInput" type="text" placeholder="Search..."
-                class="pl-7 pr-2 py-1.5 text-sm bg-neutral-900 border border-neutral-800 rounded-md text-gray-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-700" />
-            </div>
           </div>
         </div>
 
-        <div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
-          <table class="w-full table-auto text-left border-collapse">
-            <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
+        <!-- Navigation & Search Bar -->
+        <div
+          class="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl border border-neutral-900 bg-neutral-950 p-3">
+          <!-- Breadcrumbs -->
+          <div class="flex items-center gap-2 overflow-x-auto text-sm font-medium text-neutral-400 px-2 scrollbar-hide">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-4 w-4 shrink-0">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+            <a href="?path=/" class="hover:text-white transition-colors">/home/container</a>
+            <% const pathParts=path.split('/').filter(Boolean); let accumulatedPath='' ; %>
+              <% pathParts.forEach((part, index)=> { accumulatedPath += '/' + part; %>
+                <span class="text-neutral-600">/</span>
+                <% if (index < pathParts.length - 1) { %>
+                  <a href="?path=<%= encodeURIComponent(accumulatedPath) %>"
+                    class="hover:text-white transition-colors truncate max-w-[150px]">
+                    <%= part %>
+                  </a>
+                  <% } else { %>
+                    <span class="text-white font-bold truncate max-w-[150px]">
+                      <%= part %>
+                    </span>
+                    <% } %>
+                      <% }) %>
+          </div>
+
+          <!-- Search -->
+          <div class="relative w-full md:w-64">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input id="searchInput" type="text" placeholder="Search files..."
+              class="w-full rounded-lg border border-neutral-800 bg-neutral-900 py-2 pl-9 pr-4 text-sm text-white placeholder-neutral-500 outline-none focus:border-neutral-600 focus:ring-1 focus:ring-neutral-600 transition-all" />
+          </div>
+        </div>
+
+        <!-- Files List -->
+        <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-neutral-900 bg-neutral-900/50 text-neutral-400">
               <tr>
-                <th class="px-4 py-2 w-12">
+                <th class="w-10 px-4 py-3">
                   <input id="selectAllCheckbox" type="checkbox"
-                    class="w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
+                    class="h-4 w-4 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 focus:ring-offset-0" />
                 </th>
-                <th class="px-4 py-2">Name</th>
-                <th class="px-4 py-2">Size</th>
-                <th class="px-4 py-2">Created</th>
-                <th class="px-4 py-2">Actions</th>
+                <th class="px-4 py-3 font-medium">Name</th>
+                <th class="px-4 py-3 font-medium">Size</th>
+                <th class="px-4 py-3 font-medium text-right">Modified</th>
+                <th class="w-10 px-4 py-3"></th>
               </tr>
             </thead>
-            <tbody id="filesTbody">
-              <% const sortedFiles=files.sort((a,b)=> (a.type === 'folder' &&
-                b.type !== 'folder') ? -1 : (a.type !== 'folder' && b.type ===
-                'folder') ? 1 : 0); sortedFiles.forEach(file => { %>
-                <tr class="file-row border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors"
-                  data-name="<%= (file.name || '').toLowerCase() %>" data-type="<%= file.type %>"
-                  data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
-                  <!-- NEW: checkbox cell -->
-                  <td class="px-4 py-2">
+            <tbody id="filesTbody" class="divide-y divide-neutral-900">
+              <% const sortedFiles=files.sort((a,b)=> (a.type === 'folder' && b.type !== 'folder') ? -1 : (a.type !==
+                'folder' && b.type === 'folder') ? 1 : 0);
+                sortedFiles.forEach(file => {
+                const isFolder = file.type === 'folder';
+                const isJar = file.name.toLowerCase().endsWith('.jar');
+                %>
+                <tr class="file-row group hover:bg-neutral-900/50 transition-colors" data-name="<%= file.name %>"
+                  data-type="<%= file.type %>" data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
+                  <td class="px-4 py-3">
                     <input type="checkbox"
-                      class="row-checkbox w-4 h-4 rounded border border-neutral-700 bg-neutral-900 accent-neutral-300 hover:border-neutral-500 focus:ring-2 focus:ring-neutral-600 focus:ring-offset-2 focus:ring-offset-neutral-950 transition" />
+                      class="row-checkbox h-4 w-4 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 focus:ring-offset-0" />
                   </td>
-
-                  <td class="px-4 py-2 flex items-center gap-2">
-                    <% if (file.type==='folder' ) { %>
-                      <!-- Folder: navigate -->
-                      <a href="?path=<%= encodeURIComponent(path + '/' + file.name) %>"
-                        class="text-neutral-100 hover:text-neutral-300 hover:underline flex items-center gap-2 font-medium">
-                        <i data-lucide="folder-closed"></i>
-                        <span class="file-name">
-                          <%= file.name %>
-                        </span>
-                      </a>
-
-                      <% } else { const isJar=file.name.toLowerCase().endsWith('.jar'); const
-                        ext=file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '' ; const
-                        fileIconsMap={ js:'code', ts:'code', json:'file-braces', html:'code', css:'file-css',
-                        scss:'file-css', md:'file-text', py:'file-text', sh:'terminal', txt:'file-text', jar:'archive',
-                        default:'file' }; const fileIcon=fileIconsMap[ext] || fileIconsMap.default; %>
-                        <% if (!isJar) { %>
-                          <a href="#"
-                            class="open-editor flex items-center gap-2 text-neutral-100 hover:text-neutral-300 hover:underline cursor-pointer"
-                            data-path="<%= (path === '/' ? '' : path + '/') + file.name %>">
-                            <i data-lucide="<%= fileIcon %>"></i>
-                            <span class="file-name">
-                              <%= file.name %>
-                            </span>
-                          </a>
-                          <% } else { %>
-                            <!-- JAR: not editable -->
-                            <span class="flex items-center gap-2 text-neutral-400 cursor-not-allowed">
-                              <i data-lucide="<%= fileIcon %>"></i>
-                              <span class="file-name">
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <% if (isFolder) { %>
+                        <svg class="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                        </svg>
+                        <% } else { %>
+                          <svg class="h-5 w-5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                              d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                              clip-rule="evenodd" />
+                          </svg>
+                          <% } %>
+                            <% if (isFolder) { %>
+                              <a href="?path=<%= encodeURIComponent((path === '/' ? '' : path + '/') + file.name) %>"
+                                class="file-name font-medium text-white hover:underline decoration-neutral-500 underline-offset-4">
                                 <%= file.name %>
-                              </span>
-                            </span>
-                            <% } %>
-                              <% } %>
+                              </a>
+                              <% } else { %>
+                                <% if(isJar) { %>
+                                  <span class="file-name text-neutral-400 cursor-not-allowed">
+                                    <%= file.name %>
+                                  </span>
+                                  <% } else { %>
+                                    <a href="#"
+                                      class="open-editor file-name text-neutral-300 hover:text-white transition-colors"
+                                      data-path="<%= (path === '/' ? '' : path + '/') + file.name %>">
+                                      <%= file.name %>
+                                    </a>
+                                    <% } %>
+                                      <% } %>
+                    </div>
                   </td>
-
-                  <td class="px-4 py-2 capitalize">
+                  <td class="px-4 py-3 text-sm text-neutral-400 font-mono">
                     <%= formatSize(file.size) %>
                   </td>
-                  <td class="px-4 py-2">
-                    <%= new Date(file.createdAt).toLocaleString() %>
+                  <td class="px-4 py-3 text-right text-sm text-neutral-500">
+                    <%= new Date(file.createdAt).toLocaleDateString() %>
                   </td>
-                  <td class="px-4 py-2 relative">
-                    <button class="dropdownBtn px-3 py-1 rounded-xl text-neutral-100 shadow hover:shadow-lg transition">
-                      <i data-lucide="more-vertical"></i>
+                  <td class="px-4 py-3 text-right relative">
+                    <button class="dropdownBtn p-1 text-neutral-500 hover:text-white transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                      </svg>
                     </button>
+                    <!-- Dropdown Menu -->
                     <div
-                      class="dropdownMenu transition-all scale-95 opacity-0 absolute right-0 mt-1 bg-neutral-900 border border-neutral-800 rounded-md shadow-lg hidden flex flex-col z-50 min-w-[120px]">
+                      class="dropdownMenu absolute right-8 top-0 z-50 hidden min-w-[140px] flex-col rounded-xl border border-neutral-800 bg-neutral-900 p-1 shadow-xl transition-all scale-95 opacity-0">
+                      <button
+                        class="renameBtn w-full rounded-lg px-3 py-1.5 text-left text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition-colors"
+                        data-type="<%= file.type %>" data-name="<%= file.name %>"
+                        data-path="<%= (path === '/' ? '' : path + '/') + file.name %>">
+                        Rename
+                      </button>
                       <form method="POST"
-                        action="/server/files/<%= server.id %>/<%= file.type %>/delete?location=<%= encodeURIComponent(path + '/' + file.name) %>"
+                        action="/server/files/<%= server.id %>/<%= file.type %>/delete?location=<%= encodeURIComponent((path === '/' ? '' : path + '/') + file.name) %>"
                         onsubmit="return confirm('Delete <%= file.name %>?');">
-                        <button type="submit" class="text-left px-4 py-2 hover:bg-red-700 rounded-xl text-red-500">
+                        <button type="submit"
+                          class="w-full rounded-lg px-3 py-1.5 text-left text-sm text-red-500 hover:bg-red-900/20 hover:text-red-400 transition-colors">
                           Delete
                         </button>
                       </form>
-                      <button class="renameBtn text-left px-4 py-2 hover:bg-neutral-800 rounded-xl"
-                        data-type="<%= file.type %>" data-name="<%= file.name %>"
-                        data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
-                        Rename
-                      </button>
                     </div>
                   </td>
                 </tr>
                 <% }) %>
 
-                  <!-- No results row (hidden by default) -->
                   <tr id="noResultsRow" class="hidden">
-                    <td colspan="5" class="px-4 py-6 text-neutral-500 italic">
-                      No files match your search.
-                    </td>
+                    <td colspan="5" class="py-12 text-center text-neutral-500 italic">No files match your search.</td>
                   </tr>
             </tbody>
           </table>
         </div>
+
       </div>
     </main>
 
-    <!-- Rename/Create Modal -->
+    <!-- Floating Action Bar -->
+    <div id="actionBar"
+      class="fixed bottom-8 left-1/2 z-40 flex -translate-x-1/2 translate-y-20 items-center gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/90 px-6 py-3 shadow-2xl backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none">
+      <div class="flex items-center gap-3 border-r border-neutral-800 pr-4">
+        <span id="actionSelectedCount" class="text-sm font-bold text-white">0 selected</span>
+        <button id="clearSelectionBtn" class="text-xs text-neutral-400 hover:text-white">Clear</button>
+      </div>
+      <button id="deleteSelectedBtn"
+        class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors shadow-lg shadow-red-900/20">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+        </svg>
+        Delete Selected
+      </button>
+    </div>
+
+
+    <!-- Modals -->
+
+    <!-- Create/Rename Modal -->
     <div id="modalOverlay"
-      class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden flex items-center justify-center z-50">
-      <div id="modalPanel" role="dialog" aria-modal="true" aria-labelledby="modalTitle"
-        class="relative z-10 max-w-lg w-full mx-4 rounded-lg bg-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0">
-        <div class="p-6">
-          <div class="flex items-start gap-4">
-            <div class="flex-1">
-              <h2 id="modalTitle" class="text-lg font-semibold">New File</h2>
-              <p class="mt-1 text-sm text-neutral-400">
-                Enter a name for your file or folder.
-              </p>
-            </div>
-          </div>
-
-          <div class="mt-4 flex flex-col gap-3">
-            <input id="modalInput"
-              class="w-full p-3 rounded-md bg-neutral-800 border border-neutral-700 text-neutral-100"
-              placeholder="Name" />
-            <textarea id="modalContent"
-              class="w-full p-3 rounded-md bg-neutral-800 border border-neutral-700 hidden h-32 text-neutral-100"
-              placeholder="Content (for file)"></textarea>
-          </div>
-
-          <div class="mt-6 flex justify-end gap-3">
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+      <div id="modalPanel"
+        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+        <h2 id="modalTitle" class="text-lg font-bold text-white">New File</h2>
+        <div class="mt-4 space-y-4">
+          <input id="modalInput" type="text" placeholder="Name"
+            class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+          <textarea id="modalContent"
+            class="hidden h-32 w-full rounded-lg border border-neutral-800 bg-neutral-900 p-3 text-sm text-white outline-none focus:border-white"></textarea>
+          <div class="flex justify-end gap-3 pt-2">
             <button id="modalCancel"
-              class="px-4 py-2 rounded-lg text-sm text-stone-500 hover:text-gray-300 hover:bg-neutral-800">
-              Cancel
-            </button>
+              class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-neutral-300 hover:bg-neutral-800">Cancel</button>
             <button id="modalConfirm"
-              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-gray-100 hover:bg-red-300 text-stone-900">
-              Confirm
-            </button>
+              class="rounded-lg bg-white px-4 py-2 text-sm font-bold text-black hover:bg-neutral-200">Confirm</button>
           </div>
         </div>
       </div>
     </div>
-    <div id="editorModalOverlay"
-      class="fixed inset-0 bg-black bg-neutral-950/50 backdrop-blur-sm hidden flex items-center justify-center z-60">
-      <div id="editorModal" role="dialog" aria-modal="true" aria-labelledby="editorModalTitle"
-        class="relative z-10 w-[95%] max-w-6xl mx-4 rounded-md bg-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
+
+    <!-- Editor Modal (Fullscreen) -->
+    <div id="editorModalOverlay" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-md transition-opacity">
+      <div id="editorModal"
+        class="flex h-full w-full flex-col bg-[#1e1e1e] transition-transform scale-95 opacity-0 duration-200">
+        <!-- Editor Header -->
+        <div class="flex h-12 items-center justify-between border-b border-[#333] bg-[#252526] px-4">
           <div class="flex items-center gap-3">
-            <h3 id="editorModalTitle" class="text-lg font-semibold">Edit file</h3>
-            <span id="editorFilename" class="text-sm text-neutral-400"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-5 w-5 text-neutral-400">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span id="editorFilename" class="text-sm font-medium text-neutral-200">filename.txt</span>
+            <span id="editorStatus" class="ml-2 text-xs text-neutral-500">Ready</span>
           </div>
           <div class="flex items-center gap-2">
-            <button id="editorModalDownload"
-              class="px-3 py-1.5 rounded-md text-sm bg-neutral-800 hover:bg-neutral-700">Download</button>
-            <button id="editorModalClose" class="px-3 py-1.5 rounded-md text-sm hover:bg-neutral-800">Close</button>
+            <button id="editorModalDownload" class="p-1.5 text-neutral-400 hover:text-white transition-colors"
+              title="Download">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-5 w-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12L12 16.5m0 0L16.5 12M12 16.5V3" />
+              </svg>
+            </button>
+            <button id="editorModalClose"
+              class="rounded-md border border-[#444] bg-[#333] px-3 py-1.5 text-xs font-bold text-neutral-300 hover:bg-[#444] transition-colors">Close</button>
             <button id="editorModalSave"
-              class="px-4 py-1.5 rounded-lg text-sm bg-gray-100 hover:bg-red-300 text-stone-900 flex items-center gap-2">
-              <i data-lucide="save" class="w-4 h-4"></i> Save
+              class="flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-indigo-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-3.5 w-3.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6A2.25 2.25 0 016 3.75h1.5m9 0h-9" />
+              </svg>
+              Save (Ctrl+S)
             </button>
           </div>
         </div>
-
-        <!-- editor container -->
-        <div id="modalEditorContainer" class="h-[70vh] bg-neutral-900"></div>
-
-        <!-- small footer with status -->
-        <div class="px-4 py-2 border-t border-neutral-800 flex items-center justify-between text-sm text-neutral-400">
-          <div id="editorStatus">Ready</div>
-          <div id="editorLanguage" class="italic"></div>
+        <!-- Editor Content -->
+        <div id="modalEditorContainer" class="flex-1 bg-[#1e1e1e]"></div>
+        <!-- Footer -->
+        <div class="flex h-6 items-center justify-end bg-[#007acc] px-4 text-xs text-white">
+          <span id="editorLanguage">Plain Text</span>
         </div>
       </div>
     </div>
-    <!-- Upload Modal -->
+
+    <!-- Upload Progress Modal -->
     <div id="uploadModal"
-      class="fixed inset-0 bg-black bg-opacity-50 hidden flex flex-col items-center justify-center z-50 p-6">
-      <h2 class="text-md font-bold mb-4 text-white">Uploading Files...</h2>
-      <div class="w-full max-w-lg bg-neutral-800 rounded-xl overflow-hidden h-6 mb-2">
-        <div id="uploadBar" class="bg-green-500 h-6 w-0"></div>
+      class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div class="w-full max-w-sm rounded-2xl border border-neutral-900 bg-black p-6 text-center shadow-2xl">
+        <h3 class="mb-4 text-lg font-bold text-white">Uploading Files...</h3>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-neutral-800">
+          <div id="uploadBar" class="h-full w-0 bg-indigo-500 transition-all duration-300"></div>
+        </div>
+        <p id="uploadStatus" class="mt-4 text-sm text-neutral-400">Preparing...</p>
       </div>
-      <p id="uploadStatus" class="text-white font-medium"></p>
     </div>
 
-    <!-- DELETE PROGRESS MODAL -->
+    <!-- Delete Progress Modal -->
     <div id="deleteProgressModal"
-      class="fixed inset-0 bg-black bg-neutral-900/50 hidden flex items-center justify-center z-60 p-6" aria-hidden="true">
-      <div class="w-full max-w-md bg-neutral-950 rounded-md p-6 shadow-lg">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h3 id="deleteProgressTitle" class="text-lg font-semibold text-gray-100">Deleting files</h3>
-            <p id="deleteProgressSub" class="text-sm text-neutral-400 mt-1">Queued files will be deleted one-by-one.</p>
-          </div>
-          <div>
-            <button id="deleteProgressClose" class="text-sm px-3 py-1 rounded-md hover:bg-neutral-800">Close</button>
-          </div>
+      class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div class="w-full max-w-sm rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-white">Deleting Files</h3>
+          <button id="deleteProgressClose" class="text-xs text-neutral-500 hover:text-white">Close</button>
         </div>
-
-        <div class="mt-4">
-          <div class="w-full bg-neutral-800 rounded-full h-4 overflow-hidden">
-            <div id="deleteProgressBar" class="h-4 w-0 bg-gray-100 transition-all"></div>
-          </div>
-          <div class="mt-3 flex items-center justify-between text-sm text-neutral-300">
-            <span id="deleteProgressLabel">0 / 0</span>
-            <span id="deleteProgressCurrent" class="italic">Waiting to start...</span>
-          </div>
+        <p id="deleteProgressCurrent" class="text-sm text-neutral-400 mb-2 truncate">Starting...</p>
+        <div class="h-2 w-full overflow-hidden rounded-full bg-neutral-800">
+          <div id="deleteProgressBar" class="h-full w-0 bg-red-500 transition-all duration-300"></div>
         </div>
-
-        <div class="mt-5 flex justify-end gap-2">
-          <button id="deleteProgressCancel"
-            class="px-4 py-2 rounded-lg text-sm bg-neutral-800 hover:bg-neutral-700">Abort</button>
+        <div class="mt-2 flex justify-between text-xs text-neutral-500">
+          <span id="deleteProgressLabel">0/0</span>
+          <button id="deleteProgressCancel" class="text-red-500 hover:underline">Cancel</button>
         </div>
       </div>
     </div>
 
-    <!-- Sliding (blowing) action bar -->
-    <div id="actionBar"
-      class="fixed inset-x-0 bottom-6 z-50 translate-y-32 opacity-0 pointer-events-none transition-all duration-300 flex justify-center">
 
-      <div
-        class="w-full max-w-3xl mx-4 bg-neutral-900 border border-neutral-800 rounded-md px-4 py-3 shadow-lg flex items-center justify-between gap-4">
-
-        <div class="flex items-center gap-3">
-          <div class="flex flex-col">
-            <span id="actionSelectedCount" class="text-sm font-semibold text-gray-100">
-              0 selected
-            </span>
-            <span id="actionSelectedList" class="text-xs text-neutral-400 hidden"></span>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button id="deleteSelectedBtn"
-            class="flex items-center gap-2 whitespace-nowrap px-6 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white shadow">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-            Delete Files
-          </button>
-
-          <button id="clearSelectionBtn"
-            class="px-3 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200">
-            Clear
-          </button>
-        </div>
-
-      </div>
-    </div>
-
-
+    <!-- SCRIPTS -->
     <script>
-      lucide.createIcons();
-      function escapeHtml(s) {
-        const map = {
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;",
-        };
-        return String(s).replace(/[&<>"']/g, (m) => map[m]);
-      }
+      // Utility
+      function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[m]); }
 
-
+      // --- Filter Logic ---
       (function () {
-        // --- File search/filter --- (kept unchanged except selector change)
         const searchInput = document.getElementById("searchInput");
-        const tbody = document.getElementById("filesTbody");
-        const rows = Array.from(tbody.querySelectorAll("tr.file-row"));
-        const noResultsRow = document.getElementById("noResultsRow");
-        const DEBOUNCE_MS = 200;
+        const table = document.getElementById("filesTbody");
+        const rows = Array.from(table.querySelectorAll("tr.file-row"));
+        const noResults = document.getElementById("noResultsRow");
 
-        function escapeRegExp(str) {
-          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        }
-        function highlightMatch(el, query) {
-          const nameSpan = el.querySelector(".file-name");
-          if (!nameSpan) return;
-          const raw = nameSpan.textContent || "";
-          if (!query) {
-            nameSpan.innerHTML = escapeHtml(raw);
-            return;
-          }
-          try {
-            const re = new RegExp("(" + escapeRegExp(query) + ")", "ig");
-            nameSpan.innerHTML = escapeHtml(raw).replace(
-              re,
-              '<mark class="bg-yellow-400/20 text-yellow-300 rounded px-0.5">$1</mark>'
-            );
-          } catch {
-            nameSpan.innerHTML = escapeHtml(raw);
-          }
-        }
+        searchInput.addEventListener("input", (e) => {
+          const query = e.target.value.toLowerCase();
+          let hasResults = false;
 
-        function parseQuery(q) {
-          const res = { text: "", ext: null, type: null };
-          if (!q) return res;
-          q = q.trim();
-          const tokens = q.split(/\s+/);
-          const remaining = [];
-          tokens.forEach((tok) => {
-            const lower = tok.toLowerCase();
-            if (lower.startsWith("ext:")) res.ext = lower.slice(4);
-            else if (lower.startsWith("type:")) res.type = lower.slice(5);
-            else remaining.push(tok);
-          });
-          res.text = remaining.join(" ");
-          return res;
-        }
-
-        function filterRows(rawQuery) {
-          const q = parseQuery(rawQuery);
-          const queryText = (q.text || "").toLowerCase();
-          let visibleCount = 0;
-
-          rows.forEach((row) => {
-            const name = (row.dataset.name || "").toLowerCase();
-            const type = (row.dataset.type || "").toLowerCase();
-            let extMatch = true;
-            if (q.ext) {
-              const dotIndex = name.lastIndexOf(".");
-              const ext = dotIndex !== -1 ? name.slice(dotIndex + 1) : "";
-              extMatch = ext === q.ext;
-            }
-            let typeCheck = true;
-            if (q.type) typeCheck = type === q.type;
-            let textMatch = true;
-            if (queryText) textMatch = name.includes(queryText);
-            const show = extMatch && typeCheck && textMatch;
-
-            if (show) {
+          rows.forEach(row => {
+            const name = row.dataset.name.toLowerCase();
+            if (name.includes(query)) {
               row.classList.remove("hidden");
-              row.classList.remove("opacity-0");
-              if (queryText) highlightMatch(row, queryText);
-              else highlightMatch(row, null);
-              visibleCount++;
+              // Highlight Logic (Simplified)
+              const nameEl = row.querySelector(".file-name");
+              if (query) {
+                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                nameEl.innerHTML = row.dataset.name.replace(regex, "<mark>$1</mark>");
+              } else {
+                nameEl.textContent = row.dataset.name;
+              }
+              hasResults = true;
             } else {
               row.classList.add("hidden");
             }
           });
 
-          if (visibleCount === 0) noResultsRow.classList.remove("hidden");
-          else noResultsRow.classList.add("hidden");
-        }
-
-        let timer = null;
-        function onInput() {
-          clearTimeout(timer);
-          timer = setTimeout(() => filterRows(searchInput.value || ""), DEBOUNCE_MS);
-        }
-
-        if (searchInput) {
-          searchInput.addEventListener("input", onInput);
-          searchInput.addEventListener("keydown", (e) => {
-            if (e.key === "Escape") {
-              searchInput.value = "";
-              filterRows("");
-            } else if (e.key === "Enter") {
-              const first = tbody.querySelector(
-                "tr.file-row:not(.hidden) .file-name"
-              );
-              if (first) first.scrollIntoView({ block: "nearest", behavior: "smooth" });
-            }
-          });
-        }
+          if (!hasResults) noResults.classList.remove("hidden");
+          else noResults.classList.add("hidden");
+        });
       })();
 
-      // --- Modal logic --- (unchanged)
+      // --- Selection Logic ---
+      const actionBar = document.getElementById("actionBar");
+      const checkAll = document.getElementById("selectAllCheckbox");
+      const checks = document.querySelectorAll(".row-checkbox");
+      const selectedCountLabel = document.getElementById("actionSelectedCount");
+
+      function updateSelection() {
+        const selected = document.querySelectorAll(".row-checkbox:checked");
+        const count = selected.length;
+
+        selectedCountLabel.textContent = `${count} selected`;
+
+        if (count > 0) {
+          actionBar.classList.remove("translate-y-20", "opacity-0", "pointer-events-none");
+          actionBar.classList.add("translate-y-0", "opacity-100", "pointer-events-auto");
+        } else {
+          actionBar.classList.add("translate-y-20", "opacity-0", "pointer-events-none");
+          actionBar.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+        }
+      }
+
+      checkAll.onclick = (e) => {
+        checks.forEach(c => {
+          if (!c.closest('tr').classList.contains('hidden')) c.checked = e.target.checked;
+        });
+        updateSelection();
+      };
+
+      checks.forEach(c => c.onclick = updateSelection);
+      document.getElementById("clearSelectionBtn").onclick = () => {
+        checks.forEach(c => c.checked = false);
+        checkAll.checked = false;
+        updateSelection();
+      };
+
+      // --- Dropdowns ---
+      document.querySelectorAll(".dropdownBtn").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          // close others
+          document.querySelectorAll(".dropdownMenu").forEach(m => {
+            if (m !== btn.nextElementSibling) m.classList.add("hidden", "scale-95", "opacity-0");
+          });
+
+          const menu = btn.nextElementSibling;
+          if (menu.classList.contains("hidden")) {
+            menu.classList.remove("hidden");
+            setTimeout(() => menu.classList.remove("scale-95", "opacity-0"), 10);
+          } else {
+            menu.classList.add("scale-95", "opacity-0");
+            setTimeout(() => menu.classList.add("hidden"), 100);
+          }
+        };
+      });
+      document.onclick = () => {
+        document.querySelectorAll(".dropdownMenu").forEach(m => m.classList.add("hidden", "scale-95", "opacity-0"));
+      };
+
+      // --- Modals (Create/Rename) ---
       const modalOverlay = document.getElementById("modalOverlay");
       const modalPanel = document.getElementById("modalPanel");
       const modalTitle = document.getElementById("modalTitle");
@@ -511,685 +482,244 @@
       const modalConfirm = document.getElementById("modalConfirm");
       const modalCancel = document.getElementById("modalCancel");
 
-      let modalMode = null;
-      let modalTarget = null;
+      let modalAction = null; // 'newFile', 'newFolder', 'rename'
+      let renameTarget = null;
 
-      function showModal() {
-        modalOverlay.classList.remove("hidden");
-        requestAnimationFrame(() => {
+      function openModal(action, target = null) {
+        modalAction = action;
+        renameTarget = target;
+        modalInput.value = "";
+        modalContent.classList.add("hidden");
+        modalContent.value = "";
+
+        if (action === 'newFile') {
+          modalTitle.textContent = "New File";
+          modalContent.classList.remove("hidden");
+        } else if (action === 'newFolder') {
+          modalTitle.textContent = "New Folder";
+        } else if (action === 'rename') {
+          modalTitle.textContent = "Rename Item";
+          modalInput.value = target.name;
+        }
+
+        modalOverlay.classList.remove("hidden", "flex"); // reset flex
+        modalOverlay.classList.add("flex");
+        setTimeout(() => {
           modalPanel.classList.remove("scale-95", "opacity-0");
           modalPanel.classList.add("scale-100", "opacity-100");
-        });
+        }, 10);
+        modalInput.focus();
       }
 
-      function hideModal() {
+      function closeModal() {
         modalPanel.classList.remove("scale-100", "opacity-100");
         modalPanel.classList.add("scale-95", "opacity-0");
         setTimeout(() => modalOverlay.classList.add("hidden"), 200);
       }
 
-      function openModal(type) {
-        modalMode = type;
-        modalTarget = null;
-        modalTitle.textContent = type === "file" ? "New File" : "New Folder";
-        modalInput.value = "";
-        modalContent.value = "";
-        modalConfirm.dataset.type = type;
-        showModal();
-      }
+      modalCancel.onclick = closeModal;
+      document.getElementById("newFileBtn").onclick = () => openModal('newFile');
+      document.getElementById("newFolderBtn").onclick = () => openModal('newFolder');
 
-      function openRenameModal(type, name, relPath) {
-        modalMode = "rename";
-        modalTarget = { type, name, path: relPath };
-        modalTitle.textContent = `Rename ${type}`;
-        modalInput.value = name;
-        modalContent.classList.add("hidden");
-        modalConfirm.dataset.type = type;
-        showModal();
-      }
-
-      modalCancel.onclick = hideModal;
-      document.getElementById("newFileBtn").onclick = () => openModal("file");
-      document.getElementById("newFolderBtn").onclick = () => openModal("folder");
+      document.querySelectorAll(".renameBtn").forEach(btn => {
+        btn.onclick = () => openModal('rename', { name: btn.dataset.name, path: btn.dataset.path, type: btn.dataset.type });
+      });
 
       modalConfirm.onclick = () => {
-        if (!modalInput.value.trim()) return alert("Name required");
-        if (modalMode === "rename" && modalTarget) {
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/server/files/<%= server.id %>/${modalTarget.type}/rename`;
-          form.innerHTML = `
-        <input type="hidden" name="location" value="${modalTarget.path}">
-        <input type="hidden" name="newName" value="${modalInput.value}">
-      `;
-          document.body.appendChild(form);
-          form.submit();
+        const name = modalInput.value.trim();
+        if (!name) return;
+
+        const form = document.createElement("form");
+        form.method = "POST";
+
+        if (modalAction === 'rename') {
+          form.action = `/server/files/<%= server.id %>/${renameTarget.type}/rename`;
+          form.innerHTML = `<input type="hidden" name="location" value="${renameTarget.path}"><input type="hidden" name="newName" value="${name}">`;
         } else {
-          const type = modalConfirm.dataset.type;
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `/server/files/<%= server.id %>/${type === "file" ? "new-file" : "new-folder"
-            }?path=<%= encodeURIComponent(path) %>`;
-          form.innerHTML = `
-        <input type="hidden" name="filename" value="${modalInput.value}">
-        ${type === "file"
-              ? `<input type="hidden" name="content" value="${modalContent.value}">`
-              : ""
-            }
-      `;
-          document.body.appendChild(form);
-          form.submit();
+          const type = modalAction === 'newFile' ? 'new-file' : 'new-folder';
+          form.action = `/server/files/<%= server.id %>/${type}?path=<%= encodeURIComponent(path) %>`;
+          form.innerHTML = `<input type="hidden" name="filename" value="${name}">`;
+          if (modalAction === 'newFile') form.innerHTML += `<input type="hidden" name="content" value="${modalContent.value}">`;
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+      };
+
+      // --- Monaco Editor --- 
+      let monacoLoaded = false;
+      let editorInstance = null;
+      let currentEditPath = null;
+
+      const editorModal = document.getElementById("editorModal");
+      const editorOverlay = document.getElementById("editorModalOverlay");
+      const editorStatus = document.getElementById("editorStatus");
+      const editorLanguage = document.getElementById("editorLanguage");
+
+      async function loadMonaco() {
+        if (monacoLoaded) return;
+        return new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js';
+          script.onload = () => {
+            require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
+            require(['vs/editor/editor.main'], () => {
+              monacoLoaded = true;
+              resolve();
+            });
+          };
+          document.body.appendChild(script);
+        });
+      }
+      // Preload
+      setTimeout(loadMonaco, 1000);
+
+      document.querySelectorAll(".open-editor").forEach(btn => {
+        btn.onclick = async (e) => {
+          e.preventDefault();
+          const path = btn.dataset.path;
+          currentEditPath = path;
+          const filename = path.split('/').pop();
+          document.getElementById("editorFilename").textContent = filename;
+
+          editorOverlay.classList.remove("hidden");
+          editorOverlay.classList.add("flex"); // Ensure flex
+          setTimeout(() => {
+            editorModal.classList.remove("scale-95", "opacity-0");
+            editorModal.classList.add("scale-100", "opacity-100");
+          }, 10);
+
+          editorStatus.textContent = "Loading...";
+          await loadMonaco();
+
+          const res = await fetch(`/server/files/<%= server.id %>/raw?location=${encodeURIComponent(path)}`);
+          const content = await res.text();
+
+          const ext = filename.split('.').pop();
+          const langMap = { js: 'javascript', ts: 'typescript', html: 'html', css: 'css', json: 'json', py: 'python', md: 'markdown' };
+          const lang = langMap[ext] || 'plaintext';
+          editorLanguage.textContent = lang;
+
+          if (editorInstance) {
+            const model = monaco.editor.createModel(content, lang);
+            editorInstance.setModel(model);
+          } else {
+            editorInstance = monaco.editor.create(document.getElementById("modalEditorContainer"), {
+              value: content,
+              language: lang,
+              theme: 'vs-dark',
+              automaticLayout: true,
+              minimap: { enabled: false }
+            });
+          }
+          editorStatus.textContent = "Ready";
+        };
+      });
+
+      document.getElementById("editorModalClose").onclick = () => {
+        editorModal.classList.remove("scale-100", "opacity-100");
+        editorModal.classList.add("scale-95", "opacity-0");
+        setTimeout(() => editorOverlay.classList.add("hidden"), 200);
+      };
+
+      document.getElementById("editorModalSave").onclick = async () => {
+        if (!editorInstance) return;
+
+        const saveBtn = document.getElementById("editorModalSave");
+        const originalContent = saveBtn.innerHTML;
+        const originalClasses = saveBtn.className; // Keep original styling
+
+        // Saving State
+        editorStatus.textContent = "Saving...";
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg> Saving...`;
+
+        const content = editorInstance.getValue();
+        const filename = currentEditPath.split('/').pop();
+        const dir = currentEditPath.split('/').slice(0, -1).join('/');
+
+        try {
+          await fetch(`/server/files/<%= server.id %>/new-file?path=${dir || '/'}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename, content })
+          });
+
+          // Success State
+          editorStatus.textContent = "Saved";
+          saveBtn.className = "flex items-center gap-1.5 rounded-md bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white transition-all shadow-lg shadow-emerald-900/20";
+          saveBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg> Saved!`;
+
+          // Revert after delay
+          setTimeout(() => {
+            editorStatus.textContent = "Ready";
+            saveBtn.className = originalClasses;
+            saveBtn.innerHTML = originalContent;
+            saveBtn.disabled = false;
+          }, 2000);
+
+        } catch (e) {
+          console.error(e);
+          alert("Save failed");
+          editorStatus.textContent = "Error";
+          // Revert immediately on error so user can retry
+          saveBtn.className = originalClasses;
+          saveBtn.innerHTML = originalContent;
+          saveBtn.disabled = false;
         }
       };
 
-      // --- Dropdown buttons --- (kept)
-      document.querySelectorAll(".dropdownBtn").forEach((btn) => {
-        const menu = btn.nextElementSibling;
-        btn.onclick = (e) => {
-          e.stopPropagation();
-          document.querySelectorAll(".dropdownMenu").forEach((m) => {
-            if (m !== menu && !m.classList.contains("hidden")) {
-              m.classList.add("scale-95", "opacity-0");
-              setTimeout(() => m.classList.add("hidden"), 150);
-            }
-          });
-          if (menu.classList.contains("hidden")) {
-            menu.classList.remove("hidden");
-            requestAnimationFrame(() => {
-              menu.classList.remove("scale-95", "opacity-0");
-              menu.classList.add("scale-100", "opacity-100");
-            });
-          } else {
-            menu.classList.add("scale-95", "opacity-0");
-            setTimeout(() => menu.classList.add("hidden"), 150);
-          }
-        };
-      });
-
-      document.addEventListener("click", () => {
-        document.querySelectorAll(".dropdownMenu").forEach((menu) => {
-          if (!menu.classList.contains("hidden")) {
-            menu.classList.add("scale-95", "opacity-0");
-            setTimeout(() => menu.classList.add("hidden"), 150);
-          }
-        });
-      });
-
-      document.querySelectorAll(".renameBtn").forEach((btn) => {
-        btn.onclick = () => {
-          openRenameModal(btn.dataset.type, btn.dataset.name, btn.dataset.path);
-          const menu = btn.closest(".dropdownMenu");
-          menu.classList.add("scale-95", "opacity-0");
-          setTimeout(() => menu.classList.add("hidden"), 150);
-        };
-      });
-
-      // --- Upload logic --- (unchanged)
-      const uploadBtn = document.getElementById("uploadFileBtn");
+      // --- Upload & Delete Queues (Simplified for UX, keeping logic minimal) ---
       const uploadInput = document.getElementById("uploadFileInput");
-      const uploadModal = document.getElementById("uploadModal");
-      const uploadBar = document.getElementById("uploadBar");
-      const uploadStatus = document.getElementById("uploadStatus");
-
-      let uploadQueue = [];
-
-      uploadBtn.onclick = () => uploadInput.click();
-      uploadInput.onchange = (e) => {
+      uploadInput.onchange = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
-        enqueueFiles(files);
-      };
 
-      function enqueueFiles(files) {
-        uploadQueue.push(...files);
-        if (uploadQueue.length === files.length) startUploadQueue();
-      }
+        document.getElementById("uploadModal").classList.remove("hidden");
+        document.getElementById("uploadModal").classList.add("flex");
+        const bar = document.getElementById("uploadBar");
 
-      async function startUploadQueue() {
-        if (!uploadQueue.length) return location.reload();
-        showUploadModal();
-        const file = uploadQueue.shift();
-        uploadStatus.textContent = `Uploading ${file.name}...`;
-        try {
-          await uploadFile(file);
-        } catch (err) {
-          console.error(err);
-          alert(`Failed to upload ${file.name}: ${err.message}`);
-        }
-        uploadBar.style.width = "0%";
-        startUploadQueue();
-      }
-
-      function uploadFile(file) {
-        return new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
+        for (let i = 0; i < files.length; i++) {
+          document.getElementById("uploadStatus").textContent = `Uploading ${files[i].name} (${i + 1}/${files.length})...`;
           const formData = new FormData();
-          formData.append("file", file);
-          xhr.upload.addEventListener("progress", (e) => {
-            if (e.lengthComputable) {
-              const percent = (e.loaded / e.total) * 100;
-              uploadBar.style.width = percent + "%";
-            }
+          formData.append("file", files[i]);
+
+          await fetch(`/server/files/<%= server.id %>/upload?path=<%= encodeURIComponent(path) %>`, {
+            method: "POST",
+            body: formData
           });
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Server responded with status ${xhr.status}`));
-          };
-          xhr.onerror = () => reject(new Error("Upload failed"));
-          xhr.open(
-            "POST",
-            `/server/files/<%= server.id %>/upload?path=<%= encodeURIComponent(path) %>`
-          );
-          xhr.send(formData);
-        });
-      }
-
-      function showUploadModal() {
-        uploadModal.classList.remove("hidden");
-      }
-
-      function hideUploadModal() {
-        uploadModal.classList.add("hidden");
-        uploadStatus.textContent = "";
-      }
-
-
-      (function () {
-        const selectedBadge = document.getElementById('selectedCountBadge');
-        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-        const actionBar = document.getElementById('actionBar');
-        const actionSelectedCount = document.getElementById('actionSelectedCount');
-        const actionSelectedList = document.getElementById('actionSelectedList');
-        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
-
-        const deleteProgressModal = document.getElementById('deleteProgressModal');
-        const deleteProgressBar = document.getElementById('deleteProgressBar');
-        const deleteProgressLabel = document.getElementById('deleteProgressLabel');
-        const deleteProgressCurrent = document.getElementById('deleteProgressCurrent');
-        const deleteProgressClose = document.getElementById('deleteProgressClose');
-        const deleteProgressCancel = document.getElementById('deleteProgressCancel');
-
-        let abortController = null;
-
-        /* -------------------- helpers -------------------- */
-
-        function getSelectedRows() {
-          return Array.from(document.querySelectorAll('tr.file-row')).filter(row => {
-            const cb = row.querySelector('.row-checkbox');
-            return cb && cb.checked && !row.classList.contains('hidden');
-          });
+          bar.style.width = `${((i + 1) / files.length) * 100}%`;
         }
+        location.reload();
+      };
+      document.getElementById("uploadFileBtn").onclick = () => uploadInput.click();
 
-        function showActionBar() {
-          actionBar.style.pointerEvents = 'auto';
-          actionBar.classList.remove('translate-y-32', 'opacity-0');
-          actionBar.classList.add('translate-y-0', 'opacity-100');
-        }
-
-        function hideActionBar() {
-          actionBar.style.pointerEvents = 'none';
-          actionBar.classList.remove('translate-y-0', 'opacity-100');
-          actionBar.classList.add('translate-y-32', 'opacity-0');
-        }
-
-        function clearSelection() {
-          document.querySelectorAll('.row-checkbox').forEach(cb => {
-            cb.checked = false;
-          });
-          if (selectAllCheckbox) selectAllCheckbox.checked = false;
-          updateSelectedUI();
-        }
-
-        function updateSelectedUI() {
-          const selectedRows = getSelectedRows();
-          const count = selectedRows.length;
-
-          if (selectedBadge) {
-            if (count === 0) {
-              selectedBadge.classList.add('hidden');
-              selectedBadge.textContent = '0';
-            } else {
-              selectedBadge.classList.remove('hidden');
-              selectedBadge.textContent = String(count);
-            }
-          }
-
-          actionSelectedCount.textContent = `${count} selected`;
-
-          if (count > 0 && count <= 5) {
-            actionSelectedList.textContent = selectedRows
-              .map(r => r.dataset.path)
-              .join(', ');
-            actionSelectedList.classList.remove('hidden');
-          } else {
-            actionSelectedList.classList.add('hidden');
-          }
-
-          if (count > 0) showActionBar();
-          else hideActionBar();
-        }
-
-        /* -------------------- checkbox init (FIXED) -------------------- */
-
-        document.querySelectorAll('.row-checkbox').forEach(cb => {
-          // 🔥 IMPORTANT: do NOT hide them
-          cb.classList.remove('opacity-0', 'pointer-events-none');
-          cb.addEventListener('change', updateSelectedUI);
-        });
-
-        /* -------------------- select all -------------------- */
-
-        if (selectAllCheckbox) {
-          selectAllCheckbox.addEventListener('change', (e) => {
-            const on = e.target.checked;
-            document.querySelectorAll('tr.file-row:not(.hidden)').forEach(row => {
-              const cb = row.querySelector('.row-checkbox');
-              if (cb) cb.checked = on;
-            });
-            updateSelectedUI();
-          });
-        }
-
-        /* -------------------- clear button -------------------- */
-
-        clearSelectionBtn.addEventListener('click', clearSelection);
-
-        /* -------------------- delete selected -------------------- */
-
-        deleteSelectedBtn.addEventListener('click', async () => {
-          const selectedRows = getSelectedRows();
-          if (!selectedRows.length) return;
-
-          if (!confirm(`Delete ${selectedRows.length} item(s)? This will run sequentially.`)) {
-            return;
-          }
-
-          const queue = selectedRows.map(r => ({
-            type: r.dataset.type,
-            path: r.dataset.path,
-            name: r.querySelector('.file-name')?.textContent.trim() || r.dataset.path,
-            row: r
+      // Delete Selected
+      document.getElementById("deleteSelectedBtn").onclick = async () => {
+        const selected = Array.from(document.querySelectorAll(".row-checkbox:checked"))
+          .map(cb => ({
+            path: cb.closest('tr').dataset.path,
+            type: cb.closest('tr').dataset.type
           }));
 
-          await runDeleteQueue(queue);
-        });
+        if (!confirm(`Delete ${selected.length} items?`)) return;
 
-        /* -------------------- delete queue -------------------- */
+        const modal = document.getElementById("deleteProgressModal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        const bar = document.getElementById("deleteProgressBar");
 
-        async function runDeleteQueue(queue) {
-          deleteProgressModal.classList.remove('hidden');
-          deleteProgressBar.style.width = '0%';
-          deleteProgressLabel.textContent = `0 / ${queue.length}`;
-          deleteProgressCurrent.textContent = 'Starting...';
+        for (let i = 0; i < selected.length; i++) {
+          document.getElementById("deleteProgressCurrent").textContent = selected[i].path;
+          document.getElementById("deleteProgressLabel").textContent = `${i + 1}/${selected.length}`;
+          bar.style.width = `${((i + 1) / selected.length) * 100}%`;
 
-          abortController = new AbortController();
-          let completed = 0;
-
-          for (const item of queue) {
-            if (abortController.signal.aborted) break;
-
-            deleteProgressCurrent.textContent = `Deleting ${item.name}`;
-
-            try {
-              await deleteSingleItem(item, abortController.signal);
-              item.row?.remove();
-            } catch (err) {
-              console.error('Delete failed:', err);
-            }
-
-            completed++;
-            deleteProgressBar.style.width =
-              Math.round((completed / queue.length) * 100) + '%';
-            deleteProgressLabel.textContent = `${completed} / ${queue.length}`;
-          }
-
-          deleteProgressCurrent.textContent = 'Done';
-          abortController = null;
-          clearSelection();
-          setTimeout(deleteProgressModal.classList.add('hidden'), 1500)
+          await fetch(`/server/files/<%= server.id %>/${selected[i].type}/delete?location=${encodeURIComponent(selected[i].path)}`, { method: "POST" });
         }
+        location.reload();
+      };
 
-        function deleteSingleItem(item, signal) {
-          const serverId = '<%= server.id %>';
-          const params = new URLSearchParams({ location: item.path });
-
-          return fetch(
-            `/server/files/${encodeURIComponent(serverId)}/${encodeURIComponent(item.type)}/delete?${params}`,
-            {
-              method: 'POST',
-              credentials: 'same-origin',
-              signal
-            }
-          ).then(res => {
-            if (!res.ok) throw new Error('Delete failed');
-          });
-        }
-
-        /* -------------------- modal controls -------------------- */
-
-        deleteProgressClose.addEventListener('click', () => {
-          if (!abortController) deleteProgressModal.classList.add('hidden');
-        });
-
-        deleteProgressCancel.addEventListener('click', () => {
-          if (abortController && confirm('Abort deletion queue?')) {
-            abortController.abort();
-          }
-        });
-
-      })();
-      // --- Keyboard find shortcut (Ctrl/Cmd+F) --- (kept)
-      document.addEventListener("keydown", (e) => {
-        const isMac = navigator.platform.toUpperCase().includes("MAC");
-        const isFindShortcut = isMac
-          ? e.metaKey && e.key === "f"
-          : e.ctrlKey && e.key === "f";
-
-        if (!isFindShortcut) return;
-        const activeTag = document.activeElement?.tagName?.toLowerCase();
-        const isTyping =
-          activeTag === "input" ||
-          activeTag === "textarea" ||
-          document.activeElement?.isContentEditable;
-
-        if (isTyping && document.activeElement.id !== "searchInput") return;
-        e.preventDefault();
-        const searchInput = document.getElementById("searchInput");
-        if (!searchInput) return;
-        searchInput.focus();
-        searchInput.select();
-      });
-
-      // --- Right-click context menu --- (kept)
-      (function () {
-        const serverId = '<%= server.id %>';
-        const currentPath = '<%= path %>';
-        const relPrefix = currentPath === '/' ? '' : currentPath + '/';
-
-        const contextMenu = document.createElement('div');
-        contextMenu.id = 'context-menu';
-        contextMenu.className =
-          'dropdownMenu transition-all scale-95 opacity-0 bg-neutral-900 border border-neutral-800 rounded-md shadow-lg hidden flex flex-col z-50 min-w-[140px] fixed';
-        contextMenu.style.right = 'auto';
-        contextMenu.style.left = '0px';
-        contextMenu.style.top = '0px';
-        contextMenu.style.padding = '6px 0';
-        document.body.appendChild(contextMenu);
-
-        function hideAllMenus() {
-          document.querySelectorAll('.dropdownMenu').forEach((m) => {
-            if (!m.classList.contains('hidden')) {
-              m.classList.add('scale-95', 'opacity-0');
-              setTimeout(() => m.classList.add('hidden'), 150);
-            }
-          });
-        }
-
-        function showContextMenuAt(x, y) {
-          hideAllMenus();
-          contextMenu.classList.remove('hidden');
-          contextMenu.style.left = x + 'px';
-          contextMenu.style.top = y + 'px';
-          requestAnimationFrame(() => {
-            contextMenu.classList.remove('scale-95', 'opacity-0');
-            contextMenu.classList.add('scale-100', 'opacity-100');
-          });
-          requestAnimationFrame(() => {
-            const rect = contextMenu.getBoundingClientRect();
-            const PAD = 8;
-            let left = rect.left;
-            let top = rect.top;
-            if (rect.right > window.innerWidth) left = Math.max(PAD, window.innerWidth - rect.width - PAD);
-            if (rect.bottom > window.innerHeight) top = Math.max(PAD, window.innerHeight - rect.height - PAD);
-            contextMenu.style.left = left + 'px';
-            contextMenu.style.top = top + 'px';
-          });
-          if (window.lucide) lucide.createIcons();
-        }
-
-        function hideContextMenu() {
-          if (contextMenu.classList.contains('hidden')) return;
-          contextMenu.classList.remove('scale-100', 'opacity-100');
-          contextMenu.classList.add('scale-95', 'opacity-0');
-          setTimeout(() => contextMenu.classList.add('hidden'), 150);
-        }
-
-        function buildMenuFor(row) {
-          const name = row.querySelector('.file-name')?.textContent?.trim() || '';
-          const type = row.dataset.type || 'file';
-          const relPath = (currentPath === '/' ? '' : currentPath + '/') + name;
-          const safeName = escapeHtml(name);
-          const deleteUrl = '/server/files/' + encodeURIComponent(serverId) + '/' + encodeURIComponent(type) + '/delete?location=' + encodeURIComponent(relPath);
-
-          contextMenu.innerHTML = `
-        <form method="POST" action="${deleteUrl}" onsubmit="return confirm('Delete ${safeName}?');" style="margin:0">
-          <button type="submit" class="text-left px-4 py-2 hover:bg-red-700 rounded-xl text-red-500">Delete</button>
-        </form>
-        <button class="renameBtn text-left px-4 py-2 hover:bg-neutral-800 rounded-xl" data-type="${escapeHtml(type)}" data-name="${escapeHtml(name)}" data-path="${escapeHtml(relPath)}">Rename</button>
-      `;
-
-          const renameBtn = contextMenu.querySelector('.renameBtn');
-          if (renameBtn) {
-            renameBtn.onclick = (ev) => {
-              ev.stopPropagation();
-              openRenameModal(renameBtn.dataset.type, renameBtn.dataset.name, renameBtn.dataset.path);
-              hideContextMenu();
-            };
-          }
-        }
-
-        document.addEventListener('contextmenu', (e) => {
-          const row = e.target.closest('tr.file-row');
-          if (!row) return;
-          e.preventDefault();
-          buildMenuFor(row);
-          showContextMenuAt(e.clientX, e.clientY);
-        });
-
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('#context-menu')) hideContextMenu();
-        });
-        window.addEventListener('blur', hideContextMenu);
-        window.addEventListener('resize', hideContextMenu);
-        window.addEventListener('scroll', hideContextMenu, true);
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape') hideContextMenu();
-        });
-      })();
-      // ===== Monaco + editor modal script =====
-      function getLanguageFromFilename(filename) {
-        if (!filename || !filename.includes('.')) return 'plaintext';
-        const ext = filename.split('.').pop().toLowerCase();
-        const map = { js: 'javascript', ts: 'typescript', json: 'json', html: 'html', css: 'css', scss: 'scss', md: 'markdown', yml: 'yaml', yaml: 'yaml', py: 'python', sh: 'shell', bash: 'shell', php: 'php', go: 'go', java: 'java', c: 'c', cpp: 'cpp', rs: 'rust', sql: 'sql', txt: 'plaintext' };
-        return map[ext] || 'plaintext';
-      }
-
-      const editorModalOverlay = document.getElementById('editorModalOverlay');
-      const editorModal = document.getElementById('editorModal');
-      const editorFilename = document.getElementById('editorFilename');
-      const modalEditorContainer = document.getElementById('modalEditorContainer');
-      const editorModalSave = document.getElementById('editorModalSave');
-      const editorModalClose = document.getElementById('editorModalClose');
-      const editorModalDownload = document.getElementById('editorModalDownload');
-      const editorStatus = document.getElementById('editorStatus');
-      const editorLanguage = document.getElementById('editorLanguage');
-
-      let monacoEditorInstance = null;
-      let monacoLoaded = false;
-      let currentEditPath = null;
-      let currentFilename = null;
-      let monacoLoadPromise = null;
-
-      function loadMonacoOnce() {
-        if (monacoLoadPromise) return monacoLoadPromise;
-
-        monacoLoadPromise = new Promise((resolve, reject) => {
-          const loaderSrc = 'https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js';
-          const s = document.createElement('script');
-          s.src = loaderSrc;
-          s.onload = () => {
-            require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' } });
-            require(['vs/editor/editor.main'], () => resolve());
-          };
-          s.onerror = reject;
-          document.body.appendChild(s);
-        });
-
-        return monacoLoadPromise;
-      }
-
-      loadMonacoOnce();
-
-      // proactive background preload on idle so clicking is faster
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => loadMonacoOnce().catch(() => { }), { timeout: 2000 });
-      } else {
-        // fallback short delay
-        setTimeout(() => loadMonacoOnce().catch(() => { }), 1500);
-      }
-
-      function showEditorModal() {
-        editorModalOverlay.classList.remove('hidden');
-        requestAnimationFrame(() => {
-          editorModal.classList.remove('scale-95', 'opacity-0');
-          editorModal.classList.add('scale-100', 'opacity-100');
-        });
-      }
-      function hideEditorModal() {
-        editorModal.classList.remove('scale-100', 'opacity-100');
-        editorModal.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => editorModalOverlay.classList.add('hidden'), 180);
-      }
-      async function fetchFileContent(relPath) {
-        const serverId = '<%= server.id %>';
-        const url = `/server/files/${encodeURIComponent(serverId)}/raw?location=${encodeURIComponent(relPath)}`;
-        const res = await fetch(url, { credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Failed to fetch file');
-        return await res.text();
-      }
-
-      async function saveFileContent(relPath, content) {
-        const serverId = '<%= server.id %>';
-        const url = `/server/files/${encodeURIComponent(serverId)}/new-file?path=${relPath.split("/").slice(0, -1).join("/") || "/"}`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: relPath.split('/').pop(), content }),
-          credentials: 'same-origin'
-        });
-        const bodyText = await res.text();
-        if (!res.ok) {
-          const txt = await res.text().catch(() => null);
-          throw new Error(txt || 'Save failed');
-        }
-
-        try {
-          return JSON.parse(bodyText);
-        } catch {
-          return bodyText;
-        }
-      }
-
-      async function openEditorFor(path) {
-        currentEditPath = path;
-        currentFilename = path.split('/').pop();
-        editorFilename.textContent = ' — ' + currentFilename;
-        editorStatus.textContent = 'Loading…';
-        editorLanguage.textContent = '';
-
-        let content;
-        try {
-          content = await fetchFileContent(path);
-        } catch (err) {
-          console.error(err);
-          editorStatus.textContent = 'Failed to load file';
-          alert('Failed to load file content.');
-          return;
-        }
-
-        const language = getLanguageFromFilename(currentFilename);
-
-        if (!monacoEditorInstance) {
-          monacoEditorInstance = monaco.editor.create(modalEditorContainer, {
-            value: content,
-            language,
-            theme: 'vs-dark',
-            automaticLayout: true,
-            fontSize: 13,
-            minimap: { enabled: false }
-          });
-        } else {
-          // reuse editor, create new model
-          const model = monaco.editor.createModel(content, language);
-          monacoEditorInstance.setModel(model);
-        }
-
-        editorLanguage.textContent = language;
-        editorStatus.textContent = 'Loaded';
-        showEditorModal();
-        monacoEditorInstance.focus();
-      }
-
-      document.addEventListener('click', (e) => {
-        const a = e.target.closest('a.open-editor');
-        if (!a) return;
-        e.preventDefault();
-        const relPath = a.dataset.path;
-        if (!relPath) return;
-        openEditorFor(relPath);
-      });
-
-      editorModalSave.addEventListener('click', async () => {
-        if (!monacoEditorInstance) return;
-        editorModalSave.disabled = true;
-        const prev = editorModalSave.textContent;
-        editorModalSave.textContent = 'Saving…';
-        editorStatus.textContent = 'Saving…';
-        try {
-          const content = monacoEditorInstance.getValue();
-          await saveFileContent(currentEditPath, content);
-          editorStatus.textContent = 'Saved';
-          setTimeout(hideEditorModal, 1500)
-        } catch (err) {
-          console.error(err);
-          editorStatus.textContent = 'Save failed';
-          alert('Save failed: ' + (err.message || 'unknown'));
-        } finally {
-          editorModalSave.disabled = false;
-          editorModalSave.textContent = prev;
-        }
-      });
-
-      editorModalClose.addEventListener('click', hideEditorModal);
-      editorModalOverlay.addEventListener('click', (e) => {
-        if (e.target === editorModalOverlay) hideEditorModal();
-      });
-
-      editorModalDownload.addEventListener('click', () => {
-        if (!monacoEditorInstance) return;
-        const content = monacoEditorInstance.getValue();
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = currentFilename || 'file.txt';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      // Keyboard shortcut to save
-      document.addEventListener('keydown', (e) => {
-        const isSave = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's';
-        if (!isSave) return;
-        if (editorModalOverlay.classList.contains('hidden')) return;
-        e.preventDefault();
-        editorModalSave.click();
-      });
     </script>
-
 </body>
 
 </html>

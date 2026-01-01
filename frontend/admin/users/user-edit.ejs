@@ -1,69 +1,112 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
   <meta charset="UTF-8" />
-  <title><%= name %> - Edit User</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Edit User
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
+
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name, user }) %>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-3xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
-      <!-- Header -->
-      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md">
-        <h1 class="text-3xl font-bold flex items-center gap-2">
-          <i data-lucide="edit-2" class="w-6 h-6"></i>
-          Edit User
-        </h1>
+        <!-- Back Link -->
+        <a href="/admin/users"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Users
+        </a>
+
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Edit User</h1>
+          <p class="mt-2 text-neutral-400">Updating profile for <%= target.username %>.</p>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+          <form action="/admin/user/<%= target.id %>/edit" method="POST" class="space-y-8">
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Email Address</label>
+                <input type="email" name="email" value="<%= target.email %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Username</label>
+                <input type="text" name="username" value="<%= target.username %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">New Password
+                  (Optional)</label>
+                <input type="password" name="password" placeholder="Leave empty to keep current"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+
+              <div class="space-y-2 flex items-end">
+                <label
+                  class="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 w-full cursor-pointer hover:border-neutral-700 transition-colors">
+                  <input type="checkbox" name="admin" value="true" <%=target.admin ? 'checked' : '' %> class="h-4 w-4
+                  rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 focus:ring-offset-0 transition-all
+                  checked:bg-white checked:border-white" />
+                  <span class="text-sm font-medium text-neutral-300 select-none">Administrator Access</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-neutral-900">
+              <a href="/admin/users"
+                class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
+              <button type="submit"
+                class="rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10">
+                Save Changes
+              </button>
+            </div>
+
+          </form>
+        </div>
+
       </div>
+    </main>
 
-      <!-- Form -->
-      <form
-        action="/admin/user/<%= target.id %>/edit"
-        method="post"
-        class="bg-neutral-950 border border-neutral-800 p-6 rounded-md space-y-4"
-      >
-
-        <div>
-          <label class="text-sm text-gray-400">Email</label>
-          <input name="email" value="<%= target.email %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-        </div>
-
-        <div>
-          <label class="text-sm text-gray-400">Username</label>
-          <input name="username" value="<%= target.username %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-        </div>
-
-        <div>
-          <label class="text-sm text-gray-400">New Password</label>
-          <input name="password" type="password"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-        </div>
-
-        <label class="flex items-center gap-2 text-sm text-gray-400">
-          <input type="checkbox" name="admin" value="true" <%= target.admin ? 'checked' : '' %>>
-          Administrator
-        </label>
-
-        <div class="flex gap-2">
-          <button class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl">
-            Save
-          </button>
-          <a href="/admin/user/<%= target.id %>"
-            class="bg-neutral-800 hover:bg-neutral-700 px-6 py-3 rounded-xl">
-            Cancel
-          </a>
-        </div>
-      </form>
-
-    </div>
-  </main>
-
-  <script>lucide.createIcons()</script>
 </body>
+
 </html>

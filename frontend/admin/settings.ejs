@@ -1,173 +1,198 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
-    <%= name %> - Settings
+    <%= name %> - Administration
   </title>
-  <link rel="stylesheet" href="/assets/tailwind.css" />
-
-  <script src="https://unpkg.com/lucide@latest"></script>
-
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
   <style>
-    .input {
-      width: 100%;
-      background: #0a0a0a;
-      border: 1px solid #262626;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.75rem;
-      color: #f5f5f5;
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
     }
 
-    .tab-active {
-      background: #0a0a0a;
-      border-color: #262626;
-      color: #fff;
+    ::-webkit-scrollbar {
+      width: 6px;
     }
 
-    /* a little visual emphasis for large action buttons */
-    .big-btn {
-      @apply inline-flex items-center justify-center gap-3 px-6 py-3 rounded-md font-semibold text-lg;
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
     }
   </style>
 </head>
 
-<body class="min-h-screen flex">
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../components/sidebar', { name, user }) %>
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-4xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+
         <!-- Header -->
-        <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md">
-          <h1 class="text-3xl font-bold flex items-center gap-2">
-            <i data-lucide="user" class="w-6 h-6"></i> Settings
-          </h1>
-          <p class="text-gray-400">Manage your application</p>
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Platform Settings</h1>
+          <p class="mt-2 text-neutral-400">Configure global application settings and view status.</p>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex gap-2 border-b border-neutral-800">
-          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 tab-active"
-            data-tab="overview">
-            Overview
-          </button>
-          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 text-gray-400"
-            data-tab="settings">
-            Settings
-          </button>
-        </div>
-
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content bg-neutral-950 border border-neutral-800 rounded-b-md p-6 space-y-6">
-          <!-- Version banner (hidden by default) -->
-          <div id="versionBanner" class="hidden rounded-lg p-3 text-white bg-red-700 flex items-center gap-3">
-            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        <!-- Version Banner -->
+        <div id="versionBanner"
+          class="mb-8 hidden overflow-hidden rounded-xl border border-red-900/50 bg-red-950/10 p-4">
+          <div class="flex items-start gap-4">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-900/20 text-red-500">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" />
+              </svg>
+            </div>
             <div>
-              <div id="versionBannerText" class="font-medium">
-                Your instance is not running the latest version.
-              </div>
-              <div class="text-sm text-red-100" id="versionBannerSub">
-                Current: <span id="curVerInline"></span> • Latest:
-                <span id="latestVerInline"></span>
-              </div>
+              <h3 class="text-sm font-bold text-red-400">Update Available</h3>
+              <p class="mt-1 text-sm text-red-200/70">
+                You are running version <span id="curVerInline" class="font-mono text-white">...</span> but the latest
+                is <span id="latestVerInline" class="font-mono text-white">...</span>. Please update your instance.
+              </p>
             </div>
-          </div>
-
-          <img src="https://talorix.io/talorix-banner2.png" alt="Talorix Banner"
-            class="rounded-xl border border-neutral-800" />
-
-          <div class="space-y-3">
-            <a href="https://talorix.io" target="_blank"
-              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition">
-              <i data-lucide="globe" class="w-5 h-5 text-emerald-400"></i>
-              <div>
-                <div class="font-medium">Website</div>
-                <div class="text-sm text-gray-400">https://talorix.io</div>
-              </div>
-            </a>
-
-            <a href="https://discord.gg/kqvyDk5BKR" target="_blank"
-              class="w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-900 border border-neutral-800 relative transition">
-              <i data-lucide="messages-square" class="w-5 h-5 text-indigo-400"></i>
-              <div>
-                <div class="font-medium">Discord</div>
-                <div class="text-sm text-gray-400">Join the community</div>
-              </div>
-            </a>
-          </div>
-
-          <div class="text-gray-400">
-            Version:
-            <span id="version" class="text-gray-100 font-medium mr-3">Loading...</span>
-            <span class="text-sm text-gray-500">(<span id="latestLabel">checking latest…</span>)</span>
           </div>
         </div>
 
-        <!-- Settings Tab -->
-        <div id="settings" class="tab-content hidden bg-neutral-950 border border-neutral-800 rounded-b-md p-6">
-          <form id="settingsForm" class="space-y-4">
-            <div>
-              <label for="name" class="block text-gray-400 mb-1">
-                Application Name
-              </label>
-              <input id="name" name="name" value="<%= settings.name || '' %>" class="input" />
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+          <!-- Left Column: Navigation/Tabs (Desktop) or content flow -->
+          <div class="lg:col-span-2 space-y-8">
+
+            <!-- Hero Card -->
+            <div class="relative overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950">
+              <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5"></div>
+              <div class="relative p-8">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="text-xl font-bold text-white">System Status</h2>
+                    <div class="mt-2 flex items-center gap-2 text-sm text-neutral-400">
+                      <span>Current Version:</span>
+                      <span id="version"
+                        class="rounded bg-neutral-900 px-2 py-0.5 font-mono text-xs text-white">Loading...</span>
+                    </div>
+                  </div>
+                  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-900 text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-6 w-6">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div
-              class="flex items-center justify-between bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3">
-              <div>
-                <p class="text-gray-100 font-medium">Register Enabled</p>
-                <p class="text-sm text-gray-400">Allow new users to create accounts</p>
+
+            <!-- Configuration Form -->
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+              <div class="mb-6">
+                <h2 class="text-lg font-bold text-white">General Configuration</h2>
+                <p class="text-sm text-neutral-500">Manage basic application settings.</p>
               </div>
 
-              <label for="registerEnabled" class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="registerEnabled" name="registerEnabled" class="sr-only peer"
-                  <%=settings.registerEnabled ? 'checked' : '' %>
-                />
-                <div class="w-11 h-6 bg-neutral-700 rounded-full peer 
-             peer-checked:bg-emerald-600
-             after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-             after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
-             peer-checked:after:translate-x-5"></div>
-              </label>
-            </div>
-            <button type="submit"
-              class="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded-xl font-medium text-white">
-              Save
-            </button>
-          </form>
+              <form id="settingsForm" class="space-y-6">
 
-          <div id="msg" class="mt-4"></div>
+                <div class="space-y-1">
+                  <label class="text-xs font-medium uppercase tracking-wider text-neutral-500">Application Name</label>
+                  <input type="text" name="name" value="<%= settings.name || '' %>"
+                    class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    placeholder="My Hosting" />
+                </div>
+
+                <div
+                  class="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900/30 p-4">
+                  <div>
+                    <p class="font-medium text-white">User Registration</p>
+                    <p class="text-sm text-neutral-500">Allow new users to sign up freely.</p>
+                  </div>
+                  <label class="relative inline-flex cursor-pointer items-center">
+                    <input type="checkbox" name="registerEnabled" class="peer sr-only" <%=settings.registerEnabled
+                      ? 'checked' : '' %> >
+                    <div
+                      class="h-6 w-11 rounded-full bg-neutral-800 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-neutral-500 peer-checked:bg-white transition-colors">
+                    </div>
+                    <div
+                      class="absolute left-[2px] top-[2px] h-5 w-5 rounded-full bg-white peer-checked:bg-black transition-all peer-checked:translate-x-full border border-neutral-600 peer-checked:border-black">
+                    </div>
+                  </label>
+                </div>
+
+                <div class="pt-2">
+                  <button type="submit"
+                    class="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+                    Save Changes
+                  </button>
+                  <span id="msg" class="ml-3 text-sm font-medium"></span>
+                </div>
+
+              </form>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Community / Links -->
+          <div class="space-y-6">
+
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-500">Resources</h3>
+              <div class="space-y-3">
+                <a href="https://talorix.io" target="_blank"
+                  class="group flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/50 p-3 transition-colors hover:border-neutral-700 hover:bg-neutral-900">
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-800 text-emerald-500 group-hover:text-emerald-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-5 w-5">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S12 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S12 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-white">Documentation</p>
+                    <p class="text-xs text-neutral-500">Read the guides</p>
+                  </div>
+                </a>
+                <a href="https://discord.gg/kqvyDk5BKR" target="_blank"
+                  class="group flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-900/50 p-3 transition-colors hover:border-neutral-700 hover:bg-neutral-900">
+                  <div
+                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-800 text-indigo-500 group-hover:text-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-5 w-5">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-white">Discord Community</p>
+                    <p class="text-xs text-neutral-500">Get help & support</p>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+          </div>
+
         </div>
+
       </div>
     </main>
 
     <script>
-      /* Tabs */
-      const tabs = document.querySelectorAll(".tab-btn");
-      const contents = document.querySelectorAll(".tab-content");
-
-      tabs.forEach((tab) => {
-        tab.addEventListener("click", () => {
-          tabs.forEach((t) =>
-            t.classList.remove("tab-active", "text-gray-100")
-          );
-          contents.forEach((c) => c.classList.add("hidden"));
-
-          tab.classList.add("tab-active");
-          document.getElementById(tab.dataset.tab).classList.remove("hidden");
-        });
-      });
-
-      /* Helper: semver-like comparison (handles v prefix and different segment lengths) */
+      /* Helper: semver-like comparison */
       function normalize(v) {
         if (!v && v !== 0) return [];
-        // remove a leading "v" or non-digit characters at start
-        v = String(v)
-          .trim()
-          .replace(/^[^0-9]*/, "");
+        v = String(v).trim().replace(/^[^0-9]*/, "");
         return v.split(".").map((s) => {
-          // remove any non-digit suffix (e.g. "1.2.3-beta")
           const m = s.match(/^(\d+)/);
           return m ? parseInt(m[1], 10) : 0;
         });
@@ -185,66 +210,50 @@
         return 0;
       }
 
-      const currentVersion = <%- JSON.stringify(config.version) %>;
+      const currentVersion = <% - JSON.stringify(config.version) %>;
 
-      /* Fetch Latest Version and update UI + banner if needed */
+      /* Fetch Latest Version */
       (async () => {
         const versionEl = document.getElementById("version");
-        const latestLabel = document.getElementById("latestLabel");
         const banner = document.getElementById("versionBanner");
-        const bannerText = document.getElementById("versionBannerText");
         const curVerInline = document.getElementById("curVerInline");
         const latestVerInline = document.getElementById("latestVerInline");
 
-        // show current version from server immediately
         versionEl.textContent = currentVersion || "Unknown";
-        curVerInline.textContent = currentVersion || "Unknown";
+        if (curVerInline) curVerInline.textContent = currentVersion || "Unknown";
 
         try {
-          const res = await fetch(
-            "https://ma4z.is-a.dev/repo/version_library.json"
-          );
+          // Replace with real repo later if needed
+          const res = await fetch("https://ma4z.is-a.dev/repo/version_library.json");
           const data = await res.json();
           const latest = data?.["hydren:sr"]?.["talorix"]?.["panel"];
-          if (!latest) {
-            latestLabel.textContent = "unknown";
-            latestVerInline.textContent = "unknown";
-            return;
-          }
-          latestLabel.textContent = "latest: " + latest;
-          latestVerInline.textContent = latest;
-          // compare
-          const cmp = compareVersions(latest, currentVersion);
-          if (cmp > 0) {
-            // latest is greater than current -> show red banner
-            bannerText.textContent =
-              "Update available — you are not running the latest version.";
-            banner.classList.remove("hidden");
-          } else {
-            // up-to-date
-            banner.classList.add("hidden");
+
+          if (latest) {
+            if (latestVerInline) latestVerInline.textContent = latest;
+            const cmp = compareVersions(latest, currentVersion);
+            if (cmp > 0 && banner) {
+              banner.classList.remove("hidden");
+            }
           }
         } catch (err) {
-          latestLabel.textContent = "unknown";
-          latestVerInline.textContent = "unknown";
-          // keep banner hidden on fetch error
-          banner.classList.add("hidden");
           console.error("Failed to fetch version info:", err);
         }
       })();
 
-      /* Settings Form (unchanged) */
+      /* Settings Form */
       const form = document.getElementById("settingsForm");
       const msg = document.getElementById("msg");
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const name = form.name.value.trim();
-        const registerEnabled = !!form.registerEnabled.checked;
+        const registerEnabled = form.registerEnabled.checked;
+
+        msg.textContent = "";
 
         if (!name) {
-          msg.textContent = "App name cannot be empty";
-          msg.className = "text-red-500 mt-2";
+          msg.textContent = "Name required";
+          msg.className = "ml-3 text-sm font-medium text-red-500";
           return;
         }
 
@@ -256,19 +265,19 @@
           });
 
           const data = await res.json();
-          msg.textContent = data.success
-            ? "Settings saved successfully!"
-            : data.error || "Error saving settings";
-          msg.className = data.success
-            ? "text-emerald-500 mt-2"
-            : "text-red-500 mt-2";
+          msg.textContent = data.success ? "Saved!" : (data.error || "Error");
+          msg.className = data.success ? "ml-3 text-sm font-medium text-emerald-500" : "ml-3 text-sm font-medium text-red-500";
+
+          // Clear msg after 2s
+          setTimeout(() => { msg.textContent = ""; }, 3000);
+
         } catch (err) {
           msg.textContent = err.message;
-          msg.className = "text-red-500 mt-2";
+          msg.className = "ml-3 text-sm font-medium text-red-500";
         }
       });
-      lucide.createIcons();
     </script>
+
 </body>
 
 </html>

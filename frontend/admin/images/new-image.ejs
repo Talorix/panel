@@ -1,187 +1,244 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
     <%= name %> - New Image
   </title>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
-<body class="min-h-screen flex">
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name, user }) %>
 
-    <main class="flex-1 flex items-center justify-center p-10 overflow-auto">
-      <div class="w-full max-w-5xl">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
-        <!-- HEADER -->
-        <div class="mb-10 border border-neutral-800 rounded-md p-6 bg-neutral-950">
-          <h1 class="text-4xl font-bold tracking-tight">Create Image</h1>
-          <p class="text-gray-400 mt-2">
-            Configure image metadata, variables, and features.
-          </p>
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Create Image</h1>
+          <p class="mt-2 text-neutral-400">Configure a new Docker image for your servers.</p>
         </div>
 
-        <!-- GRID -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Main Form Grid -->
+        <div class="space-y-8">
 
-          <!-- IMAGE INFO (FULL WIDTH) -->
-          <section class="lg:col-span-2 border border-neutral-800 rounded-md p-6 space-y-4">
-            <h2 class="text-lg font-semibold">Image Information</h2>
+          <!-- Basic Info -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+            <h2 class="mb-6 text-lg font-bold text-white">Image Details</h2>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Name</label>
+                <input id="name" type="text" placeholder="e.g. NodeJS 18"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Docker Image</label>
+                <input id="dockerImage" type="text" placeholder="e.g. node:18-alpine"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all font-mono" />
+              </div>
+              <div class="col-span-1 md:col-span-2 space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Description</label>
+                <input id="description" type="text" placeholder="Optional description for this image..."
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+            </div>
+          </div>
 
-            <input id="dockerImage" placeholder="Docker Image (e.g. ubuntu:latest)"
-              class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+          <!-- Configuration Cards -->
+          <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
 
-            <input id="name" placeholder="Image Name"
-              class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-
-            <input id="description" placeholder="Description (optional)"
-              class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-          </section>
-
-          <!-- ENVS (LEFT) -->
-          <section class="border border-neutral-800 rounded-md p-6 space-y-4">
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-semibold">Environment Variables</h2>
-              <button onclick="addEnv()"
-                class="px-3 py-1 text-sm rounded-lg border border-neutral-800 hover:border-neutral-700">
-                + Add
-              </button>
+            <!-- ENV VARS -->
+            <div class="flex flex-col rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white">Environment Variables</h2>
+                <button onclick="addEnv()"
+                  class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="h-4 w-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Add Variable
+                </button>
+              </div>
+              <div id="envsContainer" class="flex-1 space-y-3">
+                <!-- Dynamic Items -->
+              </div>
+              <p class="mt-4 text-center text-xs text-neutral-500 italic" id="envEmptyState">No environment variables
+                added.</p>
             </div>
 
-            <div id="envsContainer" class="space-y-2"></div>
-          </section>
-
-          <!-- FEATURES (RIGHT) -->
-          <section class="border border-neutral-800 rounded-md p-6 space-y-4">
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-semibold">Features</h2>
-              <button onclick="addFeature()"
-                class="px-3 py-1 text-sm rounded-lg border border-neutral-800 hover:border-neutral-700">
-                + Add
-              </button>
+            <!-- FEATURES -->
+            <div class="flex flex-col rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white">Features</h2>
+                <button onclick="addFeature()"
+                  class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="h-4 w-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Add Feature
+                </button>
+              </div>
+              <div id="featuresContainer" class="flex-1 space-y-3">
+                <!-- Dynamic Items -->
+              </div>
+              <p class="mt-4 text-center text-xs text-neutral-500 italic" id="featEmptyState">No features added.</p>
             </div>
 
-            <div id="featuresContainer" class="space-y-2"></div>
-          </section>
+          </div>
 
-          <!-- FILES (FULL WIDTH) -->
-          <section class="lg:col-span-2 border border-neutral-800 rounded-md p-6 space-y-4">
-            <div class="flex justify-between items-center">
-              <h2 class="text-lg font-semibold">Files</h2>
+          <!-- FILES -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="mb-6 flex items-center justify-between">
+              <h2 class="text-lg font-bold text-white">Startup Files/Scripts</h2>
               <button onclick="addFile()"
-                class="px-3 py-1 text-sm rounded-lg border border-neutral-800 hover:border-neutral-700">
-                + Add
+                class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="h-4 w-4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Add File
               </button>
             </div>
+            <div id="filesContainer" class="space-y-3">
+              <!-- Dynamic Items -->
+            </div>
+            <p class="mt-4 text-center text-xs text-neutral-500 italic" id="fileEmptyState">No files added.</p>
+          </div>
 
-            <div id="filesContainer" class="space-y-2"></div>
-          </section>
+          <!-- Action Bar -->
+          <div class="flex items-center justify-end gap-4 pt-4 border-t border-neutral-900">
+            <a href="/admin/images"
+              class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
+            <button onclick="createImage()"
+              class="rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10">
+              Create Image
+            </button>
+          </div>
 
         </div>
-
-        <!-- ACTIONS -->
-        <div class="flex justify-end gap-3 mt-10">
-          <a href="/admin/images" class="px-5 py-2 rounded-xl border border-neutral-800 hover:border-neutral-700">
-            Cancel
-          </a>
-
-          <button onclick="createImage()" class="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-medium">
-            Create Image
-          </button>
-        </div>
-
       </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-      lucide.createIcons();
-      let featureCount = 0;
-      let envCount = 0;
-      let fileCount = 0;
-      function addEnv(key = '', value = '') {
-        const div = document.createElement('div');
-        div.className = "relative flex-1"; 
-        div.innerHTML = `
-     <input placeholder="Key" value="" class="w-full p-2 rounded-xl bg-neutral-950 border border-neutral-800 pr-8">
-  <input placeholder="Value" value="" class="w-full p-2 rounded-xl bg-neutral-950 border border-neutral-800 pr-8">
-  <button onclick="this.parentNode.remove()"
-    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500">
-    ✕
-  </button>
+      const envContainer = document.getElementById("envsContainer");
+      const featContainer = document.getElementById("featuresContainer");
+      const fileContainer = document.getElementById("filesContainer");
+      const envEmpty = document.getElementById("envEmptyState");
+      const featEmpty = document.getElementById("featEmptyState");
+      const fileEmpty = document.getElementById("fileEmptyState");
 
-  `;
-        envsContainer.appendChild(div);
+      function updateEmptyStates() {
+        envEmpty.style.display = envContainer.children.length ? 'none' : 'block';
+        featEmpty.style.display = featContainer.children.length ? 'none' : 'block';
+        fileEmpty.style.display = fileContainer.children.length ? 'none' : 'block';
       }
 
-      function addFile(filename = '', url = '') {
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center'; // added items-center
+      function addEnv() {
+        const div = document.createElement("div");
+        div.className = "flex items-center gap-3 animate-slide-up";
         div.innerHTML = `
-    <input placeholder="Filename" value="${filename}"
-      class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
-    <input placeholder="URL" value="${url}"
-      class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
-    <button onclick="this.parentNode.remove()"
-      class="px-3 py-2 rounded-xl border border-neutral-800 hover:border-neutral-700">
-      ✕
-    </button>
-  `;
-        filesContainer.appendChild(div);
+           <div class="flex-1 grid grid-cols-2 gap-3">
+               <input placeholder="Key" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white transition-all" />
+               <input placeholder="Default Value" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white transition-all" />
+           </div>
+           <button onclick="this.closest('div.flex').remove(); updateEmptyStates();" class="shrink-0 p-2 text-neutral-500 hover:text-red-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+           </button>
+        `;
+        envContainer.appendChild(div);
+        updateEmptyStates();
       }
 
-      function addFeature(value = '') {
-        const div = document.createElement('div');
-        div.className = 'flex gap-2 items-center'; // added items-center
+      function addFeature() {
+        const div = document.createElement("div");
+        div.className = "flex items-center gap-3 animate-slide-up";
         div.innerHTML = `
-    <input placeholder="Feature (e.g. eula)" value="${value}"
-      class="flex-1 p-2 rounded-xl bg-neutral-950 border border-neutral-800">
-    <button onclick="this.parentNode.remove()"
-      class="px-3 py-2 rounded-xl border border-neutral-800 hover:border-neutral-700">
-      ✕
-    </button>
-  `;
-        featuresContainer.appendChild(div);
+           <input placeholder="Feature Code (e.g. eula, java_version)" class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white transition-all" />
+           <button onclick="this.closest('div.flex').remove(); updateEmptyStates();" class="shrink-0 p-2 text-neutral-500 hover:text-red-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+           </button>
+        `;
+        featContainer.appendChild(div);
+        updateEmptyStates();
       }
 
+      function addFile() {
+        const div = document.createElement("div");
+        div.className = "flex items-center gap-3 animate-slide-up";
+        div.innerHTML = `
+           <div class="flex-1 grid grid-cols-2 gap-3">
+               <input placeholder="Filename" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white transition-all" />
+               <input placeholder="Download URL" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white transition-all" />
+           </div>
+           <button onclick="this.closest('div.flex').remove(); updateEmptyStates();" class="shrink-0 p-2 text-neutral-500 hover:text-red-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+           </button>
+        `;
+        fileContainer.appendChild(div);
+        updateEmptyStates();
+      }
 
       async function createImage() {
+        const name = document.getElementById("name").value.trim();
+        const dockerImage = document.getElementById("dockerImage").value.trim();
+        const description = document.getElementById("description").value.trim();
+
+        if (!name || !dockerImage) return alert("Name and Docker Image are required.");
+
+        const envs = {};
+        envContainer.querySelectorAll("div.grid").forEach(row => {
+          const inputs = row.querySelectorAll("input");
+          const key = inputs[0].value.trim();
+          const val = inputs[1].value.trim();
+          if (key) envs[key] = val;
+        });
+
+        const files = [];
+        fileContainer.querySelectorAll("div.grid").forEach(row => {
+          const inputs = row.querySelectorAll("input");
+          const name = inputs[0].value.trim();
+          const url = inputs[1].value.trim();
+          if (name && url) files.push({ filename: name, url });
+        });
+
+        const features = [];
+        featContainer.querySelectorAll("input").forEach(input => {
+          if (input.value.trim()) features.push(input.value.trim());
+        });
+
         try {
-          // Collect ENVs
-          const envs = {};
-          document.querySelectorAll('#envsContainer > div').forEach(div => {
-            const [keyInput, valueInput] = div.querySelectorAll('input');
-            if (keyInput.value) envs[keyInput.value] = valueInput.value;
-          });
-
-          // Collect Files
-          const files = [];
-          document.querySelectorAll('#filesContainer > div').forEach(div => {
-            const [filenameInput, urlInput] = div.querySelectorAll('input');
-            if (filenameInput.value && urlInput.value) files.push({ filename: filenameInput.value, url: urlInput.value });
-          });
-
-          const features = [];
-          document.querySelectorAll('#featuresContainer input').forEach(input => {
-            if (input.value.trim()) features.push(input.value.trim());
-          });
-
-          const res = await axios.post('/admin/images/new', {
-            dockerImage: document.getElementById('dockerImage').value,
-            name: document.getElementById('name').value,
-            description: document.getElementById('description').value,
-            envs,
-            files,
-            features
-          });
-
+          const res = await axios.post('/admin/images/new', { dockerImage, name, description, envs, files, features });
           if (res.data.success) window.location.href = '/admin/images';
-        } catch (err) {
-          alert("Failed to create image. Check your inputs.");
-          console.error(err);
+          else alert("Failed to create image.");
+        } catch (e) {
+          alert("Error: " + (e.response?.data?.message || e.message));
         }
       }
     </script>
