@@ -1,497 +1,489 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>
     <%= name %> - <%= node.name %>
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<style>
-  .tab-active {
-    background: #0a0a0a;
-    border-color: #262626;
-    color: #fff;
-  }
-</style>
 
-<body class="min-h-screen flex">
+<body class="flex h-full w-full overflow-hidden">
 
   <%- include('../../components/sidebar', { name, user }) %>
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-6xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
 
-        <!-- Node Header -->
-        <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md flex items-center justify-between">
+        <!-- Back Link -->
+        <a href="/admin/nodes"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Nodes
+        </a>
+
+        <!-- Header -->
+        <div class="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <h1 class="text-3xl font-bold">
-              <%= node.name %>
-            </h1>
-            <% if (node.status==="online" ) { %>
-              <p class="text-green-400 mt-2">Node Online</p>
-              <% } else if (node.status==="dockernotrunning" ) { %>
-                <p class="text-yellow-400 mt-2">Docker Not Running</p>
-                <% } else { %>
-                  <p class="text-red-400 mt-2">Node Offline</p>
-                  <% } %>
+            <div class="flex items-center gap-4">
+              <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                <%= node.name %>
+              </h1>
+              <% if (node.status==="online" ) { %>
+                <span
+                  class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-500 ring-1 ring-inset ring-emerald-500/20">Online</span>
+                <% } else if (node.status==="dockernotrunning" ) { %>
+                  <span
+                    class="inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-1 text-xs font-bold text-yellow-500 ring-1 ring-inset ring-yellow-500/20">Docker
+                    Error</span>
+                  <% } else { %>
+                    <span
+                      class="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-500 ring-1 ring-inset ring-red-500/20">Offline</span>
+                    <% } %>
+            </div>
+            <p class="mt-2 text-neutral-400">View performance stats and manage network allocations.</p>
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex gap-3">
             <button onclick="configureNode()"
-              class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-sm">
-              <i data-lucide="key" class="w-4 h-4"></i> Configure
+              class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+              </svg>
+              Configure
             </button>
             <button onclick="deleteNode()"
-              class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-sm">
-              <i data-lucide="trash-2" class="w-4 h-4"></i> Delete
+              class="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.02] hover:bg-red-700 active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+              </svg>
+              Delete
             </button>
           </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="flex gap-2 border-b border-neutral-800">
-          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 tab-active" id="tab-stats">
-            Stats
+        <!-- Navigation Pills -->
+        <div class="mb-8 flex space-x-2 border-b border-neutral-900 pb-2">
+          <button id="tab-stats"
+            class="rounded-full bg-white px-4 py-1.5 text-sm font-bold text-black transition-colors hover:bg-neutral-200">
+            Statistics
           </button>
-          <button class="tab-btn px-4 py-2 rounded-t-xl border border-b-0 border-neutral-800 text-gray-400"
-            id="tab-allocations">
+          <button id="tab-allocations"
+            class="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-bold text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white">
             Allocations
           </button>
         </div>
-        <!-- Tab Content -->
-        <div id="tabContent">
 
-          <!-- Stats Content -->
-          <div id="content-stats" class="space-y-6">
-            <div class="bg-neutral-950 border border-neutral-800 p-6 space-y-6">
-              <div class="pt-4">
-                <div class="text-2xl font-semibold text-gray-100 mb-3">System Information</div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">OS Type</div>
-                    <div class="text-sm mt-1" id="osType">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">OS Platform</div>
-                    <div class="text-sm mt-1" id="osPlatform">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">OS Arch</div>
-                    <div class="text-sm mt-1" id="osArch">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">OS Release</div>
-                    <div class="text-sm mt-1" id="osRelease">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">CPU Model</div>
-                    <div class="text-sm mt-1" id="cpuModel">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">CPU Speed</div>
-                    <div class="text-sm mt-1" id="cpuSpeed">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">Uptime</div>
-                    <div class="text-sm mt-1" id="uptime">-</div>
-                  </div>
-                  <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                    <div class="text-xs text-gray-500">Load Avg</div>
-                    <div class="text-sm mt-1">
-                      <span id="load1">-</span>, <span id="load5">-</span>, <span id="load15">-</span>
-                    </div>
-                  </div>
-                </div>
+        <!-- TAB: STATS -->
+        <div id="content-stats" class="space-y-6">
+
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <!-- Charts -->
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h3 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">CPU Usage</h3>
+              <div class="h-64 w-full">
+                <canvas id="cpuChart"></canvas>
               </div>
-
-
-              <h2 class="text-xl font-semibold mb-4">Node Usage</h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- CPU Chart -->
-                <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                  <h3 class="text-lg font-medium mb-2">CPU Usage (%)</h3>
-                  <canvas id="cpuChart" height="150"></canvas>
-                </div>
-
-                <!-- RAM Chart -->
-                <div class="bg-neutral-950 border border-neutral-800 rounded-md p-4">
-                  <h3 class="text-lg font-medium mb-2">RAM Usage (GB)</h3>
-                  <canvas id="ramChart" height="150"></canvas>
-                </div>
+            </div>
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h3 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">RAM Usage</h3>
+              <div class="h-64 w-full">
+                <canvas id="ramChart"></canvas>
               </div>
             </div>
           </div>
 
-          <!-- Allocations Content -->
-          <div id="content-allocations" class="hidden space-y-6">
-            <div class="bg-neutral-950 border border-neutral-800 p-6 space-y-4">
-              <h2 class="text-xl font-semibold mb-4">Node Allocations</h2>
+          <!-- System Info Grid -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+            <h3 class="mb-6 text-lg font-bold text-white">System Information</h3>
+            <div class="grid grid-cols-2 gap-y-6 gap-x-12 md:grid-cols-4">
 
-              <!-- Add Allocation Form -->
-              <form id="addAllocationForm" class="flex flex-wrap gap-2 items-end">
-                <div class="flex flex-col">
-                  <label class="text-sm text-gray-400">IP</label>
-                  <input type="text" name="ip" placeholder="IP"
-                    class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100" required>
-                </div>
-                <div class="flex flex-col">
-                  <label class="text-sm text-gray-400">Port(s)</label>
-                  <input type="text" name="port" placeholder="25565 or 25565-25665"
-                    class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100" required>
-                </div>
-                <div class="flex flex-col">
-                  <label class="text-sm text-gray-400">Domain (optional)</label>
-                  <input type="text" name="domain" placeholder="domain.com"
-                    class="bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-1 text-gray-100">
-                </div>
-                <button type="submit"
-                  class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-sm text-white">Add
-                  Allocation(s)</button>
-              </form>
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">OS Type</p>
+                <p class="mt-1 font-mono text-sm text-white" id="osType">-</p>
+              </div>
 
-              <!-- Allocations Table -->
-              <table class="min-w-full table-auto border-collapse border border-neutral-800 mt-4">
-                <thead>
-                  <tr class="bg-neutral-900">
-                    <th class="px-4 py-2 border-b border-neutral-800">IP</th>
-                    <th class="px-4 py-2 border-b border-neutral-800">Port</th>
-                    <th class="px-4 py-2 border-b border-neutral-800">Domain</th>
-                    <th class="px-4 py-2 border-b border-neutral-800">Type</th>
-                    <th class="px-4 py-2 border-b border-neutral-800">Claimed By</th>
-                    <th class="px-4 py-2 border-b border-neutral-800">Actions</th>
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">Platform</p>
+                <p class="mt-1 font-mono text-sm text-white" id="osPlatform">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">Arch</p>
+                <p class="mt-1 font-mono text-sm text-white" id="osArch">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">Kernel</p>
+                <p class="mt-1 font-mono text-sm text-white" id="osRelease">-</p>
+              </div>
+
+              <div class="col-span-2">
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">CPU Model</p>
+                <p class="mt-1 font-mono text-sm text-white truncate" id="cpuModel">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">CPU Speed</p>
+                <p class="mt-1 font-mono text-sm text-white" id="cpuSpeed">-</p>
+              </div>
+
+              <div>
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">Uptime</p>
+                <p class="mt-1 font-mono text-sm text-white" id="uptime">-</p>
+              </div>
+
+              <div class="col-span-2 md:col-span-4">
+                <p class="text-xs text-neutral-500 font-bold uppercase tracking-wider">Load Average (1m, 5m, 15m)</p>
+                <div class="mt-1 flex gap-4 font-mono text-sm text-white">
+                  <span id="load1" class="text-emerald-400">-</span>
+                  <span id="load5" class="text-yellow-400">-</span>
+                  <span id="load15" class="text-red-400">-</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB: ALLOCATIONS -->
+        <div id="content-allocations" class="hidden space-y-6">
+
+          <!-- Create Allocation -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <h3 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Create Allocations</h3>
+            <form id="addAllocationForm" class="flex flex-col gap-4 md:flex-row md:items-end">
+              <div class="flex-1 space-y-1">
+                <label class="text-xs font-bold text-neutral-400">IP Address</label>
+                <input type="text" name="ip" placeholder="0.0.0.0"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm font-mono text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+              <div class="flex-1 space-y-1">
+                <label class="text-xs font-bold text-neutral-400">Ports (Range allowed)</label>
+                <input type="text" name="port" placeholder="25565 or 25565-25570"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm font-mono text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+              <div class="flex-1 space-y-1">
+                <label class="text-xs font-bold text-neutral-400">Alias (Optional)</label>
+                <input type="text" name="domain" placeholder="play.example.com"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+              <button type="submit"
+                class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors">
+                Add
+              </button>
+            </form>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950">
+            <table class="w-full text-left text-sm">
+              <thead class="border-b border-neutral-900 bg-neutral-900/50 text-neutral-400">
+                <tr>
+                  <th class="px-6 py-3 font-medium">IP Address</th>
+                  <th class="px-6 py-3 font-medium">Port</th>
+                  <th class="px-6 py-3 font-medium">Alias</th>
+                  <th class="px-6 py-3 font-medium">Status</th>
+                  <th class="px-6 py-3 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="allocationsTableBody" class="divide-y divide-neutral-900">
+                <% for(let i=0; i < (node.allocations || []).length; i++) { let a=node.allocations[i]; %>
+                  <tr id="allocation-<%= a.id %>" class="hover:bg-neutral-900/30 transition-colors">
+                    <td class="px-6 py-3 font-mono text-neutral-300">
+                      <%= a.ip %>
+                    </td>
+                    <td class="px-6 py-3 font-mono text-neutral-300">
+                      <%= a.port %>
+                    </td>
+                    <td class="px-6 py-3 text-neutral-400">
+                      <%= a.domain || '-' %>
+                    </td>
+                    <td class="px-6 py-3">
+                      <% if(a.allocationOwnedto) { %>
+                        <span
+                          class="inline-flex items-center rounded-full bg-indigo-900/30 px-2.5 py-0.5 text-xs font-medium text-indigo-400">
+                          In Use
+                        </span>
+                        <% } else { %>
+                          <span
+                            class="inline-flex items-center rounded-full bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
+                            Unassigned
+                          </span>
+                          <% } %>
+                    </td>
+                    <td class="px-6 py-3 text-right">
+                      <% if(!a.allocationOwnedto) { %>
+                        <button onclick="deleteAllocation('<%= a.id %>')"
+                          class="text-xs font-bold text-red-500 hover:underline">Delete</button>
+                        <% } else { %>
+                          <span class="text-xs text-neutral-600 cursor-not-allowed">Locked</span>
+                          <% } %>
+                    </td>
                   </tr>
-                </thead>
-                <tbody id="allocationsTableBody">
-                  <% for(let i=0; i < (node.allocations || []).length; i++) { let a=node.allocations[i]; %>
-                    <tr id="allocation-<%= a.id %>">
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <%= a.ip %>
-                      </td>
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <%= a.port %>
-                      </td>
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <%= a.domain || "-" %>
-                      </td>
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <%= a.type || "-" %>
-                      </td>
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <% if(a.allocationOwnedto) { %>
-                          <%= servers.find(s=> s.id === a.allocationOwnedto.serverId)?.name || "Unknown" %>
-                            <% } else { %>
-                              -
-                              <% } %>
-                      </td>
-                      <td class="px-4 py-2 border-b border-neutral-800">
-                        <% if(!a.allocationOwnedto) { %>
-                          <button onclick='deleteAllocation("<%= a.id %>")'
-                            class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded-xl text-sm text-white">Delete</button>
-                          <% } else { %>
-                            <button class="bg-stone-600 hover:bg-stone-700 px-2 py-1 rounded-xl text-sm text-white"
-                              title="Please delete the server first">Cannot Delete</button>
-                            <% } %>
-                      </td>
-                    </tr>
-                    <% } %>
-                </tbody>
-              </table>
-              <div class="flex items-center justify-between mt-3 text-sm text-gray-300">
-                <span id="paginationInfo"></span>
+                  <% } %>
+              </tbody>
+            </table>
 
-                <div class="flex gap-2">
-                  <button id="prevPage"
-                    class="px-3 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50">
-                    Prev
-                  </button>
-
-                  <button id="nextPage"
-                    class="px-3 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50">
-                    Next
-                  </button>
-                </div>
+            <!-- Pagination Controls -->
+            <div class="flex items-center justify-between border-t border-neutral-900 px-6 py-3">
+              <span id="paginationInfo" class="text-xs text-neutral-500">Showing page 1</span>
+              <div class="flex gap-2">
+                <button id="prevPage"
+                  class="rounded bg-neutral-900 px-3 py-1 text-xs text-white disabled:opacity-50 hover:bg-neutral-800">Prev</button>
+                <button id="nextPage"
+                  class="rounded bg-neutral-900 px-3 py-1 text-xs text-white disabled:opacity-50 hover:bg-neutral-800">Next</button>
               </div>
-              <script>
-                const rowsPerPage = 10;
-                const tableBody = document.getElementById("allocationsTableBody");
-                const rows = Array.from(tableBody.querySelectorAll("tr"));
-
-                let currentPage = 1;
-                const totalPages = Math.ceil(rows.length / rowsPerPage);
-
-                const paginationInfo = document.getElementById("paginationInfo");
-                const prevBtn = document.getElementById("prevPage");
-                const nextBtn = document.getElementById("nextPage");
-
-                function renderPage() {
-                  const start = (currentPage - 1) * rowsPerPage;
-                  const end = start + rowsPerPage;
-
-                  rows.forEach((row, index) => {
-                    row.style.display = index >= start && index < end ? "" : "none";
-                  });
-
-                  paginationInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-                  prevBtn.disabled = currentPage === 1;
-                  nextBtn.disabled = currentPage === totalPages;
-                }
-
-                prevBtn.onclick = () => {
-                  if (currentPage > 1) {
-                    currentPage--;
-                    renderPage();
-                  }
-                };
-
-                nextBtn.onclick = () => {
-                  if (currentPage < totalPages) {
-                    currentPage++;
-                    renderPage();
-                  }
-                };
-
-                renderPage();
-              </script>
-
             </div>
+
           </div>
-
-          <script>
-            // Add Allocation
-            document.getElementById("addAllocationForm").addEventListener("submit", async (e) => {
-              e.preventDefault();
-              const form = e.target;
-              const ip = form.ip.value.trim();
-              const port = form.port.value.trim();
-              const domain = form.domain.value.trim();
-
-              if (!ip || !port) return alert("IP and Port are required");
-
-              try {
-                const res = await fetch(`/admin/node/${nodeId}/allocations/add`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ ip, port, domain })
-                });
-                const data = await res.json();
-
-                if (!res.ok) return alert(data.error || "Failed to add allocation");
-
-                // Refresh table
-                if (data.added) {
-                  data.added.forEach(a => addAllocationRow(a));
-                } else if (data.allocation) {
-                  addAllocationRow(data.allocation);
-                }
-
-                form.reset();
-              } catch (err) {
-                console.error(err);
-                alert("Failed to add allocation");
-              }
-            });
-
-            function addAllocationRow(a) {
-              const tbody = document.getElementById("allocationsTableBody");
-              const row = document.createElement("tr");
-              row.id = `allocation-${a.id}`;
-              row.innerHTML = `
-      <td class="px-4 py-2 border-b border-neutral-800">${a.ip}</td>
-      <td class="px-4 py-2 border-b border-neutral-800">${a.port}</td>
-      <td class="px-4 py-2 border-b border-neutral-800">${a.domain || "-"}</td>
-      <td class="px-4 py-2 border-b border-neutral-800">${a.type || "secondary"}</td>
-      <td class="px-4 py-2 border-b border-neutral-800">-</td>
-      <td class="px-4 py-2 border-b border-neutral-800">
-        <button onclick="deleteAllocation('${a.id}')" class="bg-red-600 hover:bg-red-700 px-2 py-1 rounded-xl text-sm text-white">Delete</button>
-      </td>
-    `;
-              tbody.appendChild(row);
-            }
-
-            // Delete Allocation
-            async function deleteAllocation(allocationId) {
-              if (!confirm("Are you sure you want to delete this allocation?")) return;
-
-              try {
-                const res = await fetch(`/admin/node/${nodeId}/allocations/delete/${allocationId}`, { method: "DELETE" });
-                if (!res.ok) {
-                  const data = await res.json();
-                  return alert(data.error || "Failed to delete allocation");
-                }
-
-                // Remove row from table
-                const row = document.getElementById(`allocation-${allocationId}`);
-                if (row) row.remove();
-              } catch (err) {
-                console.error(err);
-                alert("Failed to delete allocation");
-              }
-            }
-          </script>
 
         </div>
 
       </div>
     </main>
 
-    <!-- Configure Node Modal (unchanged) -->
-    <div id="configModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-      <div class="bg-neutral-950 border border-neutral-800 rounded-md p-6 w-full max-w-xl">
-        <h2 class="text-xl font-semibold mb-4">Configure Node</h2>
-        <p class="text-gray-400 mb-2">Run this command on the node machine:</p>
-        <pre id="configCommand"
-          class="bg-neutral-950 border border-neutral-800 rounded-xl p-4 text-sm text-gray-200 overflow-x-auto"></pre>
-        <div class="flex justify-end gap-2 mt-6">
-          <button onclick="closeConfigModal()" class="px-4 py-2 cursor-pointer rounded-md text-gray-400 hover:bg-neutral-900">Close</button>
-          <button id="copyButton" onclick="copyCommand()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl">Copy</button>
+    <!-- Configure Modal -->
+    <div id="configModal"
+      class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+      <div
+        class="w-full max-w-xl transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all">
+        <h2 class="text-xl font-bold text-white mb-4">Configure Node Daemon</h2>
+        <p class="text-sm text-neutral-400 mb-4">Execute the following command on your node server to configure the
+          daemon automatically.</p>
+
+        <div class="relative mb-6 group">
+          <pre id="configCommand"
+            class="w-full overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-900 p-4 font-mono text-sm text-emerald-400 scrollbar-hide"></pre>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button onclick="closeConfigModal()"
+            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-neutral-300 hover:bg-neutral-800 transition-colors">Close</button>
+          <button id="copyButton" onclick="copyCommand()"
+            class="rounded-lg bg-white px-6 py-2 text-sm font-bold text-black hover:bg-neutral-200 transition-colors">Copy
+            Command</button>
         </div>
       </div>
     </div>
 
-    
     <script>
-      lucide.createIcons();
       const nodeId = "<%= req.params.id %>";
 
       // Tabs
-      
       const tabStats = document.getElementById("tab-stats");
       const tabAlloc = document.getElementById("tab-allocations");
       const contentStats = document.getElementById("content-stats");
       const contentAlloc = document.getElementById("content-allocations");
 
-      tabStats.addEventListener("click", () => {
-        contentStats.classList.remove("hidden");
-        contentAlloc.classList.add("hidden");
-        tabStats.classList.add("border-indigo-600", "font-semibold");
-        tabAlloc.classList.remove("border-indigo-600", "font-semibold");
-        tabAlloc.classList.add("text-gray-400");
-        tabStats.classList.add("tab-active");
-        tabAlloc.classList.remove("tab-active");
-      });
+      function switchTab(tab) {
+        if (tab === 'stats') {
+          tabStats.classList.replace('bg-neutral-900', 'bg-white');
+          tabStats.classList.replace('text-neutral-400', 'text-black');
+          tabAlloc.classList.replace('bg-white', 'bg-neutral-900');
+          tabAlloc.classList.replace('text-black', 'text-neutral-400');
+          contentStats.classList.remove("hidden");
+          contentAlloc.classList.add("hidden");
+        } else {
+          tabAlloc.classList.replace('bg-neutral-900', 'bg-white');
+          tabAlloc.classList.replace('text-neutral-400', 'text-black');
+          tabStats.classList.replace('bg-white', 'bg-neutral-900');
+          tabStats.classList.replace('text-black', 'text-neutral-400');
+          contentAlloc.classList.remove("hidden");
+          contentStats.classList.add("hidden");
+        }
+      }
 
-      tabAlloc.addEventListener("click", () => {
-        contentAlloc.classList.remove("hidden");
-        contentStats.classList.add("hidden");
-        tabAlloc.classList.add("border-indigo-600", "font-semibold");
-        tabStats.classList.remove("border-indigo-600", "font-semibold");
-        tabStats.classList.remove("tab-active");
-        tabAlloc.classList.add("tab-active");
-      });
+      tabStats.onclick = () => switchTab('stats');
+      tabAlloc.onclick = () => switchTab('allocations');
 
-      // Configure Node
-      async function configureNode() {
+      // Pagination Logic
+      const rowsPerPage = 10;
+      const tbody = document.getElementById("allocationsTableBody");
+      const rows = Array.from(tbody.children);
+      const totalPages = Math.ceil(rows.length / rowsPerPage) || 1;
+      let currentPage = 1;
+
+      function renderTable() {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        rows.forEach((row, i) => {
+          row.style.display = (i >= start && i < end) ? '' : 'none';
+        });
+
+        document.getElementById("paginationInfo").textContent = `Page ${currentPage} of ${totalPages}`;
+        document.getElementById("prevPage").disabled = currentPage === 1;
+        document.getElementById("nextPage").disabled = currentPage === totalPages;
+      }
+
+      document.getElementById("prevPage").onclick = () => { if (currentPage > 1) { currentPage--; renderTable(); } };
+      document.getElementById("nextPage").onclick = () => { if (currentPage < totalPages) { currentPage++; renderTable(); } };
+      renderTable(); // init
+
+      // Add Allocation
+      document.getElementById("addAllocationForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const ip = form.ip.value.trim();
+        const port = form.port.value.trim();
+        const domain = form.domain.value.trim();
+
+        if (!ip || !port) return alert("IP and Ports required.");
+
+        try {
+          const res = await fetch(`/admin/node/${nodeId}/allocations/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip, port, domain })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          location.reload();
+        } catch (err) {
+          alert(err.message || "Failed to add allocation");
+        }
+      };
+
+      // Delete Allocation
+      window.deleteAllocation = async (id) => {
+        if (!confirm("Delete this allocation?")) return;
+        try {
+          const res = await fetch(`/admin/node/${nodeId}/allocations/delete/${id}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error();
+          document.getElementById(`allocation-${id}`).remove();
+        } catch (e) {
+          alert("Failed to delete.");
+        }
+      };
+
+      // Modal & Config
+      window.configureNode = async () => {
         const res = await fetch(`/admin/node/${nodeId}/configure-key`, { method: "POST" });
         const data = await res.json();
         document.getElementById("configCommand").textContent = data.command;
         document.getElementById("configModal").classList.remove("hidden");
         document.getElementById("configModal").classList.add("flex");
-      }
+      };
 
-      function closeConfigModal() {
-        document.getElementById("configModal").classList.add("hidden");
+      window.closeConfigModal = () => {
         document.getElementById("configModal").classList.remove("flex");
-      }
+        document.getElementById("configModal").classList.add("hidden");
+      };
 
-     
-    function copyCommand() {
-  const button = document.getElementById("copyButton");
-  const command = document.getElementById("configCommand").textContent;
+      window.copyCommand = () => {
+        navigator.clipboard.writeText(document.getElementById("configCommand").textContent);
+        const btn = document.getElementById("copyButton");
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy Command", 2000);
+      };
 
-  navigator.clipboard.writeText(command).then(() => {
-    const originalText = button.textContent;
-    button.textContent = "Copied!";
-    button.disabled = true;
-
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.disabled = false;
-    }, 3000);
-  }).catch(err => {
-    console.error("Failed to copy: ", err);
-    alert("Failed to copy command");
-  });
-}
-      // Delete Node
-      async function deleteNode() {
-        if (!confirm("Are you sure you want to delete this node?")) return;
+      window.deleteNode = async () => {
+        if (!confirm("Permanently delete this node? This cannot be undone.")) return;
         const res = await fetch(`/admin/node/${nodeId}/delete`, { method: "POST" });
-        if (res.ok) window.location.href = "/admin/nodes";
-        else alert("Failed to delete node");
-      }
+        if (res.ok) location.href = '/admin/nodes';
+        else alert("Failed to delete node.");
+      };
 
-      // Charts setup
-      const labels = Array.from({ length: 20 }, (_, i) => '');
+      // Charts
+      Chart.defaults.color = '#737373';
+      Chart.defaults.borderColor = '#262626';
+
+      const chartOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        elements: { point: { radius: 0 } },
+        scales: {
+          x: { display: false },
+          y: { beginAtZero: true, grid: { color: '#262626' } }
+        },
+        plugins: { legend: { display: false }, tooltip: { enabled: true, intersect: false, mode: 'index' } }
+      };
+
       const cpuChart = new Chart(document.getElementById('cpuChart'), {
         type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'CPU %',
-            data: Array(20).fill(0),
-            borderColor: 'rgb(34,197,94)',
-            backgroundColor: 'rgba(34,197,94,0.2)',
-            tension: 0.3
-          }]
-        },
-        options: { animation: false, responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+        data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4 }] },
+        options: { ...chartOpts, scales: { ...chartOpts.scales, y: { beginAtZero: true, max: 100 } } }
       });
 
       const ramChart = new Chart(document.getElementById('ramChart'), {
         type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'RAM GB',
-            data: Array(20).fill(0),
-            borderColor: 'rgb(59,130,246)',
-            backgroundColor: 'rgba(59,130,246,0.2)',
-            tension: 0.3
-          }]
-        },
-        options: { animation: false, responsive: true, scales: { y: { beginAtZero: true } } }
+        data: { labels: Array(20).fill(''), datasets: [{ data: Array(20).fill(0), borderColor: '#6366f1', backgroundColor: 'rgba(99, 102, 241, 0.1)', fill: true, tension: 0.4 }] },
+        options: chartOpts
       });
+
       async function fetchStats() {
         try {
           const res = await fetch(`/admin/node/stats/${nodeId}`);
-          if (!res.ok) throw new Error('Failed to fetch stats');
+          if (!res.ok) return;
           const data = await res.json();
+          const s = data.stats;
 
-          // CPU and RAM charts
-          const cpuPercent = data.stats.cpuUsagePercent || 0;
-          const ramUsed = parseFloat(data.stats.usedRamGB) || 0;
-
+          // Charts
+          cpuChart.data.datasets[0].data.push(s.cpuUsagePercent || 0);
           cpuChart.data.datasets[0].data.shift();
-          cpuChart.data.datasets[0].data.push(cpuPercent);
           cpuChart.update('none');
 
+          ramChart.data.datasets[0].data.push(parseFloat(s.usedRamGB) || 0);
           ramChart.data.datasets[0].data.shift();
-          ramChart.data.datasets[0].data.push(ramUsed);
           ramChart.update('none');
 
-          // System info
-          document.getElementById("osType").textContent = data.stats.osType;
-          document.getElementById("osPlatform").textContent = data.stats.osPlatform;
-          document.getElementById("osArch").textContent = data.stats.osArch;
-          document.getElementById("osRelease").textContent = data.stats.osRelease;
-          document.getElementById("cpuModel").textContent = data.stats.cpuModel;
-          document.getElementById("cpuSpeed").textContent = data.stats.cpuSpeed;
-          document.getElementById("uptime").textContent = data.stats.uptime;
-          document.getElementById("load1").textContent = data.stats.load1;
-          document.getElementById("load5").textContent = data.stats.load5;
-          document.getElementById("load15").textContent = data.stats.load15;
+          // Text Stats
+          document.getElementById("osType").textContent = s.osType;
+          document.getElementById("osPlatform").textContent = s.osPlatform;
+          document.getElementById("osArch").textContent = s.osArch;
+          document.getElementById("osRelease").textContent = s.osRelease;
+          document.getElementById("cpuModel").textContent = s.cpuModel;
+          document.getElementById("cpuSpeed").textContent = s.cpuSpeed;
+          document.getElementById("uptime").textContent = s.uptime;
+          document.getElementById("load1").textContent = s.load1;
+          document.getElementById("load5").textContent = s.load5;
+          document.getElementById("load15").textContent = s.load15;
 
-        } catch (err) {
-          console.error(err);
-        }
+        } catch (e) { console.error(e); }
       }
-
-      setInterval(fetchStats, 5000);
+      setInterval(fetchStats, 3000);
       fetchStats();
+
     </script>
 </body>
 

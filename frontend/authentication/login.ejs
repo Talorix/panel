@@ -1,88 +1,165 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-neutral-950 font-space-grotesk antialiased">
+
 <head>
   <meta charset="UTF-8">
-  <title><%= name %> - Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Login
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
   <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+
   <style>
-    input, button { border-radius: 0.25rem; }
-  </style>
-   <style>
-  /* Import Google Fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-  /* Tailwind-style font class */
-  .font-space-grotesk {
+    .font-space-grotesk {
       font-family: 'Space Grotesk', sans-serif;
-  }
-</style>
+    }
 
+    /* Custom scrollbar to keep it sleek */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #262626;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #404040;
+    }
+
+    /* Autofill style fix for dark mode */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px #171717 inset !important;
+      -webkit-text-fill-color: white !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
 
-  <!-- Left: Login Form -->
-  <div class="w-full md:w-1/3 flex flex-col justify-center px-12 bg-gradient-to-b from-neutral-900 via-neutral-950 to-neutral-900 border-r border-neutral-800">
-    <h1 class="text-4xl font-bold mb-8"><%= name %> - Login</h1>
+<body class="flex h-full w-full overflow-hidden text-white selection:bg-neutral-700 selection:text-white">
 
-    <% if (typeof error !== 'undefined') { %>
-      <p class="text-red-500 mb-4"><%= error %></p>
-    <% } %>
-
-    <form id="loginForm" method="POST" action="/login" class="space-y-4">
-      <div>
-        <label class="block text-xs font-medium text-neutral-600 mb-1.5">
-          Email <span class="text-red-600">*</span>
-        </label>
-        <input
-          type="email"
-          name="email"
-          placeholder="guy@email.com"
-          required
-          class="w-full px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-900/60 text-neutral-100 border-neutral-800/60 placeholder-neutral-500"
-        />
+  <!-- Left Side: Form -->
+  <div
+    class="flex h-full w-full flex-col justify-center overflow-y-auto border-r border-neutral-900 bg-black px-8 py-12 lg:w-[450px] lg:shrink-0 lg:px-12">
+    <div class="mx-auto w-full max-w-sm">
+      <!-- Header -->
+      <div class="mb-10">
+        <div class="mb-6 flex items-center gap-3">
+          <!-- Optional: Use logo if available, or just name -->
+          <% if (config.logo) { %>
+            <img src="<%= config.logo %>" alt="Logo"
+              class="h-10 w-10 object-contain brightness-200 contrast-100 grayscale hover:grayscale-0 transition-all duration-300">
+            <% } %>
+              <span class="text-xl font-bold tracking-tight text-neutral-100">
+                <%= name %>
+              </span>
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Welcome back</h1>
+        <p class="text-sm text-neutral-500">
+          Enter your credentials to access the console.
+        </p>
       </div>
 
-      <div>
-        <label class="block text-xs font-medium text-neutral-600 mb-1.5">
-          Password <span class="text-red-600">*</span>
-        </label>
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          required
-          class="w-full px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-900/60 text-neutral-100 border-neutral-800/60 placeholder-neutral-500"
-        />
-      </div>
+      <!-- Error Alert -->
+      <% if (typeof error !=='undefined' && error) { %>
+        <div
+          class="mb-6 flex items-center gap-3 rounded-md border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+            class="h-5 w-5 shrink-0 text-red-500">
+            <path fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
+              clip-rule="evenodd" />
+          </svg>
+          <span>
+            <%= error %>
+          </span>
+        </div>
+        <% } %>
 
-      <button
-        type="submit"
-        class="w-full px-3 py-1.5 text-xs font-semibold bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
-      >
-        Login
-      </button>
-    </form>
-<% if (registerEnabled) { %>
-    <p class="mt-6 text-center text-gray-300">
-      Don't have an account? 
-      <a href="/register" class="text-blue-500 hover:underline font-semibold">Register</a>
-    </p>
-    <% } %>
+          <!-- Form -->
+          <form id="loginForm" method="POST" action="/login" class="flex flex-col gap-5">
+
+            <!-- Email -->
+            <div class="group relative">
+              <label for="email"
+                class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-neutral-500 transition-colors group-focus-within:text-white">
+                Email Address
+              </label>
+              <div class="relative">
+                <input id="email" type="email" name="email" placeholder="name@example.com" required
+                  class="peer block w-full rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-neutral-200 placeholder-neutral-600 outline-none transition-all focus:border-neutral-500 focus:bg-neutral-900 focus:ring-1 focus:ring-neutral-500" />
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="group relative">
+              <div class="mb-1.5 flex items-center justify-between">
+                <label for="password"
+                  class="text-xs font-medium uppercase tracking-wider text-neutral-500 transition-colors group-focus-within:text-white">
+                  Password
+                </label>
+                <!-- Optional: Forgot Password Link could go here -->
+              </div>
+              <div class="relative">
+                <input id="password" type="password" name="password" placeholder="••••••••" required
+                  class="peer block w-full rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-neutral-200 placeholder-neutral-600 outline-none transition-all focus:border-neutral-500 focus:bg-neutral-900 focus:ring-1 focus:ring-neutral-500" />
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit"
+              class="mt-2 flex w-full items-center justify-center rounded-md bg-white px-4 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.01] hover:bg-neutral-200 active:scale-[0.99]">
+              Sign In
+            </button>
+
+          </form>
+
+          <!-- Footer / Register -->
+          <div class="mt-8 text-center text-xs text-neutral-500">
+            <% if (registerEnabled) { %>
+              <p>
+                Don't have an account?
+                <a href="/register"
+                  class="ml-1 font-medium text-white underline underline-offset-4 hover:text-neutral-300 transition-colors">Create
+                  account</a>
+              </p>
+              <% } else { %>
+                <p>Registration is currently disabled.</p>
+                <% } %>
+          </div>
+
+          <div class="mt-8 text-center text-xs text-neutral-800">
+            &copy; <%= new Date().getFullYear() %>
+              <%= name %>
+          </div>
+    </div>
   </div>
 
-  <!-- Right: Landscape -->
-  <div class="hidden md:block w-2/3 relative">
-    <img 
-      src="https://images.pexels.com/photos/346529/pexels-photo-346529.jpeg" 
-      alt="Landscape" 
-      class="w-full h-full object-cover brightness-75"
-    />
-    <div class="absolute inset-0 bg-neutral-950/40 backdrop-blur-sm"></div>
-    <div class="absolute inset-0 flex items-center justify-center">
-      <h2 class="text-4xl font-bold text-gray-100">Welcome Back</h2>
+  <!-- Right Side: Image -->
+  <div class="hidden lg:relative lg:flex lg:w-2/3 items-center justify-center bg-neutral-900 overflow-hidden">
+    <div class="absolute inset-0 bg-neutral-950/20 z-10"></div>
+    <!-- Using the local asset we just ensured exists -->
+    <img src="/assets/login_bg.png" alt="Abstract Background"
+      class="h-full w-full object-cover opacity-90 transition-transform duration-[20s] hover:scale-105" />
+
+    <div class="absolute bottom-12 left-12 z-20 max-w-lg">
+      <h2 class="text-3xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">Architecture designed for scale.</h2>
+      <p class="text-neutral-300 text-lg drop-shadow-md">Powerful, reliable, and secure infrastructure management at
+        your fingertips.</p>
     </div>
   </div>
 
 </body>
+
 </html>

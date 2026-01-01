@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "admin": "node cli/adminsys",
-    "tmkc": "npx @tailwindcss/cli -i ./public/tw.conf -o ./public/assets/tailwind.css --watch"
+    "tmkc": "npx @tailwindcss/cli -i ./public/tw.conf -o ./public/assets/tailwind.css --content './frontend/**/*.ejs' --watch"
   },
   "bin": {
     "talorix": "./cli/talorix.js"

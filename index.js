@@ -112,7 +112,7 @@ Source:   https://github.com/talorix/panel
 async function start() {
   await getVersion();
   app.listen(PORT, () => {
-    Logger.success(`Talorix have started on the port ${PORT}`);
+    Logger.success(`Talorix have started on the port http://localhost:${PORT}`);
   });
 }
 

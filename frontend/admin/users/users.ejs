@@ -1,160 +1,247 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
   <meta charset="UTF-8" />
-  <title><%= name %> - Users</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Users
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
+
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name, user }) %>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
 
-      <!-- Header -->
-      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold flex items-center gap-2">
-            <i data-lucide="users" class="w-6 h-6"></i> Users
-          </h1>
-          <p class="text-gray-400">Manage all users</p>
+        <!-- Header -->
+        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Users</h1>
+            <p class="mt-2 text-neutral-400">Manage registered users and permissions.</p>
+          </div>
+          <div>
+            <button onclick="openCreateModal()"
+              class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-5 w-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3.75 19.5a6.96 6.96 0 006.138-3.963 12.022 12.022 0 00.524 6.487 7.06 7.06 0 01-6.662-2.525z" />
+              </svg>
+              Create User
+            </button>
+          </div>
         </div>
 
-        
-  <!-- Open Modal Button -->
-  <button
-    onclick="openCreateModal()"
-    class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl font-medium transition"
-  >
-    + Create User
-  </button>
+        <!-- Users Grid -->
+        <% if (users && users.length> 0) { %>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <% users.forEach(u=> { %>
+              <div
+                class="group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:-translate-y-1 hover:border-neutral-700 hover:shadow-xl hover:shadow-neutral-900/20">
+
+                <div class="mb-6 flex items-start justify-between">
+                  <div class="flex items-center gap-4">
+                    <img
+                      src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=<%= u.username %>&backgroundColor=transparent"
+                      alt="Avatar" class="h-12 w-12 rounded-xl bg-neutral-900 object-cover p-1">
+                    <div>
+                      <h3 class="text-lg font-bold text-white">
+                        <%= u.username %>
+                      </h3>
+                      <div class="flex items-center gap-2 text-xs text-neutral-500">
+                        <span class="truncate max-w-[150px]">
+                          <%= u.email %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <% if (u.admin) { %>
+                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-900/20 text-indigo-400"
+                      title="Administrator">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-5 w-5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                      </svg>
+                    </div>
+                    <% } %>
+                </div>
+
+                <!-- Stats -->
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                  <div class="rounded-lg bg-neutral-900/40 p-3">
+                    <p class="text-xs font-medium uppercase tracking-wider text-neutral-500">Role</p>
+                    <p class="text-sm font-bold text-white">
+                      <%= u.admin ? 'Administrator' : 'User' %>
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-neutral-900/40 p-3">
+                    <p class="text-xs font-medium uppercase tracking-wider text-neutral-500">Servers</p>
+                    <p class="font-mono text-sm text-white">
+                      <%= u.servers?.length || 0 %>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                  <a href="/admin/user/<%= u.id %>"
+                    class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-neutral-100 px-4 py-2 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-white">
+                    View Profile
+                  </a>
+                  <a href="/admin/user/<%= u.id %>/edit"
+                    class="flex items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-4 w-4">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                    </svg>
+                  </a>
+                </div>
+
+              </div>
+              <% }) %>
+          </div>
+          <% } else { %>
+            <!-- Empty State -->
+            <div
+              class="flex flex-col items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-neutral-950/30 py-24 text-center">
+              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-900">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="h-8 w-8 text-neutral-500">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">No Users Found</h3>
+              <p class="mt-2 max-w-sm text-neutral-500">No users have been registered yet.</p>
+            </div>
+            <% } %>
+
       </div>
+    </main>
 
-      <div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
-  <table class="w-full table-auto text-left border-collapse">
-    <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
-      <tr>
-        <th class="px-4 py-2">Username</th>
-        <th class="px-4 py-2">Email</th>
-        <th class="px-4 py-2">Role</th>
-        <th class="px-4 py-2">Servers</th>
-        <th class="px-4 py-2 text-right">Actions</th>
-      </tr>
-    </thead>
+    <!-- Create User Modal -->
+    <div id="createModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+      <div id="modalContent"
+        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
 
-    <tbody>
-      <% if (users && users.length > 0) { %>
-        <% users.forEach(u => { %>
-          <tr class="border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
-            
-            <!-- Username -->
-            <td class="px-4 py-3 font-semibold text-gray-100 flex items-center gap-2">
-              <i data-lucide="<%= u.admin ? 'shield' : 'user' %>" class="w-4 h-4 <%= u.admin ? 'text-indigo-400' : 'text-gray-400' %>"></i>
-              <%= u.username %>
-            </td>
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-white">Create New User</h2>
+          <button onclick="closeCreateModal()" class="text-neutral-500 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-            <!-- Email -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= u.email %>
-            </td>
+        <div class="space-y-4">
+          <div>
+            <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">Username</label>
+            <input id="u-username" placeholder="johndoe"
+              class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+          </div>
 
-            <!-- Role -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= u.admin ? 'Admin' : 'User' %>
-            </td>
+          <div>
+            <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">Email
+              Address</label>
+            <input id="u-email" type="email" placeholder="john@example.com"
+              class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+          </div>
 
-            <!-- Servers -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= u.servers?.length || 0 %>
-            </td>
+          <div>
+            <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">Password</label>
+            <input id="u-password" type="password" placeholder="••••••••"
+              class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+          </div>
 
-            <!-- Actions -->
-            <td class="px-4 py-3 text-right flex justify-end gap-2">
-              <a href="/admin/user/<%= u.id %>" class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700">
-                View
-              </a>
-              <a href="/admin/user/<%= u.id %>/edit" class="px-3 py-1 text-xs font-semibold rounded-lg bg-neutral-800 hover:bg-neutral-700">
-                Edit
-              </a>
-            </td>
+          <div class="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900/50 p-3">
+            <input type="checkbox" id="u-admin"
+              class="h-5 w-5 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 checked:bg-white checked:text-black">
+            <label for="u-admin" class="text-sm font-medium text-white cursor-pointer select-none">Administrator
+              Access</label>
+          </div>
+        </div>
 
-          </tr>
-        <% }) %>
-      <% } else { %>
-        <tr>
-          <td colspan="5" class="px-4 py-6 text-neutral-500 italic text-center">
-            No users found.
-          </td>
-        </tr>
-      <% } %>
-    </tbody>
-  </table>
-</div>
-<div id="createModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-  <div class="bg-neutral-950 border border-neutral-900 p-8 w-full max-w-lg transform scale-95 opacity-0 rounded-md shadow-md">
-    <h2 class="text-md font-semibold mb-6">Create User</h2>
-    <div class="space-y-4">
-      <input id="u-username" placeholder="Username" class="w-full px-4 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-900/60 text-neutral-100 border-neutral-800/60 placeholder-neutral-500" />
-      <input id="u-email" placeholder="Email" class="w-full px-4 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-900/60 text-neutral-100 border-neutral-800/60 placeholder-neutral-500" />
-      <input id="u-password" placeholder="Password" type="password" class="w-full px-4 py-2.5 text-md focus:outline-none focus:ring-2 focus:ring-neutral-900 bg-neutral-900/60 text-neutral-100 border-neutral-800/60 placeholder-neutral-500" />
-      <label class="flex items-center gap-2">
-        <input type="checkbox" id="u-admin" class="w-4 h-4" />
-        Admin
-      </label>
+        <div class="mt-8 grid grid-cols-2 gap-3">
+          <button onclick="closeCreateModal()"
+            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm font-bold text-neutral-300 transition-colors hover:bg-neutral-800">Cancel</button>
+          <button onclick="createUser()"
+            class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">Create
+            User</button>
+        </div>
+
+      </div>
     </div>
-    <div class="flex justify-end gap-3 mt-8">
-      <button onclick="closeCreateModal()" class="px-5 py-2 bg-red-600 text-white transition rounded-md hover:bg-red-700">Cancel</button>
-      <button onclick="createUser()" class="px-5 py-2 bg-gray-100 text-neutral-950 transition rounded-md hover:bg-gray-300">Create</button>
-    </div>
-  </div>
-</div>
-    </div>
-  </main>
 
- <script>
-  lucide.createIcons();
-  const modal = document.getElementById("createModal");
-  const modalContent = modal.querySelector("div");
+    <script>
+      const modal = document.getElementById("createModal");
+      const modalContent = document.getElementById("modalContent");
 
-  function openCreateModal() {
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    setTimeout(() => {
-      modalContent.classList.add("modal-enter-active");
-      modalContent.classList.remove("scale-95", "opacity-0");
-    }, 10);
-  }
+      function openCreateModal() {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        // Trigger reflow
+        void modal.offsetWidth;
+        modalContent.classList.remove("scale-95", "opacity-0");
+        modalContent.classList.add("scale-100", "opacity-100");
+      }
 
-  function closeCreateModal() {
-    modalContent.classList.remove("modal-enter-active");
-    modalContent.classList.add("modal-leave-active");
-    setTimeout(() => {
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
-      modalContent.classList.remove("modal-leave-active");
-      modalContent.classList.add("scale-95", "opacity-0");
-    }, 250);
-  }
+      function closeCreateModal() {
+        modalContent.classList.remove("scale-100", "opacity-100");
+        modalContent.classList.add("scale-95", "opacity-0");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+        }, 200);
+      }
 
-  async function createUser() {
-    const username = document.getElementById("u-username").value;
-    const email = document.getElementById("u-email").value;
-    const password = document.getElementById("u-password").value;
-    const admin = document.getElementById("u-admin").checked;
+      async function createUser() {
+        const username = document.getElementById("u-username").value;
+        const email = document.getElementById("u-email").value;
+        const password = document.getElementById("u-password").value;
+        const admin = document.getElementById("u-admin").checked;
 
-    if (!username || !email || !password) return alert("All fields are required");
+        if (!username || !email || !password) return alert("All fields are required");
 
-    const res = await fetch("/admin/users/new", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password, admin })
-    });
+        const res = await fetch("/admin/users/new", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password, admin })
+        });
 
-    if (res.ok) location.reload();
-    else alert("Failed to create user");
-  }
-</script>
+        if (res.ok) location.reload();
+        else alert("Failed to create user");
+      }
+    </script>
 
 </body>
+
 </html>

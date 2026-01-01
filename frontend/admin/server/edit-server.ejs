@@ -1,118 +1,163 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
-  <head>
-    <meta charset="UTF-8" />
-    <title><%= name %> - Edit Server</title>
-    <link rel="stylesheet" href="/assets/tailwind.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-  </head>
-  <body class="min-h-screen flex">
-    <%- include('../../components/sidebar', { name, user }) %>
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-xl mx-auto space-y-6">
-        <h1 class="text-3xl font-bold mb-4">🖥 Edit Server: <%= server.name %></h1>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Edit Server
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-        <div class="bg-neutral-900 border border-neutral-800 rounded-md p-6 space-y-4">
-          <!-- Select User -->
-          <select
-            id="user"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          >
-            <% users.forEach(u => { %>
-            <option value="<%= u.id %>" <%= u.id === server.userId ? "selected" : "" %>>
-              <%= u.username %>
-            </option>
-            <% }) %>
-          </select>
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
 
-          <!-- Select Node -->
-          <select
-            id="node"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          >
-            <% nodes.forEach(n => { %>
-            <option value="<%= n.id %>" <%= n.name === server.node.name ? "selected" : "" %>>
-              <%= n.name %> (<%= n.ip %>:<%= n.port %>)
-            </option>
-            <% }) %>
-          </select>
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
 
-          <!-- Select Image -->
-          <select
-            id="image"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-            onchange="loadImageEnv()"
-          >
-            <% images.forEach(i => { %>
-            <option
-              value="<%= i.id %>"
-              data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>"
-              <%= i.id === server.imageId ? "selected" : "" %>
-            >
-              <%= i.name %>
-            </option>
-            <% }) %>
-          </select>
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
 
-          <!-- Server Info -->
-          <input
-            id="name"
-            placeholder="Server Name"
-            value="<%= server.name %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="ram"
-            placeholder="RAM (MB)"
-            type="number"
-            value="<%= server.ram %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="core"
-            placeholder="CPU Cores"
-            type="number"
-            value="<%= server.core %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <input
-            id="disk"
-            placeholder="Disk (GB)"
-            type="number"
-            value="<%= server.disk %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-          <!--input
-            id="port"
-            placeholder="Port"
-            type="number"
-            value="<%= server.port %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          /--->
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
 
-          <!-- ENV Editor -->
-          <div class="space-y-2">
-            <label class="text-sm text-gray-400">Environment Variables</label>
-            <div id="envList" class="space-y-2"></div>
+<body class="flex h-full w-full overflow-hidden">
+
+  <%- include('../../components/sidebar', { name, user }) %>
+
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+
+        <!-- Back Link -->
+        <a href="/admin/servers"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Servers
+        </a>
+
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Edit Server</h1>
+          <p class="mt-2 text-neutral-400">Modifying configuration for <%= server.name %>.</p>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="space-y-8">
+
+          <!-- Details -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+            <h2 class="mb-6 text-lg font-bold text-white">General</h2>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Server Name</label>
+                <input id="name" type="text" value="<%= server.name %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Owner</label>
+                <select id="user"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
+                  <% users.forEach(u=> { %>
+                    <option value="<%= u.id %>" <%=u.id===server.userId ? "selected" : "" %>><%= u.username %>
+                    </option>
+                    <% }) %>
+                </select>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Node</label>
+                <select id="node"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
+                  <% nodes.forEach(n=> { %>
+                    <option value="<%= n.id %>" <%=n.name===server.node.name ? "selected" : "" %>>
+                      <%= n.name %> (<%= n.ip %>:<%= n.port %>)
+                    </option>
+                    <% }) %>
+                </select>
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Image</label>
+                <select id="image" onchange="loadImageEnv()"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
+                  <% images.forEach(i=> { %>
+                    <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>"
+                      <%=i.id===server.imageId ? "selected" : "" %>>
+                      <%= i.name %>
+                    </option>
+                    <% }) %>
+                </select>
+              </div>
+
+            </div>
           </div>
 
-          <div class="flex justify-end">
-            <button
-              onclick="editServer()"
-              id="editBtn"
-              class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl"
-            >
+          <!-- Resources -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+            <h2 class="mb-6 text-lg font-bold text-white">Resources</h2>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">RAM (MB)</label>
+                <input id="ram" type="number" value="<%= server.ram %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Disk (MB)</label>
+                <input id="disk" type="number" value="<%= server.disk %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">CPU (Cores)</label>
+                <input id="core" type="number" value="<%= server.core %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Env Vars -->
+          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+            <h2 class="mb-6 text-lg font-bold text-white">Startup Configuration</h2>
+            <div id="envSection">
+              <label class="mb-3 block text-xs font-bold uppercase tracking-wider text-neutral-500">Environment
+                Variables</label>
+              <div id="envList" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <!-- Loaded via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-4 pt-4 border-t border-neutral-900">
+            <a href="/admin/servers"
+              class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
+            <button onclick="editServer()" id="editBtn"
+              class="flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10">
               Save Changes
             </button>
           </div>
+
         </div>
       </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-      const serverEnv = <%- JSON.stringify(server.env || {}) %>;
+      const serverEnv = <% - JSON.stringify(server.env || {}) %>;
 
       function loadImageEnv() {
         const select = document.getElementById("image");
@@ -123,37 +168,25 @@
         const envList = document.getElementById("envList");
         envList.innerHTML = "";
 
-        // Merge current server env with image defaults
+        // Merge
         const mergedEnv = { ...envs, ...serverEnv };
 
         Object.entries(mergedEnv).forEach(([key, value]) => {
-          const row = document.createElement("div");
-          row.className = "flex gap-2";
-
-          row.innerHTML = `
-            <input
-              value="${key}"
-              disabled
-              class="w-1/2 p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-gray-400"
-            />
-            <input
-              value="${value}"
-              data-key="${key}"
-              class="w-1/2 p-2 rounded-xl bg-neutral-950 border border-neutral-800"
-            />
+          const div = document.createElement("div");
+          div.className = "flex flex-col space-y-1";
+          div.innerHTML = `
+              <label class="text-xs font-mono text-neutral-400">${key}</label>
+              <input data-key="${key}" value="${value}" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
           `;
-
-          envList.appendChild(row);
+          envList.appendChild(div);
         });
       }
 
       function collectEnv() {
         const env = {};
-        document
-          .querySelectorAll("#envList input[data-key]")
-          .forEach((input) => {
-            env[input.dataset.key] = input.value;
-          });
+        document.querySelectorAll("#envList input[data-key]").forEach((input) => {
+          env[input.dataset.key] = input.value;
+        });
         return env;
       }
 
@@ -161,7 +194,7 @@
         const btn = document.getElementById("editBtn");
         btn.disabled = true;
         const originalText = btn.textContent;
-        btn.textContent = "Saving…";
+        btn.textContent = "Saving...";
 
         const serverId = "<%= server.id %>";
 
@@ -174,7 +207,6 @@
             ram: parseInt(document.getElementById("ram").value),
             core: parseInt(document.getElementById("core").value),
             disk: parseInt(document.getElementById("disk").value),
-       //     port: parseInt(document.getElementById("port").value),
             env: collectEnv()
           });
 
@@ -192,7 +224,7 @@
       }
 
       loadImageEnv();
-      lucide.createIcons();
     </script>
-  </body>
+</body>
+
 </html>

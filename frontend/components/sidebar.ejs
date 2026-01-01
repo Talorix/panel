@@ -1,190 +1,253 @@
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
-  .font-space-grotesk {
-    font-family: 'Space Grotesk', sans-serif;
-  }
-</style>
-
-<!-- Mobile Sidebar Toggle Button -->
+<!-- Mobile Toggle (Only visible on small screens) -->
 <button id="sidebarToggle"
-  class="md:hidden fixed top-4 left-4 z-50 bg-neutral-950 text-gray-100 p-2 rounded-md">
-  ☰
+  class="fixed left-4 top-4 z-50 rounded-full border border-neutral-800 bg-black p-2.5 text-white shadow-xl transition-transform active:scale-95 md:hidden">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+    class="w-6 h-6">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+  </svg>
 </button>
 
-<aside id="sidebar"
-  class="fixed inset-y-0 left-0 z-40 w-64 md:relative transform -translate-x-full md:translate-x-0 transition-transform duration-300 bg-neutral-950 border-r border-neutral-800 flex flex-col justify-between h-screen text-gray-100 overflow-y-auto">
+<!-- Sidebar Overlay (Mobile) -->
+<div id="sidebarOverlay" class="fixed inset-0 z-30 hidden bg-black/50 backdrop-blur-sm transition-opacity md:hidden">
+</div>
 
-  <!-- Top App Name -->
-  <div class="px-4 py-6 text-center border-b border-neutral-800">
-    <h1 class="text-2xl font-bold text-gray-100 font-space-grotesk">
-      <%= name %>
-    </h1>
+<!-- Sidebar -->
+<aside id="sidebar"
+  class="fixed inset-y-0 left-0 z-40 flex h-full w-72 -translate-x-full flex-col border-r border-neutral-900 bg-black transition-transform duration-300 ease-in-out md:static md:translate-x-0">
+
+  <!-- Header / Brand -->
+  <div class="flex h-20 shrink-0 items-center px-6">
+    <a href="/dashboard" class="flex items-center gap-3 group">
+      <% if (typeof config !=='undefined' && config.logo) { %>
+        <img src="<%= config.logo %>" alt="Logo"
+          class="h-8 w-8 object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity">
+        <% } else { %>
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-900">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-5 h-5 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 7.5l-9-5.25-9 5.25m18 0l-9 5.25-9-5.25m18 0L12 21l-9-5.25" />
+            </svg>
+          </div>
+          <% } %>
+            <span
+              class="font-space-grotesk text-lg font-bold tracking-tight text-white group-hover:text-neutral-200 transition-colors">
+              <%= typeof name !=='undefined' ? name : 'Console' %>
+            </span>
+    </a>
   </div>
 
-  <!-- Navigation Links -->
-  <nav id="mainSidebarNav" class="flex-1 px-4 py-6 space-y-1">
-    <a href="/dashboard"
-      class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-      <svg class="w-5 h-5 text-gray-300" data-lucide="layout-dashboard"></svg>
-      Dashboard
-    </a>
+  <!-- Navigation -->
+  <div class="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
+    <nav class="space-y-1">
 
-    <% if (user.admin) { %>
-      <!-- Admin Section Divider -->
-      <div class="pt-2 flex items-center gap-2">
-        <div class="flex-1 border-t border-neutral-800"></div>
-        <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Admin</span>
-        <div class="flex-1 border-t border-neutral-800"></div>
-      </div>
-
-      <!-- Admin Links -->
-      <div class="space-y-1 mt-2">
-        <a href="/admin/settings"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-5 h-5 text-gray-300" data-lucide="settings"></svg>Settings
+      <!-- Main Section -->
+      <div class="mb-6">
+        <p class="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Platform</p>
+        <a href="/dashboard"
+          class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+          Dashboard
         </a>
-        <a href="/admin/nodes"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-4 h-4 text-gray-300" data-lucide="boxes"></svg>Nodes
-        </a>
-        <a href="/admin/images"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-4 h-4 text-gray-300" data-lucide="image"></svg>Images
-        </a>
-        <a href="/admin/servers"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-4 h-4 text-gray-300" data-lucide="server"></svg>Servers
-        </a>
-        <a href="/admin/users"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-4 h-4 text-gray-300" data-lucide="users"></svg>Users
-        </a>
-        <a href="/admin/apikeys"
-          class="w-full text-left flex items-center gap-3 px-3 py-1.5 rounded-xl hover:bg-neutral-900 transition-colors">
-          <svg class="w-4 h-4 text-gray-300" data-lucide="key"></svg>API Keys
+        <a href="/settings"
+          class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Settings
         </a>
       </div>
-    <% } %>
-  </nav>
 
-  <% if (typeof server !== 'undefined') { %>
-    <nav id="serverSidebarNav" class="hidden flex-1 px-4 py-6 space-y-1">
-      <a href="/dashboard"
-        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-900 transition">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>Back to Dashboard
-      </a>
-
-      <div class="flex items-center gap-2 my-2">
-        <div class="flex-1 border-t border-neutral-800"></div>
-        <span class="text-xs font-semibold uppercase tracking-wider text-gray-400">SERVER</span>
-        <div class="flex-1 border-t border-neutral-800"></div>
-      </div>
-
-      <a href="/server/manage/<%= server.id %>"
-        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-900 transition">
-        <i data-lucide="square-terminal" class="w-4 h-4"></i>Console
-      </a>
-
-      <a href="/server/files/<%= server.id %>"
-        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-900 transition">
-        <i data-lucide="folder-open" class="w-4 h-4"></i>Files
-      </a>
-
-      <a href="/server/network/<%= server.id %>"
-        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-900 transition">
-        <i data-lucide="network" class="w-4 h-4"></i>Network
-      </a>
-
-      <a href="/server/settings/<%= server.id %>"
-        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-900 transition">
-        <i data-lucide="cog" class="w-4 h-4"></i>Settings
-      </a>
-    </nav>
-  <% } %>
-
-  <!-- User Box at Bottom -->
-  <div class="px-4 py-6 border-t border-neutral-800">
-    <div class="relative">
-      <button id="userButton"
-        class="w-full text-left px-4 py-3 bg-neutral-950 hover:bg-neutral-900 border border-neutral-900 rounded-xl flex items-center transition-colors">
-        <img src="https://api.dicebear.com/9.x/pixel-art/svg?seed=<%= user.username %>" alt="Avatar"
-          class="w-10 h-10 rounded-full mr-3" />
-        <div class="flex flex-col">
-          <span class="font-semibold"><%= user.username %></span>
-          <span class="text-xs text-gray-400"><%= user.email %></span>
+      <!-- Server Context Navigation (Only specific pages) -->
+      <% if (typeof server !=='undefined' ) { %>
+        <div class="mb-6">
+          <p class="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Server Management</p>
+          <div class="flex flex-col gap-0.5">
+            <a href="/server/manage/<%= server.id %>"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-5 h-5 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Console
+            </a>
+            <a href="/server/files/<%= server.id %>"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-5 h-5 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+              </svg>
+              File Manager
+            </a>
+            <a href="/server/network/<%= server.id %>"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-5 h-5 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12h15m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Network
+            </a>
+            <a href="/server/settings/<%= server.id %>"
+              class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-5 h-5 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+              </svg>
+              Settings
+            </a>
+          </div>
         </div>
-      </button>
+        <% } %>
 
-      <div id="userDropdown"
-        class="absolute left-0 bottom-full mb-2 w-full bg-neutral-950 border border-neutral-800 rounded-xl shadow-lg transform scale-95 opacity-0 origin-bottom transition-all duration-200 pointer-events-none flex-col z-50">
-        <button onclick="window.location.href='/settings'"
-          class="cursor-pointer w-full text-left px-4 py-2 hover:bg-neutral-900 rounded-xl transition-colors">Settings</button>
-        <form id="logoutFormSidebar" method="POST">
+          <!-- Administration (Conditional) -->
+          <% if (user && user.admin) { %>
+            <div class="mb-6">
+              <p class="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-neutral-500">Administration</p>
+              <div class="flex flex-col gap-0.5">
+                <a href="/admin/settings"
+                  class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M6 13.5V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 9.75V10.5" />
+                  </svg>
+                  Settings
+                </a>
+                <a href="/admin/nodes"
+                  class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+                  </svg>
+                  Nodes
+                </a>
+                <a href="/admin/servers"
+                  class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
+                  </svg>
+                  Servers
+                </a>
+                <a href="/admin/users"
+                  class="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 transition-all hover:bg-neutral-900 hover:text-white sidebar-link">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-5 h-5 shrink-0 transition-colors group-hover:text-white">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                  Users
+                </a>
+              </div>
+            </div>
+            <% } %>
+
+    </nav>
+  </div>
+
+  <!-- User Footer -->
+  <div class="border-t border-neutral-900 p-4">
+    <div id="userMenuBtn"
+      class="group relative flex cursor-pointer items-center gap-3 rounded-xl bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900">
+      <img
+        src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=<%= (typeof user !== 'undefined' ? user.username : 'blue') %>&backgroundColor=transparent"
+        alt="Avatar" class="h-9 w-9 rounded-lg bg-neutral-800 object-cover p-0.5">
+      <div class="flex flex-1 flex-col overflow-hidden">
+        <span class="truncate text-sm font-medium text-white">
+          <%= (typeof user !=='undefined' ? user.username : 'User' ) %>
+        </span>
+        <span class="truncate text-xs text-neutral-500">
+          <%= (typeof user !=='undefined' ? user.email : 'user@example.com' ) %>
+        </span>
+      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+        class="h-4 w-4 text-neutral-500">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+      </svg>
+
+      <!-- Dropdown -->
+      <div id="userMenuDropdown"
+        class="absolute bottom-full left-0 mb-2 hidden w-full min-w-[200px] overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 p-1 shadow-xl">
+        <form action="/logout" method="POST">
           <button type="submit"
-            class="w-full text-left px-4 py-2 hover:bg-neutral-900 transition-colors text-red-500">Logout</button>
+            class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-500 hover:bg-red-950/20 hover:text-red-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-4 w-4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+            </svg>
+            Log Out
+          </button>
         </form>
       </div>
     </div>
   </div>
+
 </aside>
 
 <script>
-  // Sidebar toggle for mobile
+  // Simple Toggle Logic
+  const toggleBtn = document.getElementById('sidebarToggle');
   const sidebar = document.getElementById('sidebar');
-  const sidebarToggle = document.getElementById('sidebarToggle');
+  const overlay = document.getElementById('sidebarOverlay');
 
-  sidebarToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('-translate-x-full');
-  });
-
-  // Toggle main/server nav
-  const isServerPage = window.location.pathname.startsWith('/server/');
-  const mainNav = document.getElementById('mainSidebarNav');
-  const serverNav = document.getElementById('serverSidebarNav');
-
-  if (!isServerPage && mainNav.classList.contains('hidden')) mainNav.classList.remove('hidden');
-  if (isServerPage && serverNav) {
-    mainNav.classList.add('hidden');
-    serverNav.classList.remove('hidden');
+  function toggleSidebar() {
+    const isClosed = sidebar.classList.contains('-translate-x-full');
+    if (isClosed) {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+    } else {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    }
   }
 
-  // User dropdown
-  const userButton = document.getElementById('userButton');
-  const userDropdown = document.getElementById('userDropdown');
-  let dropdownOpen = false;
+  toggleBtn.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
 
-  userButton.addEventListener('click', () => {
-    dropdownOpen = !dropdownOpen;
-    if (dropdownOpen) {
-      userDropdown.classList.remove('pointer-events-none', 'scale-95', 'opacity-0');
-      userDropdown.classList.add('scale-100', 'opacity-100');
-    } else {
-      userDropdown.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
-      userDropdown.classList.remove('scale-100', 'opacity-100');
+  // User Menu Logic
+  const userBtn = document.getElementById('userMenuBtn');
+  const userDropdown = document.getElementById('userMenuDropdown');
+
+  userBtn.addEventListener('click', (e) => {
+    // Prevent clicking inside the dropdown from closing it immediately if we were toggling
+    if (e.target.closest('#userMenuDropdown')) return;
+    userDropdown.classList.toggle('hidden');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!userBtn.contains(e.target)) {
+      userDropdown.classList.add('hidden');
     }
   });
 
-  // Logout
-  const logoutFormSidebar = document.getElementById("logoutFormSidebar");
-  logoutFormSidebar.addEventListener("submit", async e => {
-    e.preventDefault();
-    const response = await fetch("/logout", { method: "POST" });
-    const res = await response.json();
-    if (res.success) window.location.href = "/";
-    else alert("Logout failed");
-  });
+  // Active Link Highlight
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.remove('text-neutral-400', 'hover:bg-neutral-900', 'hover:text-white');
+      link.classList.add('bg-white', 'text-black', 'shadow-md');
 
-  // Highlight current link
-  const sidebarLinks = document.querySelectorAll('aside nav a');
-  const currentUrl = window.location.pathname;
-  sidebarLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (currentUrl === href || currentUrl.startsWith(href + '/')) {
-      link.classList.add('bg-neutral-900');
-      link.classList.remove('hover:bg-neutral-900');
+      // Change icon color if possible
+      const icon = link.querySelector('svg');
+      if (icon) {
+        icon.classList.remove('group-hover:text-white');
+        icon.classList.add('text-black');
+      }
     }
   });
-
-  lucide.createIcons();
 </script>

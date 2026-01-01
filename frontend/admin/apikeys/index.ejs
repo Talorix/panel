@@ -1,413 +1,376 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>
         <%= name %> - API Keys
     </title>
     <link rel="stylesheet" href="/assets/tailwind.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        .font-space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
 </head>
 
-<body class="min-h-screen flex">
+<body class="flex h-full w-full overflow-hidden">
+
     <%- include('../../components/sidebar', { name, user }) %>
 
-        <main class="flex-1 p-8 overflow-auto">
-            <div class="max-w-6xl mx-auto space-y-6">
+        <main class="relative flex-1 overflow-y-auto bg-black">
+            <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
+
                 <!-- Header -->
-                <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md flex justify-between items-center">
+                <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                     <div>
-                        <h1 class="text-3xl font-bold flex items-center gap-2">
-                            <i data-lucide="key" class="w-6 h-6"></i> API Keys
-                        </h1>
-                        <p class="text-gray-400">Manage all deployment and user API keys</p>
+                        <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">API Keys</h1>
+                        <p class="mt-2 text-neutral-400">Manage programmable access to your panel.</p>
                     </div>
-                    <button id="createApiKeyBtn" 
-                        class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl font-medium">
-                        + Create API Key
+
+                    <button id="createApiKeyBtn"
+                        class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 active:scale-[0.98]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Create API Key
                     </button>
                 </div>
 
-
-            <!-- API Keys Table -->
-            <div class="bg-neutral-900/20 border border-neutral-900 rounded-md overflow-auto">
-                <table class="min-w-full divide-y divide-neutral-800">
-                    <thead class="bg-neutral-950">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-100">Name</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-100">Preview</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-100">Permissions</th>
-                            <th class="px-4 py-3 text-right text-sm font-semibold text-gray-100">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-neutral-800 bg-neutral-950">
-                      <% if (apikeys && apikeys.length > 0) { %>
-                        <% apikeys.forEach(key => { %>
-                          <tr class="hover:bg-neutral-900/50 transition-colors">
-                            <td class="px-4 py-3">
-                              <div class="flex items-center gap-3">
-                                <i data-lucide="key" class="w-5 h-5 text-gray-100"></i>
-                                <div>
-                                  <div class="font-semibold text-gray-100"><%= key.name || 'Unnamed' %></div>
-                                  <div class="text-xs text-neutral-400"><%= key.createdAt ? new Date(key.createdAt).toLocaleString() : '' %></div>
+                <!-- Keys Grid -->
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                    <% if (apikeys && apikeys.length> 0) { %>
+                        <% apikeys.forEach(key=> { %>
+                            <div
+                                class="group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:border-neutral-700">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-neutral-400 border border-neutral-800">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-white">
+                                                <%= key.name || 'Unnamed' %>
+                                            </h3>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="rounded bg-neutral-900 px-1.5 py-0.5 font-mono text-xs text-neutral-400">
+                                                    <%= key.preview %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-1 z-20">
+                                        <button data-action="edit" data-id="<%= key.id %>"
+                                            class="rounded-lg p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                            </svg>
+                                        </button>
+                                        <button data-action="delete" data-id="<%= key.id %>"
+                                            class="rounded-lg p-2 text-neutral-400 hover:bg-red-900/20 hover:text-red-500 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
-                              </div>
-                            </td>
 
-                            <td class="px-4 py-3">
-                              <span class="ml-2 px-2 py-0.5 text-xs font-semibold text-gray-100 bg-neutral-800 rounded-full">
-                                <%= key.preview %>
-                              </span>
-                            </td>
+                                <div class="mt-6">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3">
+                                        Permissions</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <% Object.keys(key.perms || {}).forEach(perm=> { %>
+                                            <% if (key.perms[perm]) { %>
+                                                <span
+                                                    class="inline-flex items-center rounded-full bg-indigo-900/30 px-2.5 py-0.5 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-700/30">
+                                                    <%= perm %>
+                                                </span>
+                                                <% } %>
+                                                    <% }) %>
+                                    </div>
+                                </div>
 
-                            <td class="px-4 py-3">
-                              <div class="flex flex-wrap gap-2">
-                                <% Object.keys(key.perms || {}).forEach(perm => { %>
-                                  <% if (key.perms[perm]) { %>
-                                    <span class="px-2 py-0.5 text-xs font-semibold bg-green-600 rounded-full"><%= perm %></span>
-                                  <% } %>
-                                <% }) %>
-                              </div>
-                            </td>
-
-                            <td class="px-4 py-3 text-right">
-                              <div class="inline-flex gap-2 items-center">
-                                <button data-action="edit" data-id="<%= key.id %>"
-                                  class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700">
-                                  Edit
-                                </button>
-                                <button data-action="delete" data-id="<%= key.id %>"
-                                  class="px-3 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700">
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        <% }) %>
-                      <% } else { %>
-                        <tr>
-                          <td colspan="4" class="px-4 py-6 text-neutral-500 italic text-center">No API keys found.</td>
-                        </tr>
-                      <% } %>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-
-    <!-- Editor-style Create/Edit Modal (unchanged except IDs remain) -->
-    <div id="apiKeyModalOverlay"
-        class="fixed inset-0 bg-black bg-neutral-950/50 backdrop-blur-sm hidden flex items-center justify-center z-60">
-        <div id="apiKeyModal" role="dialog" aria-modal="true" aria-labelledby="apiKeyModalTitle"
-            class="relative z-10 w-[95%] max-w-3xl mx-4 rounded-md bg-neutral-950 border border-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0">
-
-            <!-- Header -->
-            <div class="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-                <div class="flex items-center gap-3">
-                    <h3 id="apiKeyModalTitle" class="text-lg font-semibold">Create API Key</h3>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="apiKeyModalClose"
-                        class="px-3 py-1.5 rounded-md text-sm hover:bg-neutral-800">Close</button>
-                    <button id="apiKeyModalSave"
-                        class="px-4 py-1.5 rounded-lg text-sm bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2">
-                        <i data-lucide="save" class="w-4 h-4"></i> Save
-                    </button>
-                </div>
-            </div>
-
-            <!-- Content (form) -->
-            <form id="apiKeyForm" class="px-4 py-4 grid gap-4">
-                <input type="hidden" name="id" id="keyId" />
-                <div>
-                    <label class="block mb-1 text-gray-400 text-sm">Name</label>
-                    <input type="text" name="name" id="keyName"
-                        class="w-full px-3 py-2 rounded-lg bg-neutral-800 text-gray-100 focus:outline-none"
-                        placeholder="API Key Name">
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <% const perms=['nodes','servers','users','settings','images']; %>
-                        <% perms.forEach(perm=> { %>
-                            <label class="flex items-center gap-2 text-gray-400">
-                                <input type="checkbox" name="<%= perm %>" id="perm_<%= perm %>"
-                                    class="accent-indigo-600" />
-                                <%= perm.charAt(0).toUpperCase() + perm.slice(1) %>
-                            </label>
+                                <div
+                                    class="mt-6 pt-4 border-t border-neutral-900 flex justify-between items-center text-xs text-neutral-500">
+                                    <span>Created <%= key.createdAt ? new Date(key.createdAt).toLocaleDateString()
+                                            : 'N/A' %></span>
+                                </div>
+                            </div>
                             <% }) %>
+                                <% } else { %>
+                                    <div
+                                        class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-800 p-12 text-center text-neutral-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="h-12 w-12 mb-4 opacity-50">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                        </svg>
+                                        <h3 class="text-lg font-bold text-white">No API Keys</h3>
+                                        <p class="mt-1 max-w-sm text-sm">Create an API key to allow external
+                                            applications to interact with the panel.</p>
+                                    </div>
+                                    <% } %>
                 </div>
-            </form>
 
-            <!-- Footer -->
-            <div
-                class="px-4 py-2 border-t border-neutral-800 flex items-center justify-between text-sm text-neutral-400">
-                <div id="apiKeyStatus">Ready</div>
             </div>
-        </div>
-    </div>
+        </main>
 
-    <!-- Token Reveal Modal (unchanged) -->
-    <div id="tokenModalOverlay"
-        class="fixed inset-0 bg-black bg-neutral-950/60 backdrop-blur-sm hidden flex items-center justify-center z-70">
-        <div id="tokenModal"
-            class="relative z-20 w-[95%] max-w-xl mx-4 rounded-md bg-neutral-950 border border-neutral-900 text-neutral-100 shadow-xl ring-1 ring-black/10 overflow-hidden transform transition-all duration-200 ease-out scale-95 opacity-0">
-            <div class="px-4 py-3 border-b border-neutral-800 flex items-start justify-between gap-4">
-                <div>
-                    <h3 class="text-lg font-semibold">API Key Created</h3>
-                    <p class="text-sm text-neutral-400 mt-1">Copy this token now — it will not be shown again.</p>
-                </div>
-                <button id="tokenModalClose"
-                    class="px-3 py-1.5 rounded-md text-sm hover:bg-neutral-800">Close</button>
-            </div>
-
-            <div class="p-4 space-y-3">
-                <div class="bg-neutral-950 border border-neutral-800 rounded-md p-3">
-                    <label class="text-xs text-neutral-400">Token</label>
-                    <div class="mt-2 flex gap-2 items-center">
-                        <input id="revealedToken" readonly
-                            class="flex-1 bg-transparent border border-neutral-800 px-3 py-2 rounded-md text-sm text-gray-100" />
-                        <button id="copyTokenBtn"
-                            class="px-3 py-2 rounded-md text-sm bg-indigo-600 hover:bg-indigo-700">Copy</button>
+        <!-- Create/Edit Modal -->
+        <div id="apiKeyModalOverlay"
+            class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+            <div id="apiKeyModal"
+                class="w-full max-w-lg transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+                <h2 id="apiKeyModalTitle" class="text-lg font-bold text-white mb-6">Create API Key</h2>
+                <form id="apiKeyForm" class="space-y-6">
+                    <input type="hidden" id="keyId" />
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Description</label>
+                        <input id="keyName" type="text" placeholder="e.g. Deployment Script"
+                            class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                            required />
                     </div>
+
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Permissions</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <% const perms=['nodes','servers','users','settings','images']; %>
+                                <% perms.forEach(perm=> { %>
+                                    <label
+                                        class="flex items-center gap-3 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 cursor-pointer hover:border-neutral-700 transition-colors">
+                                        <input type="checkbox" id="perm_<%= perm %>"
+                                            class="h-4 w-4 rounded border-neutral-700 bg-neutral-800 text-white focus:ring-0 focus:ring-offset-0 transition-all checked:bg-white checked:border-white" />
+                                        <span class="text-sm font-medium text-neutral-300 select-none">
+                                            <%= perm.charAt(0).toUpperCase() + perm.slice(1) %>
+                                        </span>
+                                    </label>
+                                    <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" id="apiKeyModalClose"
+                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-neutral-300 hover:bg-neutral-800 transition-colors">Cancel</button>
+                        <button type="submit" id="apiKeyModalSave"
+                            class="rounded-lg bg-white px-6 py-2 text-sm font-bold text-black hover:bg-neutral-200 transition-colors">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Token Reveal Modal -->
+        <div id="tokenModalOverlay"
+            class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+            <div id="tokenModal"
+                class="w-full max-w-lg transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+                <div class="mb-6 text-center">
+                    <div
+                        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="h-8 w-8">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">API Key Created</h2>
+                    <p class="mt-2 text-sm text-neutral-400">Copy your secret token now. It will not be shown again.</p>
                 </div>
 
-                <div class="rounded-md p-3 border border-red-700 bg-red-900/30 text-sm text-red-200">
-                    <strong class="block">Important:</strong>
-                    <p class="mt-1">This token will <u>not</u> be displayed again. If you lose it you must delete the key
-                        and create a new one.</p>
+                <div class="relative mb-6">
+                    <input id="revealedToken" type="text" readonly
+                        class="w-full rounded-xl border border-neutral-800 bg-neutral-900 py-3 pl-4 pr-24 text-sm font-mono text-emerald-400 outline-none" />
+                    <button id="copyTokenBtn"
+                        class="absolute right-2 top-2 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700 transition-colors">Copy</button>
                 </div>
 
-                <div class="flex justify-end gap-2">
-                    <button id="ackCopiedBtn" class="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700">I
-                        copied it</button>
+                <div class="flex justify-center">
+                    <button id="ackCopiedBtn"
+                        class="w-full rounded-xl bg-white py-3 text-sm font-bold text-black hover:bg-neutral-200 transition-colors">I
+                        have saved the token</button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Initialize lucide icons after DOM ready
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Elements
+                const overlay = document.getElementById('apiKeyModalOverlay');
+                const modal = document.getElementById('apiKeyModal');
+                const closeBtn = document.getElementById('apiKeyModalClose');
+                const saveBtn = document.getElementById('apiKeyModalSave');
+                const modalTitle = document.getElementById('apiKeyModalTitle');
+                const keyIdInput = document.getElementById('keyId');
+                const keyNameInput = document.getElementById('keyName');
+                const form = document.getElementById('apiKeyForm');
 
-            // --- elements ---
-            const overlay = document.getElementById('apiKeyModalOverlay');
-            const modal = document.getElementById('apiKeyModal');
-            const closeBtn = document.getElementById('apiKeyModalClose');
-            const saveBtn = document.getElementById('apiKeyModalSave');
-            const modalTitle = document.getElementById('apiKeyModalTitle');
-            const keyIdInput = document.getElementById('keyId');
-            const keyNameInput = document.getElementById('keyName');
-            const apiKeyForm = document.getElementById('apiKeyForm');
-            const statusEl = document.getElementById('apiKeyStatus');
+                const tokenOverlay = document.getElementById('tokenModalOverlay');
+                const tokenModal = document.getElementById('tokenModal');
+                const revealedTokenInput = document.getElementById('revealedToken');
+                const copyTokenBtn = document.getElementById('copyTokenBtn');
+                const ackCopiedBtn = document.getElementById('ackCopiedBtn');
 
-            const tokenOverlay = document.getElementById('tokenModalOverlay');
-            const tokenModal = document.getElementById('tokenModal');
-            const revealedTokenInput = document.getElementById('revealedToken');
-            const copyTokenBtn = document.getElementById('copyTokenBtn');
-            const tokenCloseBtn = document.getElementById('tokenModalClose');
-            const ackCopiedBtn = document.getElementById('ackCopiedBtn');
+                const createBtn = document.getElementById('createApiKeyBtn');
+                const PERMS = ['nodes', 'servers', 'users', 'settings', 'images'];
 
-            const createBtn = document.getElementById('createApiKeyBtn');
-
-            const PERMS = ['nodes', 'servers', 'users', 'settings', 'images'];
-
-            // Utility: show/hide editor modal
-            function openEditorModal() {
-                overlay.classList.remove('hidden');
-                setTimeout(() => modal.classList.remove('opacity-0', 'scale-95'), 10);
-            }
-            function closeEditorModal() {
-                modal.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => overlay.classList.add('hidden'), 200);
-            }
-
-            // Utility: show/hide token modal
-            function openTokenModal() {
-                tokenOverlay.classList.remove('hidden');
-                setTimeout(() => tokenModal.classList.remove('opacity-0', 'scale-95'), 10);
-            }
-            function closeTokenModal() {
-                tokenModal.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => tokenOverlay.classList.add('hidden'), 200);
-            }
-
-            // Create mode
-            function showCreateModal() {
-                modalTitle.textContent = 'Create API Key';
-                keyIdInput.value = '';
-                keyNameInput.value = '';
-                PERMS.forEach(p => document.getElementById(`perm_${p}`).checked = false);
-                statusEl.textContent = 'Ready';
-                openEditorModal();
-            }
-
-            // Edit mode: populate fields
-            function showEditModal(id) {
-                const apikeysData = <%- JSON.stringify(apikeys) %>;
-                const key = apikeysData.find(k => k.id === id);
-                if (!key) return alert('Key not found');
-
-                modalTitle.textContent = 'Edit API Key';
-                keyIdInput.value = key.id;
-                keyNameInput.value = key.name || '';
-                const permsObj = key.perms || {};
-                PERMS.forEach(p => {
-                    document.getElementById(`perm_${p}`).checked = !!permsObj[p];
-                });
-                statusEl.textContent = 'Ready';
-                openEditorModal();
-            }
-
-            // Close handlers
-            closeBtn.addEventListener('click', closeEditorModal);
-            overlay.addEventListener('click', e => { if (e.target === overlay) closeEditorModal(); });
-
-            tokenCloseBtn.addEventListener('click', () => {
-                if (!revealedTokenInput.value) { closeTokenModal(); return; }
-                if (!tokenWasCopied) {
-                    if (!confirm('You have not copied the token. It will not be shown again. Close anyway?')) return;
+                // Modal Logic
+                function openEditorModal() {
+                    overlay.classList.remove('hidden');
+                    overlay.classList.add('flex');
+                    setTimeout(() => {
+                        modal.classList.remove('scale-95', 'opacity-0');
+                        modal.classList.add('scale-100', 'opacity-100');
+                    }, 10);
                 }
-                closeTokenModal();
-            });
-
-            tokenOverlay.addEventListener('click', e => {
-                if (e.target === tokenOverlay) tokenCloseBtn.click();
-            });
-
-            // Copy support with fallback
-            let tokenWasCopied = false;
-            async function copyToClipboard(text) {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    tokenWasCopied = true;
-                    return true;
-                } catch (err) {
-                    // fallback
-                    try {
-                        revealedTokenInput.select();
-                        document.execCommand('copy');
-                        tokenWasCopied = true;
-                        return true;
-                    } catch (e) {
-                        console.error('Copy failed', e);
-                        return false;
-                    }
+                function closeEditorModal() {
+                    modal.classList.remove('scale-100', 'opacity-100');
+                    modal.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        overlay.classList.remove('flex');
+                        overlay.classList.add('hidden');
+                    }, 200);
                 }
-            }
-
-            copyTokenBtn.addEventListener('click', async () => {
-                const text = revealedTokenInput.value || '';
-                if (!text) return;
-                const ok = await copyToClipboard(text);
-                if (ok) {
-                    copyTokenBtn.textContent = 'Copied';
-                    copyTokenBtn.classList.add('opacity-80');
-                    setTimeout(() => copyTokenBtn.textContent = 'Copy', 1500);
-                } else {
-                    alert('Copy failed. Please select and copy manually.');
+                function openTokenModal() {
+                    tokenOverlay.classList.remove('hidden');
+                    tokenOverlay.classList.add('flex');
+                    setTimeout(() => {
+                        tokenModal.classList.remove('scale-95', 'opacity-0');
+                        tokenModal.classList.add('scale-100', 'opacity-100');
+                    }, 10);
                 }
-            });
-
-            ackCopiedBtn.addEventListener('click', () => {
-                if (!tokenWasCopied) {
-                    if (!confirm('Are you sure you copied the token? If you close it will NOT be shown again.')) return;
+                function closeTokenModal() {
+                    tokenModal.classList.remove('scale-100', 'opacity-100');
+                    tokenModal.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        tokenOverlay.classList.remove('flex');
+                        tokenOverlay.classList.add('hidden');
+                    }, 200);
                 }
-                closeTokenModal();
-                location.reload();
-            });
 
-            // Form submit (create/edit)
-            apiKeyForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                // trigger save button's handler
-                saveBtn.click();
-            });
-
-            // Save button handler (supports create and edit)
-            saveBtn.addEventListener('click', async () => {
-                const id = keyIdInput.value;
-                const payload = {
-                    name: keyNameInput.value.trim()
+                // Create
+                createBtn.onclick = () => {
+                    modalTitle.textContent = 'Create API Key';
+                    keyIdInput.value = '';
+                    keyNameInput.value = '';
+                    PERMS.forEach(p => document.getElementById(`perm_${p}`).checked = false);
+                    openEditorModal();
                 };
-                PERMS.forEach(p => payload[p] = document.getElementById(`perm_${p}`).checked);
-                if (id) payload.id = id;
 
-                statusEl.textContent = 'Saving...';
-                saveBtn.disabled = true;
+                // Edit
+                window.showEditModal = (id) => {
+                    // We need to fetch/store data or pass it. 
+                    // Since this is redesigned, I'll use the pre-rendered data if possible or simpler logic.
+                    // Quick fix: Embed the data again safely
+                    const apikeysData = <% - JSON.stringify(apikeys) %>;
+                    const key = apikeysData.find(k => k.id === id);
+                    if (!key) return;
 
-                try {
-                    const url = id ? '/admin/apikeys/edit' : '/admin/apikeys/new';
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    modalTitle.textContent = 'Edit API Key';
+                    keyIdInput.value = key.id;
+                    keyNameInput.value = key.name || '';
+                    const permsObj = key.perms || {};
+                    PERMS.forEach(p => document.getElementById(`perm_${p}`).checked = !!permsObj[p]);
+                    openEditorModal();
+                };
 
-                    if (!res.ok) {
-                        const txt = await res.text().catch(() => null);
-                        throw new Error(txt || 'Save failed');
+                closeBtn.onclick = closeEditorModal;
+                overlay.onclick = (e) => { if (e.target === overlay) closeEditorModal(); };
+
+                // Save
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const id = keyIdInput.value;
+                    const payload = { name: keyNameInput.value.trim() };
+                    PERMS.forEach(p => payload[p] = document.getElementById(`perm_${p}`).checked);
+                    if (id) payload.id = id;
+
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Saving...';
+
+                    try {
+                        const url = id ? '/admin/apikeys/edit' : '/admin/apikeys/new';
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!res.ok) throw new Error();
+                        const data = await res.json();
+
+                        if (!id && data && data.token) {
+                            revealedTokenInput.value = data.token;
+                            closeEditorModal();
+                            openTokenModal();
+                        } else {
+                            location.reload();
+                        }
+                    } catch (err) {
+                        alert('Failed to save API Key.');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save';
                     }
+                };
 
-                    const data = await res.json();
+                // Delete
+                window.deleteApiKey = async (id) => {
+                    if (!confirm('Are you sure you want to delete this API Key?')) return;
+                    try {
+                        await fetch(`/admin/apikeys/delete?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        location.reload();
+                    } catch (err) { alert('Delete failed'); }
+                };
 
-                    // If created, backend returns token -> show reveal modal
-                    if (!id && data && data.token) {
-                        // show token reveal modal with warning
-                        revealedTokenInput.value = data.token;
-                        tokenWasCopied = false;
-                        closeEditorModal();
-                        openTokenModal();
-                    } else {
-                        // edit or without token -> reload to reflect changes
+                // Event Delegation
+                document.addEventListener('click', (e) => {
+                    const editBtn = e.target.closest('[data-action="edit"]');
+                    if (editBtn) window.showEditModal(editBtn.dataset.id);
+
+                    const delBtn = e.target.closest('[data-action="delete"]');
+                    if (delBtn) window.deleteApiKey(delBtn.dataset.id);
+                });
+
+                // Copy Token
+                copyTokenBtn.onclick = () => {
+                    revealedTokenInput.select();
+                    document.execCommand('copy');
+                    copyTokenBtn.textContent = 'Copied!';
+                    setTimeout(() => copyTokenBtn.textContent = 'Copy', 2000);
+                };
+
+                ackCopiedBtn.onclick = () => {
+                    if (confirm("Have you definitely saved this token? You cannot see it again.")) {
+                        closeTokenModal();
                         location.reload();
                     }
-                } catch (err) {
-                    console.error(err);
-                    alert('Failed to save API key: ' + (err.message || 'unknown'));
-                    statusEl.textContent = 'Error';
-                } finally {
-                    saveBtn.disabled = false;
-                }
+                };
             });
-
-            // Delete API key (uses query param style)
-            async function deleteApiKey(id) {
-                if (!confirm('Are you sure you want to delete this API key?')) return;
-                try {
-                    const res = await fetch(`/admin/apikeys/delete?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-                    if (!res.ok) throw new Error('Delete failed');
-                    location.reload();
-                } catch (err) {
-                    alert('Failed to delete API key');
-                    console.error(err);
-                }
-            }
-
-            // expose to window just in case other scripts call it
-            window.deleteApiKey = deleteApiKey;
-            window.showEditModal = showEditModal;
-
-            // Event delegation for edit/delete and create button
-            document.addEventListener('click', (e) => {
-                const del = e.target.closest('[data-action="delete"]');
-                if (del) {
-                    const id = del.dataset.id;
-                    deleteApiKey(id);
-                    return;
-                }
-                const edt = e.target.closest('[data-action="edit"]');
-                if (edt) {
-                    showEditModal(edt.dataset.id);
-                    return;
-                }
-            });
-
-            // wire create button
-            createBtn.addEventListener('click', showCreateModal);
-        });
-    </script>
-
+        </script>
 </body>
+
 </html>

@@ -1,175 +1,157 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
   <meta charset="UTF-8" />
-  <title><%= name %> - Edit Node</title>
-  <link rel="stylesheet" href="/assets/tailwind.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Edit Node
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-  <!-- Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
 
-<body class="flex h-screen">
+<body class="flex h-full w-full overflow-hidden">
 
-  <!-- Sidebar -->
   <%- include('../../components/sidebar', { name, user }) %>
 
-  <!-- Main -->
-  <main class="flex-1 overflow-auto p-8 flex flex-col gap-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
-    <h1 class="text-3xl font-bold">🖥 Edit Node — <%= node.name %></h1>
-
-    <div class="bg-neutral-950 border border-neutral-800 rounded-md p-6 space-y-6">
-
-      <!-- Row 1 -->
-      <div class="flex flex-col md:flex-row gap-4">
-
-        <div class="flex-1">
-          <label class="block text-sm text-gray-400 mb-2">Name</label>
-          <input
-            name="name"
-            form="nodeEditForm"
-            value="<%= node.name %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-        </div>
-
-        <div class="w-40">
-          <label class="block text-sm text-gray-400 mb-2">RAM (MB)</label>
-          <input
-            name="ram"
-            form="nodeEditForm"
-            type="number"
-            value="<%= node.ram %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-        </div>
-
-        <div class="w-40">
-          <label class="block text-sm text-gray-400 mb-2">Cores</label>
-          <input
-            name="core"
-            form="nodeEditForm"
-            type="number"
-            value="<%= node.core %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-        </div>
-      </div>
-
-      <!-- Row 2 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <div>
-          <label class="block text-sm text-gray-400 mb-2">IP</label>
-          <input
-            name="ip"
-            form="nodeEditForm"
-            value="<%= node.ip %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-400 mb-2">Port</label>
-          <input
-            name="port"
-            form="nodeEditForm"
-            value="<%= node.port %>"
-            class="w-full p-3 rounded-xl bg-neutral-950 border border-neutral-800"
-          />
-        </div>
-
-        <div class="group">
-          <label class="block text-sm text-gray-400 mb-2">Node Key</label>
-
-          <div class="relative">
-            <input
-              value="<%= node.key %>"
-              disabled
-              class="
-                w-full p-3 rounded-xl
-                bg-neutral-900 border border-neutral-800
-                text-gray-400
-                blur-sm opacity-60
-                transition-all duration-300 ease-out
-                group-hover:blur-none
-                group-hover:opacity-100
-                group-hover:scale-[1.01]
-              "
-            />
-
-            <span
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none"
-            >
-              hover
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-3">
-
-        <form
-          id="nodeEditForm"
-          action="/admin/node/<%= req.params.id %>/edit"
-          method="post"
-          class="hidden"
-        ></form>
-
-        <button
-          type="submit"
-          form="nodeEditForm"
-          id="saveBtn"
-          class="bg-blue-600 cursor-pointer hover:bg-blue-700 px-6 py-3 rounded-xl flex items-center gap-2 transition"
-        >
-          <i data-lucide="save"></i>
-          Save
-        </button>
-
-        <a
-          href="/admin/nodes"
-          class="px-6 py-3 rounded-xl bg-neutral-800 hover:bg-neutral-700 transition"
-        >
-          Cancel
+        <!-- Back Link -->
+        <a href="/admin/nodes"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Nodes
         </a>
 
-        <form
-          action="/admin/node/<%= req.params.id %>/delete"
-          method="post"
-          onsubmit="return confirm('Delete this node? This cannot be undone');"
-        >
-          <button
-            type="submit"
-            class="cursor-pointer px-4 py-2 rounded-xl bg-red-700 hover:bg-red-800 transition"
-          >
-            Delete
-          </button>
-        </form>
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Edit Node</h1>
+          <p class="mt-2 text-neutral-400">Update configuration for <%= node.name %>.</p>
+        </div>
 
+        <!-- Edit Form -->
+        <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+          <form id="nodeEditForm" action="/admin/node/<%= req.params.id %>/edit" method="POST" class="space-y-8">
+
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Name</label>
+                <input type="text" name="name" value="<%= node.name %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">RAM (MB)</label>
+                  <input type="number" name="ram" value="<%= node.ram %>"
+                    class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    required />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Disk (MB)</label>
+                  <input type="number" name="disk" value="<%= node.disk %>"
+                    class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    required />
+                </div>
+              </div>
+            </div>
+
+            <!-- Network Info -->
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">IP Address</label>
+                <input type="text" name="ip" value="<%= node.ip %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-mono text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Daemon Port</label>
+                <input type="number" name="port" value="<%= node.port %>"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-mono text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                  required />
+              </div>
+            </div>
+
+            <!-- Node Key (Read Only) -->
+            <div class="space-y-2 group">
+              <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Node Key
+                (Auto-Generated)</label>
+              <div class="relative">
+                <input type="text" value="<%= node.key %>" disabled
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm font-mono text-neutral-500 blur-sm transition-all duration-300 group-hover:blur-none group-hover:text-white" />
+                <div
+                  class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white opacity-100 transition-opacity group-hover:opacity-0 pointer-events-none">
+                  HOVER TO REVEAL
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-between pt-6 border-t border-neutral-900">
+              <button type="button" onclick="deleteNode()"
+                class="text-sm font-bold text-red-500 hover:text-red-400 transition-colors">Delete Node</button>
+
+              <div class="flex gap-4">
+                <a href="/admin/nodes"
+                  class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
+                <button type="submit"
+                  class="rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10">
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Hidden Delete Form -->
+          <form id="deleteForm" action="/admin/node/<%= req.params.id %>/delete" method="POST"></form>
+
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <script>
-    lucide.createIcons();
-
-    document.getElementById("saveBtn").addEventListener("click", (e) => {
-      const f = document.getElementById("nodeEditForm");
-      if (
-        !f.name.value ||
-        !f.ip.value ||
-        !f.port.value ||
-        !f.ram.value ||
-        !f.core.value
-      ) {
-        e.preventDefault();
-        alert("All fields are required.");
+    <script>
+      function deleteNode() {
+        if (confirm("Permanently delete this node? This cannot be undone.")) {
+          document.getElementById("deleteForm").submit();
+        }
       }
-    });
-  </script>
+
+      // Basic client-side validation just in case
+      document.getElementById("nodeEditForm").addEventListener("submit", (e) => {
+        const f = e.target;
+        if (!f.name.value || !f.ram.value || !f.disk.value || !f.ip.value || !f.port.value) {
+          e.preventDefault();
+          alert("All fields are required.");
+        }
+      });
+    </script>
 
 </body>
+
 </html>

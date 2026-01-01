@@ -1,296 +1,273 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
-  <head>
-    <meta charset="UTF-8" />
-    <title><%= name %> - Nodes</title>
-    <link rel="stylesheet" href="/assets/tailwind.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-      .input {
-        width: 100%;
-        background: #0a0a0a;
-        border: 1px solid #262626;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.75rem;
-        transition: border 0.2s, background 0.2s;
-      }
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
 
-      .input:focus {
-        outline: none;
-        border-color: #6366f1;
-        background: #111111;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - Nodes
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-      @keyframes heartbeat {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.3); opacity: 0.6; }
-        100% { transform: scale(1); opacity: 1; }
-      }
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
 
-      .heartbeat {
-       /* animation: heartbeat 10s infinite; */
-      }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
 
-      /* Modal animations */
-      .modal-enter {
-        opacity: 0;
-        transform: scale(0.9);
-      }
-      .modal-enter-active {
-        opacity: 1;
-        transform: scale(1);
-        transition: opacity 0.25s ease, transform 0.25s ease;
-      }
-      .modal-leave {
-        opacity: 1;
-        transform: scale(1);
-      }
-      .modal-leave-active {
-        opacity: 0;
-        transform: scale(0.9);
-        transition: opacity 0.25s ease, transform 0.25s ease;
-      }
-    </style>
-  </head>
-  <body class="min-h-screen flex">
-    <%- include('../../components/sidebar', { name, user }) %>
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
 
-    <main class="flex-1 p-8 overflow-auto">
-      <div class="max-w-6xl mx-auto space-y-6">
-        <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md flex justify-between items-center">
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body class="flex h-full w-full overflow-hidden">
+
+  <%- include('../../components/sidebar', { name, user }) %>
+
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
+
+        <!-- Header -->
+        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-  <h1 class="text-3xl font-bold flex items-center gap-2">
-    <i data-lucide="cpu" class="w-6 h-6"></i> Nodes
-  </h1>
-  <p class="text-gray-400">Manage all connected nodes</p>
-</div>
-
-          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl font-medium transition">
-            + Create Node
-          </button>
+            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Nodes</h1>
+            <p class="mt-2 text-neutral-400">Manage your infrastructure nodes and allocations.</p>
+          </div>
+          <div>
+            <button onclick="openCreateModal()"
+              class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-5 w-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Create Node
+            </button>
+          </div>
         </div>
-<div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
-  <table class="w-full table-auto text-left border-collapse">
-    <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
-      <tr>
-        <th class="px-4 py-2">Name</th>
-        <th class="px-4 py-2">IP / Port</th>
-        <th class="px-4 py-2">Cores</th>
-        <th class="px-4 py-2">RAM</th>
-        <th class="px-4 py-2">Version</th> 
-        <th class="px-4 py-2 text-right">Status / Actions</th>
-      </tr>
-    </thead>
 
-    <tbody>
-      <% if (nodes && nodes.length > 0) { %>
-        <% nodes.forEach(node => { %>
-          <tr class="border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
+        <!-- Nodes Grid -->
+        <% if (nodes && nodes.length> 0) { %>
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <% nodes.forEach(node=> { %>
+              <div
+                class="group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:-translate-y-1 hover:border-neutral-700 hover:shadow-xl hover:shadow-neutral-900/20">
 
-            <!-- Name -->
-            <td class="px-4 py-3 font-semibold text-gray-100 flex items-center gap-2">
-              <% if (node.status === "online") { %>
-                <i data-lucide="heart-pulse" class="w-5 h-5 text-green-400 heartbeat" data-node-id="<%= node.id %>" title="Loading version..."></i>
-              <% } else if (node.status === "dockernotrunning") { %>
-               <i data-lucide="heart-pulse" class="w-5 h-5 text-yellow-400"></i>
-              <% } else { %>
-                <i data-lucide="heart-pulse" class="w-5 h-5 text-red-400"></i>
-              <% } %>
-              <%= node.name %>
-            </td>
+                <!-- Card Header -->
+                <div class="mb-6 flex items-start justify-between">
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-900 text-neutral-400 group-hover:bg-white group-hover:text-black transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-6 w-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M21 7.5l-9-5.25-9 5.25m18 0l-9 5.25-9-5.25m18 0L12 21l-9-5.25" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-white">
+                        <%= node.name %>
+                      </h3>
+                      <div class="flex items-center gap-2 text-xs text-neutral-500">
+                        <span class="font-mono">
+                          <%= node.ip %>:<%= node.port %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-            <!-- IP / Port -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= node.ip %>:<%= node.port %>
-            </td>
+                  <!-- Status Icon (Animated) -->
+                  <% if (node.status==="online" ) { %>
+                    <div class="relative flex h-3 w-3">
+                      <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </div>
+                    <% } else if (node.status==="dockernotrunning" ) { %>
+                      <div class="h-3 w-3 rounded-full bg-yellow-500"></div>
+                      <% } else { %>
+                        <div class="h-3 w-3 rounded-full bg-red-500"></div>
+                        <% } %>
+                </div>
 
-            <!-- CPU -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= node.core %>
-            </td>
+                <!-- Stats -->
+                <div class="mb-6 grid grid-cols-2 gap-4">
+                  <div class="rounded-lg bg-neutral-900/40 p-3">
+                    <p class="text-xs font-medium uppercase tracking-wider text-neutral-500">Cores</p>
+                    <p class="font-mono text-sm text-white">
+                      <%= node.core %>
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-neutral-900/40 p-3">
+                    <p class="text-xs font-medium uppercase tracking-wider text-neutral-500">RAM</p>
+                    <p class="font-mono text-sm text-white">
+                      <%= node.ram %> MB
+                    </p>
+                  </div>
+                </div>
 
-            <!-- RAM -->
-            <td class="px-4 py-3 text-gray-400">
-              <%= node.ram %> MB
-            </td>
+                <!-- Version Loader -->
+                <div class="mb-6 flex items-center justify-between border-t border-neutral-900 pt-4">
+                  <span class="text-xs text-neutral-500">Daemon Version</span>
+                  <span class="node-version text-xs font-mono text-neutral-300"
+                    data-node-id="<%= node.id %>">Checking...</span>
+                </div>
 
-            <!-- Version -->
-            <td class="px-4 py-3 text-gray-400">
-              <span class="node-version bg-neutral-950 border border-neutral-800 px-2 mb-2 font-mono rounded-md" data-node-id="<%= node.id %>">Loading...</span>
-            </td>
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                  <a href="/admin/node/<%= node.id %>"
+                    class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-neutral-100 px-4 py-2 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-white">
+                    Manage
+                  </a>
+                  <a href="/admin/node/<%= node.id %>/edit"
+                    class="flex items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-4 w-4">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                    </svg>
+                  </a>
+                  <form action="/admin/node/<%= node.id %>/delete" method="POST"
+                    onsubmit="return confirm('Start deleting node <%= node.name %>? This will delete all associated servers.')">
+                    <button type="submit"
+                      class="flex items-center justify-center rounded-lg border border-red-900/30 bg-red-900/10 px-3 py-2 text-red-500 hover:bg-red-900/20 hover:text-red-400 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="h-4 w-4">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </form>
+                </div>
 
-            <!-- Status / Actions -->
-            <td class="px-4 py-3 text-right flex justify-end gap-2">
+              </div>
+              <% }) %>
+          </div>
+          <% } else { %>
+            <!-- Empty State -->
+            <div
+              class="flex flex-col items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-neutral-950/30 py-24 text-center">
+              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-900">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="h-8 w-8 text-neutral-500">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold text-white">No Nodes Found</h3>
+              <p class="mt-2 max-w-sm text-neutral-500">Get started by creating your first node to host servers.</p>
+            </div>
+            <% } %>
 
-              <a href="/admin/node/<%= node.id %>" class="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700">
-                Manage
-              </a>
-
-              <a href="/admin/node/<%= node.id %>/edit" class="px-3 py-1 text-xs font-semibold rounded-lg bg-neutral-800 hover:bg-neutral-700">
-                Edit
-              </a>
-
-              <form action="/admin/node/<%= node.id %>/delete" method="post" onsubmit="return confirm('Delete node "<%= node.name %>"?');">
-                <button type="submit" class="px-3 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700">
-                  Delete
-                </button>
-              </form>
-
-            </td>
-          </tr>
-        <% }) %>
-      <% } else { %>
-        <tr>
-          <td colspan="6" class="px-4 py-6 text-neutral-500 italic text-center">
-            No nodes found.
-          </td>
-        </tr>
-      <% } %>
-    </tbody>
-  </table>
-  <div class="flex items-center justify-between px-4 py-3 text-sm text-gray-400 border-t border-neutral-900">
-  <span id="nodesPaginationInfo"></span>
-
-  <div class="flex gap-2">
-    <button
-      id="nodesPrevPage"
-      class="px-3 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50"
-    >
-      Prev
-    </button>
-
-    <button
-      id="nodesNextPage"
-      class="px-3 py-1 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50"
-    >
-      Next
-    </button>
-  </div>
-</div>
-<script>
-  const nodesRowsPerPage = 5;
-  const nodesTableBody = document.querySelector("table tbody");
-  const nodesRows = Array.from(nodesTableBody.querySelectorAll("tr"))
-    .filter(row => !row.textContent.includes("No nodes found"));
-
-  let nodesCurrentPage = 1;
-  const nodesTotalPages = Math.ceil(nodesRows.length / nodesRowsPerPage);
-
-  const nodesInfo = document.getElementById("nodesPaginationInfo");
-  const nodesPrev = document.getElementById("nodesPrevPage");
-  const nodesNext = document.getElementById("nodesNextPage");
-
-  function renderNodesPage() {
-    const start = (nodesCurrentPage - 1) * nodesRowsPerPage;
-    const end = start + nodesRowsPerPage;
-
-    nodesRows.forEach((row, index) => {
-      row.style.display = index >= start && index < end ? "" : "none";
-    });
-
-    nodesInfo.textContent = `Page ${nodesCurrentPage} of ${nodesTotalPages || 1}`;
-    nodesPrev.disabled = nodesCurrentPage === 1;
-    nodesNext.disabled = nodesCurrentPage === nodesTotalPages;
-  }
-
-  nodesPrev.onclick = () => {
-    if (nodesCurrentPage > 1) {
-      nodesCurrentPage--;
-      renderNodesPage();
-    }
-  };
-
-  nodesNext.onclick = () => {
-    if (nodesCurrentPage < nodesTotalPages) {
-      nodesCurrentPage++;
-      renderNodesPage();
-    }
-  };
-
-  renderNodesPage();
-</script>
-
-</div>
       </div>
     </main>
-<!-- Create Node Modal -->
-<div id="createModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-  <div class="bg-neutral-950 border border-neutral-900 p-8 w-full max-w-lg transform scale-95 opacity-0 rounded-md shadow-md">
-    <h2 class="text-md font-semibold mb-6">Create Node</h2>
-    <div class="space-y-4">
-      <input id="n-name" placeholder="Node Name" class="input w-full" />
-      <input id="n-ip" placeholder="IP (or localhost)" class="input w-full" />
-      <input id="n-port" placeholder="Port" class="input w-full" />
-    </div>
-    <div class="flex justify-end gap-3 mt-8">
-      <button onclick="closeCreateModal()" class="px-5 py-2 bg-red-600 text-white transition rounded-lg hover:bg-red-700">Cancel</button>
-      <button onclick="createNode()" class="px-5 py-2 bg-white text-neutral-950 transition rounded-lg hover:bg-gray-200">Create</button>
-    </div>
-  </div>
-</div>
 
+    <!-- Create Node Modal -->
+    <div id="createModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+      <div id="modalContent"
+        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+
+        <div class="mb-6 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-white">Create New Node</h2>
+          <button onclick="closeCreateModal()" class="text-neutral-500 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">Node Name</label>
+            <input id="n-name" placeholder="e.g. Local Node 1"
+              class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">IP Address</label>
+              <input id="n-ip" placeholder="127.0.0.1"
+                class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">Port</label>
+              <input id="n-port" placeholder="3000"
+                class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-8 grid grid-cols-2 gap-3">
+          <button onclick="closeCreateModal()"
+            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm font-bold text-neutral-300 transition-colors hover:bg-neutral-800">Cancel</button>
+          <button onclick="createNode()"
+            class="rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">Create
+            Node</button>
+        </div>
+
+      </div>
+    </div>
 
     <script>
-      lucide.createIcons();
-
       const modal = document.getElementById("createModal");
-      const modalContent = modal.querySelector("div");
+      const modalContent = document.getElementById("modalContent");
 
       function openCreateModal() {
         modal.classList.remove("hidden");
         modal.classList.add("flex");
-        setTimeout(() => {
-          modalContent.classList.add("modal-enter-active");
-          modalContent.classList.remove("scale-95", "opacity-0");
-        }, 10);
+        // Trigger reflow
+        void modal.offsetWidth;
+        modalContent.classList.remove("scale-95", "opacity-0");
+        modalContent.classList.add("scale-100", "opacity-100");
       }
 
       function closeCreateModal() {
-        modalContent.classList.remove("modal-enter-active");
-        modalContent.classList.add("modal-leave-active");
+        modalContent.classList.remove("scale-100", "opacity-100");
+        modalContent.classList.add("scale-95", "opacity-0");
         setTimeout(() => {
           modal.classList.add("hidden");
           modal.classList.remove("flex");
-          modalContent.classList.remove("modal-leave-active");
-          modalContent.classList.add("scale-95", "opacity-0");
-        }, 250);
+        }, 200);
       }
 
       async function createNode() {
-        const body = {
-          name: document.getElementById("n-name").value,
-          ip: document.getElementById("n-ip").value,
-          port: document.getElementById("n-port").value,
-        };
+        const name = document.getElementById("n-name").value;
+        const ip = document.getElementById("n-ip").value;
+        const port = document.getElementById("n-port").value;
+
+        if (!name || !ip || !port) return alert("Please fill in all fields");
 
         const res = await fetch("/admin/node/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ name, ip, port }),
         });
 
         if (res.ok) location.reload();
         else alert("Failed to create node");
       }
-       document.querySelectorAll('.heartbeat').forEach(icon => {
-    const nodeId = icon.dataset.nodeId;
-    if (!nodeId) return;
 
-    fetch(`/admin/node/ver/${nodeId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.version) {
-          icon.title = `Version: ${data.version}`;
-          const versionEl = document.querySelector(`.node-version[data-node-id="${nodeId}"]`);
-          if (versionEl) versionEl.textContent = data.version;
-        } else {
-          icon.title = 'Version unknown';
-        }
-      })
-      .catch(() => {
-        icon.title = 'Version fetch failed';
+      // Fetch Versions
+      document.querySelectorAll('.node-version').forEach(el => {
+        const nodeId = el.dataset.nodeId;
+        fetch(`/admin/node/ver/${nodeId}`)
+          .then(res => res.json())
+          .then(data => { el.textContent = data.version || "Unknown"; })
+          .catch(() => { el.textContent = "Error"; });
       });
-  });
     </script>
-  </body>
+
+</body>
+
 </html>

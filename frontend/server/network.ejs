@@ -1,146 +1,150 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
-  <meta charset="UTF-8">
-  <title><%= name %> - <%= server.name %> Network</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - <%= server.name %> Network
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
-  <!-- Tailwind -->
- <link rel="stylesheet" href="/assets/tailwind.css">
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
 
-  <!-- Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
 
-  <!-- Sidebar -->
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../components/sidebar', { name: name, user: user }) %>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-6xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
-      <!-- Header -->
-          <div
-          class="bg-neutral-950 border border-neutral-900 rounded-md px-6 py-4 flex items-center justify-between"
-        >
-          <!-- LEFT INFO -->
-          <div class="flex items-start gap-3">
-            <div class="leading-tight">
-              <p class="text-lg font-semibold text-gray-100">
-                <%= server.name %>
-              </p>
-               <p class="flex items-center gap-2 text-sm text-gray-400">
-                <i data-lucide="globe" class="w-4 h-4 text-gray-500"></i>
-                <span class="cursor-pointer " onclick="navigator.clipboard.writeText('<%= server.ip || '0.0.0.0' %>:<%= server.port %>'); 
-             alert('Copied to clipboard!')">
-                  <%= server.ip || '0.0.0.0' %>:<%= server.port %>
-                      <span class="mx-1">•</span>
-                      <%= server.node?.name || 'unknown' %>
-                </span>
-              </p>
-            </div>
+        <!-- Header -->
+        <div class="mb-12">
+          <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Network Management</h1>
+          <p class="mt-2 text-neutral-400">Configure ports and allocations for your server.</p>
+        </div>
+
+        <!-- Allocations List -->
+        <div class="mb-8 rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+          <h2 class="mb-6 text-lg font-bold text-white">Assigned Allocations</h2>
+
+          <div class="space-y-4">
+            <% if (!allocations || allocations.length===0) { %>
+              <div
+                class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
+                No allocations found.
+              </div>
+              <% } else { %>
+                <% allocations.forEach(a=> { %>
+                  <div
+                    class="flex items-center justify-between rounded-xl border border-neutral-900 bg-neutral-900/30 p-4 transition-colors hover:border-neutral-800">
+
+                    <div class="flex items-center gap-6">
+                      <div
+                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                          stroke="currentColor" class="h-6 w-6">
+                          <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-3">
+                          <span class="font-mono text-lg font-bold text-white">
+                            <%= a.port %>
+                          </span>
+                          <% if (a.type==='primary' ) { %>
+                            <span
+                              class="rounded-full bg-emerald-900/20 px-2 py-0.5 text-xs font-bold text-emerald-500 border border-emerald-900/30">Primary</span>
+                            <% } else { %>
+                              <span
+                                class="rounded-full bg-neutral-800 px-2 py-0.5 text-xs font-bold text-neutral-400">Secondary</span>
+                              <% } %>
+                        </div>
+                        <p class="text-xs text-neutral-500 my-1">
+                          <%= server.node?.name || server.node?.ip || 'Unknown Node' %>
+                        </p>
+                        <p class="text-xs text-neutral-600 font-mono">
+                          <%= server.ip || '0.0.0.0' %>:<%= a.port %>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                      <% if (a.type !=='primary' ) { %>
+                        <form method="POST" action="/server/network/<%= server.id %>/setprimary/<%= a.port %>">
+                          <button
+                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs font-bold text-white hover:bg-neutral-800 transition-colors">
+                            Make Primary
+                          </button>
+                        </form>
+                        <form method="POST" action="/server/network/<%= server.id %>/remove/<%= a.port %>">
+                          <button
+                            class="rounded-lg border border-red-900/30 bg-red-900/10 px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-900/20 transition-colors">
+                            Remove
+                          </button>
+                        </form>
+                        <% } else { %>
+                          <span class="text-xs italic text-neutral-600 mr-2">Primary allocation cannot be deleted</span>
+                          <% } %>
+                    </div>
+
+                  </div>
+                  <% }) %>
+                    <% } %>
           </div>
         </div>
 
-      <!-- Navigation -->
-<div class="bg-neutral-950 border border-neutral-900 rounded-lg overflow-hidden">
-  <table class="w-full table-auto text-left border-collapse">
-    <thead class="text-neutral-400 uppercase text-xs border-b border-neutral-800">
-      <tr>
-        <th class="px-4 py-2">Port</th>
-        <th class="px-4 py-2">Type</th>
-        <th class="px-4 py-2">Node</th>
-        <th class="px-4 py-2 text-right">Actions</th>
-      </tr>
-    </thead>
+        <!-- Add Allocation -->
+        <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+          <h2 class="mb-4 text-lg font-bold text-white">Create Allocation</h2>
+          <p class="mb-6 text-sm text-neutral-500">
+            Manually assign a new port to this server. Note that adding or removing ports may require a server restart.
+          </p>
 
-    <tbody>
-      <% if (!allocations || allocations.length === 0) { %>
-        <tr>
-          <td colspan="4" class="px-4 py-6 text-neutral-500 italic">
-            No allocations assigned to this server on its node.
-          </td>
-        </tr>
-      <% } else { %>
-        <% allocations.forEach(a => { %>
-          <tr class="border-b border-neutral-800 hover:bg-neutral-900/50 transition-colors">
-            <td class="px-4 py-2 font-mono text-neutral-100"><%= a.port %></td>
+          <form onsubmit="event.preventDefault(); addPort();" class="flex gap-4">
+            <input id="new-port" type="number" min="1" max="65535" placeholder="e.g. 8080"
+              class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+              required />
+            <button type="submit"
+              class="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
+              Add Port
+            </button>
+          </form>
+        </div>
 
-            <td class="px-4 py-2">
-              <% if (a.type === 'primary') { %>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400">Primary</span>
-              <% } else { %>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-neutral-600/20 text-neutral-400">Secondary</span>
-              <% } %>
-            </td>
-
-            <td class="px-4 py-2 text-neutral-400"><%= server.node?.name || server.node?.ip || 'Unknown' %></td>
-
-            <td class="px-4 py-2 text-right">
-              <div class="inline-flex gap-2">
-                <% if (a.type !== 'primary') { %>
-                  <form method="POST" action="/server/network/<%= server.id %>/setprimary/<%= a.port %>">
-                    <button class="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 transition">Set Primary</button>
-                  </form>
-                <form method="POST" action="/server/network/<%= server.id %>/remove/<%= a.port %>">
-                  <button class="px-3 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition">Remove</button>
-                </form>
-                  <% } %>
-              </div>
-            </td>
-          </tr>
-        <% }) %>
-      <% } %>
-    </tbody>
-  </table>
-</div>
-
-      <!-- Add Port -->
-      <div class="bg-neutral-950 border border-neutral-800 rounded-md p-6 space-y-4">
-        <h2 class="text-xl font-semibold flex items-center gap-2">
-          <i data-lucide="plus-circle" class="w-5 h-5"></i>
-          Add New Port
-        </h2>
-
-        <form
-          onsubmit="event.preventDefault(); addPort();"
-          class="flex gap-3"
-        >
-          <input
-            id="new-port"
-            type="number"
-            min="1"
-            max="65535"
-            placeholder="3000"
-            class="flex-1 p-3 rounded-xl bg-neutral-950 border border-neutral-700 text-gray-100"
-            required
-          />
-
-          <button
-            type="submit"
-            class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700">
-            Add Port
-          </button>
-        </form>
-
-        <p class="text-sm text-gray-400">
-          Adding or removing ports will recreate the container.
-        </p>
       </div>
+    </main>
 
-    </div>
-  </main>
-
-  <script>
-    lucide.createIcons();
-
-    function addPort() {
-      const port = document.getElementById('new-port').value;
-      if (!port) return;
-
-      window.location.href =
-        `/server/network/<%= server.id %>/add/${port}`;
-    }
-  </script>
+    <script>
+      function addPort() {
+        const port = document.getElementById('new-port').value;
+        if (!port) return;
+        // Using existing logic (GET request triggers backend logic presumably, based on old code)
+        // Ideally this should be POST but following old pattern for compatibility if backend expects GET
+        window.location.href = `/server/network/<%= server.id %>/add/${port}`;
+      }
+    </script>
 
 </body>
+
 </html>

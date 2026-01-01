@@ -1,74 +1,180 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-neutral-950 text-gray-100 font-space-grotesk">
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
 <head>
   <meta charset="UTF-8" />
-  <title><%= name %> - User Info</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - User Info
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex">
+
+<body class="flex h-full w-full overflow-hidden">
+
   <%- include('../../components/sidebar', { name, user }) %>
 
-  <main class="flex-1 p-8 overflow-auto">
-    <div class="max-w-5xl mx-auto space-y-6">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
 
-      <!-- Header -->
-      <div class="bg-neutral-950 border border-neutral-900 p-6 rounded-md flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold flex items-center gap-2">
-            <i data-lucide="user" class="w-6 h-6"></i>
-            <%= target.username %>
-          </h1>
-          <p class="text-gray-400"><%= target.email %></p>
-        </div>
+        <!-- Back Link -->
+        <a href="/admin/users"
+          class="mb-6 flex items-center gap-2 text-sm text-neutral-500 hover:text-white transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="h-4 w-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Users
+        </a>
 
-        <div class="flex gap-2">
-          <a href="/admin/user/<%= target.id %>/edit"
-            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl">
-            Edit
-          </a>
-
-          <form action="/admin/user/<%= target.id %>/delete" method="post">
-            <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl">
-              Delete
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Info -->
-      <div class="bg-neutral-950 border border-neutral-800 p-6 rounded-md space-y-3">
-        <div><span class="text-gray-400">User ID:</span> <%= target.id %></div>
-        <div><span class="text-gray-400">Admin:</span> <%= target.admin ? 'Yes' : 'No' %></div>
-        <!--<div><span class="text-gray-400">Created:</span> <%= new Date(target.createdAt).toLocaleString() %></div--->
-      </div>
-
-      <!-- Servers -->
-      <div class="bg-neutral-950 border border-neutral-800 p-6 rounded-md">
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-          <i data-lucide="server" class="w-5 h-5"></i> Servers
-        </h2>
-
-        <% if (target.servers.length) { %>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <% target.servers.forEach(s => { %>
-              <a 
-                class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 hover:border-indigo-600 transition">
-                <div class="font-medium"><%= s.name %></div>
-                <div class="text-sm text-gray-400">
-                  <%= s.node?.name || 'Unknown Node' %>
-                </div>
-              </a>
-            <% }) %>
+        <!-- Header -->
+        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <div class="flex items-center gap-4">
+              <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                <%= target.username %>
+              </h1>
+              <% if (target.admin) { %>
+                <span
+                  class="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-500 ring-1 ring-inset ring-red-500/20">Admin</span>
+                <% } else { %>
+                  <span
+                    class="inline-flex items-center rounded-full bg-neutral-800 px-2.5 py-1 text-xs font-bold text-neutral-400 ring-1 ring-inset ring-neutral-700">User</span>
+                  <% } %>
+            </div>
+            <p class="mt-2 text-neutral-400">
+              <%= target.email %>
+            </p>
           </div>
-        <% } else { %>
-          <p class="text-gray-500">No servers assigned.</p>
-        <% } %>
+
+          <div class="flex gap-3">
+            <a href="/admin/user/<%= target.id %>/edit"
+              class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="h-4 w-4">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              Edit
+            </a>
+
+            <form action="/admin/user/<%= target.id %>/delete" method="POST"
+              onsubmit="return confirm('Delete this user? This cannot be undone.')">
+              <button type="submit"
+                class="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.02] hover:bg-red-700 active:scale-[0.98]">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                  stroke="currentColor" class="h-4 w-4">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+
+          <!-- Details Column -->
+          <div class="space-y-6 lg:col-span-2">
+
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-neutral-500">Servers Owned</h2>
+              </div>
+
+              <% if (target.servers.length) { %>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <% target.servers.forEach(s=> { %>
+                    <a href="/admin/server/<%= s.id %>"
+                      class="group relative flex flex-col justify-between rounded-xl border border-neutral-900 bg-neutral-900/30 p-4 transition-all hover:bg-neutral-900 hover:border-neutral-700">
+                      <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                          <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-950 border border-neutral-800 text-neutral-400 group-hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                              stroke="currentColor" class="h-5 w-5">
+                              <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 013 3v2.25a3 3 0 01-3 3m13.5-6a3 3 0 113-3m-3 3a3 3 0 013 3v2.25a3 3 0 01-3 3m0 0h-13.5" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 class="font-bold text-white">
+                              <%= s.name %>
+                            </h3>
+                            <p class="text-xs text-neutral-400">
+                              <%= s.node?.name || 'Unknown Node' %>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mt-4 flex items-center justify-between border-t border-neutral-800/50 pt-3">
+                        <span class="text-xs font-mono text-neutral-500">
+                          <%= s.ram %>MB / <%= s.core %>vCPU
+                        </span>
+                        <div class="h-2 w-2 rounded-full <%= s.suspended ? 'bg-red-500' : 'bg-emerald-500' %>"></div>
+                      </div>
+                    </a>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                  <div
+                    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-neutral-800 bg-neutral-900/10 p-12 text-center text-neutral-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="h-10 w-10 mb-3 opacity-50">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                    <span class="text-sm">No servers assigned to this user.</span>
+                  </div>
+                  <% } %>
+            </div>
+
+          </div>
+
+          <!-- Meta Sidebar -->
+          <div class="space-y-6">
+
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Metadata</h2>
+
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-neutral-400">User ID</span>
+                  <span class="font-mono text-xs text-neutral-300 truncate max-w-[150px]" title="<%= target.id %>">
+                    <%= target.id %>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
+    </main>
 
-    </div>
-  </main>
-
-  <script>lucide.createIcons()</script>
 </body>
+
 </html>
