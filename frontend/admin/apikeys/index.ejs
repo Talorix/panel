@@ -286,7 +286,7 @@
                     // We need to fetch/store data or pass it. 
                     // Since this is redesigned, I'll use the pre-rendered data if possible or simpler logic.
                     // Quick fix: Embed the data again safely
-                    const apikeysData = <% - JSON.stringify(apikeys) %>;
+                    const apikeysData = <%- JSON.stringify(apikeys || []) %>;
                     const key = apikeysData.find(k => k.id === id);
                     if (!key) return;
 
