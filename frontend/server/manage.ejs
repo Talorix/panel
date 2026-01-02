@@ -389,26 +389,25 @@
           term.loadAddon(fitAddon);
           term.open(document.getElementById('terminal'));
           fitAddon.fit();
-
-          // Resize observer to keep terminal fitting
           new ResizeObserver(() => fitAddon.fit()).observe(document.getElementById('terminal'));
-
-          // Banner
           term.writeln('Connecting to socket...');
-
+          let lastMessage = '';
+          let lastTime = 0;
           function termWrite(msg) {
+            if (lastMessage === msg && (Date.now() - lastTime) < 800) return;
             if (msg.includes && !msg.includes('\r')) {
+              lastMessage = msg;
+              lastTime = Date.now();
               term.write(msg.replace(/\n/g, '\r\n'));
             } else {
+              lastMessage = msg;
+              lastTime = Date.now();
               term.write(msg);
             }
           }
 
           // --- WebSockets ---
           let consoleWs, statsWs;
-
-          let lastMsg = null;
-          let lastMsgTime = 0;
 
           function connectConsole() {
             if (consoleWs && (consoleWs.readyState === WebSocket.OPEN || consoleWs.readyState === WebSocket.CONNECTING)) return;
@@ -439,14 +438,6 @@
               } else {
                 if (data.payload) {
                   const p = typeof data.payload === 'string' ? data.payload : JSON.stringify(data.payload);
-
-                  // Simple deduplication for exact duplicates within 200ms
-                  const now = Date.now();
-                  if (p === lastMsg && (now - lastMsgTime) < 200) {
-                    return;
-                  }
-                  lastMsg = p;
-                  lastMsgTime = now;
 
                   termWrite(p);
                 }
@@ -490,9 +481,18 @@
             if (!stats || !stats.cpu_stats) return;
 
             // Calc CPU
-            const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-            const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-            const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100 : 0;
+            const cpuDelta =
+              stats.cpu_stats.cpu_usage.total_usage -
+              stats.precpu_stats.cpu_usage.total_usage;
+
+            const systemDelta =
+              stats.cpu_stats.system_cpu_usage -
+              stats.precpu_stats.system_cpu_usage;
+
+            const cpuPercent =
+              systemDelta > 0
+                ? (cpuDelta / systemDelta) * 100
+                : 0;
 
             // Calc RAM
             const ramPercent = stats.memory_stats.limit > 0 ? (stats.memory_stats.usage / stats.memory_stats.limit) * 100 : 0;
@@ -578,7 +578,7 @@
               plugins: { legend: { display: false } }, // Custom legend used
               scales: {
                 y: { beginAtZero: true, max: 100, grid: { color: '#333' }, ticks: { color: '#666' } },
-                x: { display: false }
+                x: { display: true }
               },
               animation: false
             }

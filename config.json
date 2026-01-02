@@ -5,6 +5,7 @@
     "session_secret": "you_fell_for_it_like_a_stupid_fish",
     "version": "1.0-dev",
     "logo": "https://talorix.io/Rounded%20Logo%20Design%20for%20Talorix.png",
+    "_note1": "Change the logo URL to your own logo if you want to customize it.",
     "MASTER_PASSWORD": "MyStr0ng!Passw0rd",
-    "_note1": "Your password must be at least 12 chars, include upper/lowercase, a number, and a special character."
+    "_note2": "Your password must be at least 12 chars, include upper/lowercase, a number, and a special character."
 }

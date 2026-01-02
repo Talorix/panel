@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://talorix.io/talorix-banner2.png" alt="Talorix Banner" />
+  <img src="https://talorix.io/talorix-banner3.png" alt="Talorix Banner" />
 </p>
 
 <h1 align="center">Talorix</h1>

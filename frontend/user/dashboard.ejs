@@ -63,171 +63,171 @@
           </div>
         </div>
 
-        <!-- Stats / Summary (Derived from servers array) -->
-        <div class="mb-12 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div class="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-5 animate-scale-in delay-100">
-            <div class="mb-1 text-xs font-medium uppercase tracking-wider text-neutral-500">Total Servers</div>
-            <div class="text-2xl font-bold text-white">
-              <%= servers ? servers.length : 0 %>
-            </div>
-          </div>
-          <div class="rounded-2xl border border-neutral-900 bg-neutral-950/50 p-5 animate-scale-in delay-200">
-            <div class="mb-1 text-xs font-medium uppercase tracking-wider text-neutral-500">Active Nodes</div>
-            <div class="text-2xl font-bold text-white">
-              <%= servers ? [...new Set(servers.filter(s=> s && s.node).map(s => s.node.name))].length : 0 %>
-            </div>
-          </div>
+
+        <!-- Servers Table -->
+        <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950 shadow-2xl">
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-neutral-900 bg-neutral-900/50 text-neutral-400">
+              <tr>
+                <th class="px-6 py-4 font-medium">Server</th>
+                <th class="px-6 py-4 font-medium">Status</th>
+                <th class="px-6 py-4 font-medium">Node</th>
+                <th class="px-6 py-4 font-medium">Uptime</th>
+                <th class="px-6 py-4 text-right font-medium">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-neutral-900" id="serversTableBody">
+              <% if (servers && servers.length> 0) { %>
+                <% servers.forEach((server, index)=> { %>
+                  <tr class="group hover:bg-neutral-900/40 transition-colors animate-fade-in-up"
+                    style="animation-delay: <%= Math.min(index * 50, 500) %>ms;">
+
+                    <!-- Server -->
+                    <td class="px-6 py-4">
+                      <div class="flex items-center gap-4">
+                        <div
+                          class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-900 text-neutral-400 group-hover:bg-white group-hover:text-black transition-all">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+                            <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+                            <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+                            <line x1="6" x2="6.01" y1="6" y2="6" />
+                            <line x1="6" x2="6.01" y1="18" y2="18" />
+                          </svg>
+                        </div>
+
+                        <div>
+                          <div class="font-bold text-white">
+                            <%= server.name %>
+                          </div>
+                          <div class="font-mono text-xs text-neutral-500">
+                            <%= server.id.substring(0, 8) %>...
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-6 py-4">
+                      <% if (server.suspended) { %>
+                        <span
+                          class="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-500 border border-red-500/20 animate-pulse">
+                          Suspended
+                        </span>
+                        <% } else { %>
+                          <div class="flex items-center gap-2">
+                            <div id="status-dot-<%= server.id %>" class="h-2.5 w-2.5 rounded-full bg-neutral-700"></div>
+                            <span id="status-text-<%= server.id %>" class="text-xs text-neutral-400">
+                              Checking
+                            </span>
+                          </div>
+                          <% } %>
+                    </td>
+
+                    <!-- Node -->
+                    <td class="px-6 py-4">
+                      <div>
+                        <div class="text-sm font-medium text-white">
+                          <%= server.node?.name || 'Unknown' %>
+                        </div>
+                        <div class="font-mono text-xs text-neutral-500">
+                          <%= server.node?.ip %>:<%= server.port %>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Uptime -->
+                    <td class="px-6 py-4">
+                      <span id="uptime-<%= server.id %>" class="font-mono text-xs text-neutral-300">
+                        <% if (server.suspended) { %>Suspended<% } else { %>--:--:--<% } %>
+                      </span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 text-right">
+                      <% if (!server.suspended) { %>
+                        <a href="/server/manage/<%= server.id %>"
+                          class="inline-flex items-center justify-center rounded-lg bg-neutral-900 border border-neutral-800 px-4 py-2 text-xs font-bold text-neutral-300 hover:bg-neutral-800 hover:text-white transition active:scale-95">
+                          Manage
+                        </a>
+                        <% } else { %>
+                          <span class="text-xs text-neutral-500 italic">Unavailable</span>
+                          <% } %>
+                    </td>
+
+                  </tr>
+
+                  <!-- WebSocket Status Logic (UNCHANGED) -->
+                  <script>
+                    (function () {
+                      const id = "<%= server.id %>";
+                      const dot = document.getElementById(`status-dot-${id}`);
+                      const text = document.getElementById(`status-text-${id}`);
+                      const uptimeEl = document.getElementById(`uptime-${id}`);
+
+              <% if (!server.suspended) { %>
+                const protocol = location.protocol === "https:" ? "wss" : "ws";
+                        const ws = new WebSocket(`${protocol}://${location.host}/stats/${id}`);
+
+                        let uptime = 0;
+
+                        ws.onmessage = (e) => {
+                          try {
+                            const data = JSON.parse(e.data);
+                            if (data.uptimeSeconds) uptime = data.uptimeSeconds;
+
+                            if ((data.stats?.memory_stats?.usage || 0) > 1) {
+                              dot.className =
+                                "h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
+                              text.textContent = "Online";
+                              text.className = "text-xs text-emerald-400";
+                            } else {
+                              dot.className = "h-2.5 w-2.5 rounded-full bg-red-500";
+                              text.textContent = "Offline";
+                              text.className = "text-xs text-red-400";
+                            }
+                          } catch { }
+                        };
+
+                        setInterval(() => {
+                          if (dot.classList.contains("bg-emerald-500")) {
+                            uptime++;
+                            const h = Math.floor(uptime / 3600);
+                            const m = Math.floor((uptime % 3600) / 60);
+                            const s = uptime % 60;
+                            uptimeEl.textContent = `${h}h ${m}m ${s}s`;
+                          } else {
+                            uptimeEl.textContent = "Offline";
+                          }
+                        }, 1000);
+              <% } %>
+            })();
+                  </script>
+
+                  <% }) %>
+                    <% } else { %>
+                      <tr>
+                        <td colspan="5" class="px-6 py-24 text-center">
+                          <div class="flex flex-col items-center justify-center">
+                            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-900">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="h-6 w-6 text-neutral-500">
+                                <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+                                <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+                              </svg>
+                            </div>
+                            <h3 class="text-sm font-bold text-white">No Servers Found</h3>
+                            <p class="mt-1 text-xs text-neutral-500">You don’t have any servers yet.</p>
+                          </div>
+                        </td>
+                      </tr>
+                      <% } %>
+            </tbody>
+          </table>
         </div>
 
-        <!-- Server Grid -->
-        <% if (servers && servers.filter(s=> s).length > 0) { %>
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <% servers.filter(s=> s).forEach((server, index) => { %>
-              <!-- Server Card -->
-              <!-- Stagger Delay Logic: Cap delay at 500ms (index 5) to prevent long waits on huge lists -->
-              <div style="animation-delay: <%= Math.min(index * 100, 500) %>ms;"
-                class="animate-fade-in-up group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-5 transition-all duration-300 hover:-translate-y-2 hover:border-neutral-700 hover:shadow-2xl hover:shadow-neutral-900/40">
-
-                <!-- Card Header -->
-                <div class="mb-4 flex items-start justify-between">
-                  <div class="flex items-center gap-3">
-                    <div
-                      class="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white transition-all duration-300 group-hover:bg-white group-hover:scale-110 group-hover:text-black shadow-lg group-hover:shadow-white/20">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 class="font-bold text-white leading-tight">
-                        <%= server.name %>
-                      </h3>
-                      <p class="text-xs text-neutral-500">
-                        <%= server.node?.name || 'Unknown Node' %>
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Status Indicator -->
-                  <div class="flex items-center gap-2">
-                    <% if (server.suspended) { %>
-                      <div
-                        class="h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse">
-                      </div>
-                      <% } else { %>
-                        <div id="status-dot-<%= server.id %>"
-                          class="h-2.5 w-2.5 rounded-full bg-neutral-700 transition-colors duration-500"></div>
-                        <% } %>
-                  </div>
-                </div>
-
-                <!-- Card Body -->
-                <div class="mb-6 space-y-2">
-                  <div
-                    class="flex items-center justify-between rounded-lg bg-neutral-900/50 px-3 py-2 text-xs transition-colors group-hover:bg-neutral-900">
-                    <span class="text-neutral-500">IP Address</span>
-                    <span class="font-mono text-neutral-300">
-                      <%= server.node?.ip %>:<%= server.port %>
-                    </span>
-                  </div>
-                  <div
-                    class="flex items-center justify-between rounded-lg bg-neutral-900/50 px-3 py-2 text-xs transition-colors group-hover:bg-neutral-900">
-                    <span class="text-neutral-500">Uptime</span>
-                    <span id="uptime-<%= server.id %>" class="font-mono text-neutral-300">--:--:--</span>
-                  </div>
-                </div>
-
-                <!-- Card Footer -->
-                <div class="mt-auto pt-4 border-t border-neutral-900 flex gap-2">
-                  <% if (!server.suspended) { %>
-                    <a href="/server/manage/<%= server.id %>"
-                      class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-black transition-all active:scale-95 hover:bg-neutral-200 hover:shadow-lg hover:shadow-white/10">
-                      Manage
-                    </a>
-                    <% } else { %>
-                      <button disabled
-                        class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-900/20 px-4 py-2 text-sm font-bold text-red-500 cursor-not-allowed">
-                        Suspended
-                      </button>
-                      <% } %>
-                </div>
-
-                <!-- Status Script -->
-                <script>
-                  (function () {
-                    const serverId = "<%= server.id %>";
-                    const statusDot = document.getElementById(`status-dot-${serverId}`);
-                    const uptimeEl = document.getElementById(`uptime-${serverId}`);
-
-                            // Don't run websocket if suspended (or handle it gracefully)
-                            <% if (!server.suspended) { %>
-                                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                      const ws = new WebSocket(`${protocol}://${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/stats/${serverId}`);
-
-                      let uptimeSeconds = 0;
-
-                      ws.onmessage = (evt) => {
-                        try {
-                          const data = JSON.parse(evt.data);
-                          const stats = data.stats;
-                          if (data.uptimeSeconds) uptimeSeconds = data.uptimeSeconds;
-
-                          // Update Status Dot (Green for online, Red for offline)
-                          if (statusDot) {
-                            if ((stats.memory_stats?.usage || 0) > 1) {
-                              // Online
-                              statusDot.classList.remove('bg-neutral-700', 'bg-red-500');
-                              statusDot.classList.add('bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.6)]');
-                            } else {
-                              // Offline
-                              statusDot.classList.remove('bg-neutral-700', 'bg-emerald-500', 'shadow-[0_0_8px_rgba(16,185,129,0.6)]');
-                              statusDot.classList.add('bg-red-500');
-                            }
-                          }
-                        } catch (e) {
-                          console.error("WS Error", e);
-                        }
-                      };
-
-                      // Local Uptime Tick
-                      setInterval(() => {
-                        if (statusDot && statusDot.classList.contains('bg-emerald-500')) {
-                          uptimeSeconds++;
-                          const h = Math.floor(uptimeSeconds / 3600);
-                          const m = Math.floor((uptimeSeconds % 3600) / 60);
-                          const s = uptimeSeconds % 60;
-                          uptimeEl.textContent = `${h}h ${m}m ${s}s`;
-                        } else {
-                          uptimeSeconds = 0;
-                          uptimeEl.textContent = "Offline";
-                        }
-                      }, 1000);
-                            <% } else { %>
-                                if (uptimeEl) uptimeEl.textContent = "Suspended";
-                            <% } %>
-                        })();
-                </script>
-
-              </div>
-              <% }) %>
-          </div>
-          <% } else { %>
-            <!-- Empty State -->
-            <div
-              class="flex flex-col items-center justify-center rounded-3xl border border-dashed border-neutral-800 bg-neutral-950/30 py-24 text-center animate-scale-in">
-              <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-900">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                  stroke="currentColor" class="h-8 w-8 text-neutral-500">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
-                </svg>
-              </div>
-              <h3 class="text-xl font-bold text-white">No Servers Found</h3>
-              <p class="mt-2 max-w-sm text-neutral-500">You don't have any servers deployed yet. Ask an administrator to
-                assign a server to your account.</p>
-            </div>
-            <% } %>
 
       </div>
     </main>
