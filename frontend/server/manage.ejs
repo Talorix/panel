@@ -397,8 +397,11 @@
             let message = msg;
             if (message === '{"success":true}') return;
             if (message.includes('Log stream ended.')) {
-              message = '\x1b[1;91m[System] Server marked as stopped.\x1b[0m\r\n';
-            }
+              message = '\x1b[91m[System] Server marked as stopped.\x1b[0m\r\n';
+            };
+            if (message.includes('>....')) {
+              message = message.replace(/>....+/g, '');
+            };
             if (lastMessage === message && (Date.now() - lastTime) < 800) return;
             if (message.includes && !message.includes('\r')) {
               lastMessage = message;

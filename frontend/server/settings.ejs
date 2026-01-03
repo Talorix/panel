@@ -92,9 +92,8 @@
                       data-state="active">General</button>
                     <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="subusers"
                       data-state="inactive">Subusers</button>
-                    <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="sftp"
-                      data-state="inactive" disabled title="Coming Soon" class="opacity-50 cursor-not-allowed">SFTP
-                      (Soon)</button>
+                    <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="ftp"
+                      data-state="inactive">FTP</button>
                     <button
                       class="tab-btn rounded-lg px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-900/10 transition-all"
                       data-target="danger" data-state="inactive">Danger Zone</button>
@@ -247,6 +246,102 @@
                         </div>
                       </div>
                     </div>
+                    <!-- FTP -->
+                    <div id="tab-ftp" class="tab-pane hidden space-y-6">
+                      <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                        <h2 class="mb-4 text-lg font-bold text-white">FTP Access</h2>
+                        <p class="mb-6 text-sm text-neutral-500">Use the credentials below to access your server via
+                          FTP.</p>
+
+                        <div class="space-y-4">
+                          <!-- Host -->
+                          <div class="flex justify-between items-center">
+                            <div>
+                              <div class="text-sm text-neutral-500">FTP Host</div>
+                              <div class="font-mono text-white select-all" id="ftp-host">ftp://<%= server.node.ip %>:<%= server.ftp.port || 3001 %>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Username -->
+                          <div class="flex justify-between items-center">
+                            <div>
+                              <div class="text-sm text-neutral-500">FTP Username</div>
+                              <div class="font-mono text-white select-all" id="ftp-user">
+                                <%= server.ftp.username %>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Password -->
+                          <div class="flex justify-between items-center">
+                            <div class="flex-1 min-w-0">
+                              <div class="text-sm text-neutral-500">FTP Password</div>
+                              <div class="flex items-center gap-3">
+                                <input id="ftp-pass" type="password" readonly
+                                  class="font-mono text-white bg-transparent border border-neutral-800 rounded px-3 py-2 text-sm w-64 truncate"
+                                  value="<%= server.ftp.password %>" aria-label="FTP password" />
+                                <button id="toggle-pass" type="button"
+                                  class="rounded px-2 py-1 text-xs bg-neutral-900 border border-neutral-800 hover:bg-neutral-800"
+                                  aria-label="Show password">Show</button>
+                              </div>
+                            </div>
+
+                            <!-- Connect button -->
+                            <div>
+                              <button id="ftp-connect"
+                                class="inline-block rounded px-4 py-2 text-sm font-semibold bg-white text-black hover:bg-neutral-200">
+                                Connect
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Tooltip / fallback -->
+                        <div id="ftp-tooltip" class="mt-3 text-sm text-neutral-400 hidden break-words font-mono">
+                          Copy this command if your browser can't open FTP:
+                        </div>
+                      </div>
+                    </div>
+
+                    <script>
+                      (function () {
+                        const passInput = document.getElementById("ftp-pass");
+                        const toggleBtn = document.getElementById("toggle-pass");
+                        const connectBtn = document.getElementById("ftp-connect");
+                        const tooltip = document.getElementById("ftp-tooltip");
+
+                        const host = "<%= server.node.ip %>";
+                        const port = "<%= server.ftp.port || 3001 %>";
+                        const user = "<%= server.ftp.username %>";
+                        const pass = "<%= server.ftp.password %>";
+
+                        toggleBtn.addEventListener("click", function () {
+                          const isMasked = passInput.type !== "text";
+                          passInput.type = isMasked ? "text" : "password";
+                          this.textContent = isMasked ? "Hide" : "Show";
+                        });
+
+                        connectBtn.addEventListener("click", function () {
+                          const ftpUrl = `ftp://${user}:${pass}@${host}:${port}`;
+                          let newWindow;
+                          try {
+                            newWindow = window.open(ftpUrl, "_blank");
+                          } catch { }
+                          // if browser can't open FTP, show fallback command
+                          if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+                            tooltip.innerHTML = `
+          <strong>Browser cannot open FTP directly.</strong><br>
+          Use this in your terminal:<br>
+          <code>ftp -p -n ${host} ${port}</code><br>
+          Username: <code>${user}</code> | Password: <code>${pass}</code>
+        `;
+                            tooltip.classList.remove("hidden");
+                          }
+                        });
+                      })();
+                    </script>
+
 
                     <!-- DANGER -->
                     <div id="tab-danger" class="tab-pane hidden space-y-6">

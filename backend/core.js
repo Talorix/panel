@@ -82,7 +82,7 @@ router.get("/dashboard", requireAuth, (req, res) => {
  * body: { name, ip, port }
  */
 router.post("/admin/node/create", requireAuth, requireAdmin, (req, res) => {
-  const { name, ip, port } = req.body;
+  const { name, ip, port, ftpPort } = req.body;
 
   if (!name || !ip || !port) {
     return res.status(400).json({ error: "Missing fields" });
@@ -97,6 +97,7 @@ router.post("/admin/node/create", requireAuth, requireAdmin, (req, res) => {
     core: 'unknown',
     ip,
     port,
+    ftpPort,
     key,
     allocations: [],
     status: "offline",
@@ -154,7 +155,7 @@ router.post(
     const panelUrl = `${req.protocol}://${req.get("host")}`;
 
     res.json({
-      command: `npm run configure -- --key ${node.key} --panel ${panelUrl} --port ${node.port}`,
+      command: `npm run configure -- --key ${node.key} --panel ${panelUrl} --port ${node.port} --ftpport ${node.ftpPort}`,
     });
   }
 );
@@ -1076,7 +1077,7 @@ router.post(
         }
       );
 
-      const { containerId, idt } = response.data;
+      const { containerId, idt, ftppass } = response.data;
 
       /* -------------------------
        SERVER DATA
@@ -1101,6 +1102,12 @@ router.post(
         port,
         containerId,
         idt,
+        ftp: {
+          host: node.ip,
+          port: node.ftpPort || 3001,
+          username: `talorix.${idt}`,
+          password: ftppass,
+        },
         env: finalEnv,
         suspended: false,
         createdAt: Date.now(),

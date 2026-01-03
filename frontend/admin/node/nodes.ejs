@@ -204,6 +204,11 @@
               <input id="n-port" placeholder="3000"
                 class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
             </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-neutral-500">FTP Port</label>
+              <input id="n-ftpport" placeholder="3001"
+                class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+            </div>
           </div>
         </div>
 
@@ -244,13 +249,14 @@
         const name = document.getElementById("n-name").value;
         const ip = document.getElementById("n-ip").value;
         const port = document.getElementById("n-port").value;
+        const ftpPort = document.getElementById("n-ftpport").value;
 
         if (!name || !ip || !port) return alert("Please fill in all fields");
 
         const res = await fetch("/admin/node/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, ip, port }),
+          body: JSON.stringify({ name, ip, port, ftpPort }),
         });
 
         if (res.ok) location.reload();

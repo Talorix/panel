@@ -15,6 +15,10 @@ function requireAuth(req, res, next) {
 /* =========================
    HELPERS
 ========================= */
+function _makeId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
 function getServerForUser(userId, serverId) {
   const user = unsqh.get("users", userId);
   if (!user) return null;
@@ -39,6 +43,7 @@ function getNodeUrl(node) {
 
 function withServer(req, res, next) {
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.redirect("/dashboard?error=NOTFOUND");
   if (server.suspended) return res.redirect("/dashboard?error=SUSPENDED");
   next();
@@ -79,6 +84,7 @@ router.get("/server/manage/:id", requireAuth, withServer, (req, res) => {
   if (!user) return res.redirect("/");
 
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   const image = unsqh.get("images", server.imageId);
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
@@ -97,6 +103,7 @@ router.get("/server/manage/:id", requireAuth, withServer, (req, res) => {
  */
 router.post("/server/size/:id", requireAuth, withServer, async (req, res) => {
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.status(404).send("Server not found");
   if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -122,6 +129,7 @@ router.post("/server/size/:id", requireAuth, withServer, async (req, res) => {
  */
 router.post("/server/features/:id/eula/accept", requireAuth, withServer, async (req, res) => {
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.status(404).send("Server not found");
   if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -130,6 +138,7 @@ router.post("/server/features/:id/eula/accept", requireAuth, withServer, async (
 
   try {
     await createFileOnServer(server, node, "eula.txt", "eula=true");
+    logAdd(req.session.userId, `Accepted EULA`);
     res.send({ success: true, message: "EULA accepted" });
   } catch (err) {
     console.error(err);
@@ -147,6 +156,7 @@ router.get(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send({ success: false, message: "Server not found" });
     if (!server.node) return res.status(500).send({ success: false, message: "Server node not assigned" });
 
@@ -211,6 +221,7 @@ router.get(
  */
 router.get("/server/files/:id", requireAuth, withServer, async (req, res) => {
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.status(404).send("Server not found");
 
   if (!server.node) return res.status(500).send("Server node not assigned");
@@ -264,6 +275,7 @@ router.get("/server/files/:id", requireAuth, withServer, async (req, res) => {
 
 router.get('/server/files/:id/raw', requireAuth, withServer, async (req, res) => {
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.status(404).send('Server not found');
   if (!server.node) return res.status(500).send('Server node not assigned');
 
@@ -298,6 +310,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -315,6 +328,7 @@ router.post(
           params: { path: pathQuery, key: node.key },
         }
       );
+      logAdd(req.session.userId, `Created file ${filename} in ${pathQuery}`);
       res.redirect(
         `/server/files/${server.id}?path=${encodeURIComponent(pathQuery)}`
       );
@@ -336,6 +350,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -353,6 +368,7 @@ router.post(
           params: { path: pathQuery, key: node.key },
         }
       );
+      logAdd(req.session.userId, `Created folder ${filename} in ${pathQuery}`);
       res.redirect(
         `/server/files/${server.id}?path=${encodeURIComponent(pathQuery)}`
       );
@@ -372,6 +388,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -388,6 +405,7 @@ router.post(
           params: { location, key: node.key },
         }
       );
+      logAdd(req.session.userId, `Deleted file ${location}`);
       res.redirect(`/server/files/${server.id}`);
     } catch (err) {
       res.status(500).send(err.message);
@@ -405,6 +423,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -421,6 +440,7 @@ router.post(
           params: { location, key: node.key },
         }
       );
+      logAdd(req.session.userId, `Deleted folder ${location}`);
       res.redirect(`/server/files/${server.id}`);
     } catch (err) {
       res.status(500).send(err.message);
@@ -438,6 +458,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -454,6 +475,7 @@ router.post(
         { location, newName },
         { params: { key: node.key } }
       );
+      logAdd(req.session.userId, `Renamed file ${location} to ${newName}`);
       res.redirect(`/server/files/${server.id}`);
     } catch (err) {
       res.status(500).send(err.message);
@@ -471,6 +493,7 @@ router.post(
   withServer,
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -487,6 +510,7 @@ router.post(
         { location, newName },
         { params: { key: node.key } }
       );
+      logAdd(req.session.userId, `Renamed folder ${location} to ${newName}`);
       res.redirect(`/server/files/${server.id}`);
     } catch (err) {
       res.status(500).send(err.message);
@@ -506,6 +530,7 @@ router.get("/server/settings/:id", requireAuth, withServer, (req, res) => {
   if (!user) return res.redirect("/");
 
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.redirect("/dashboard");
 
   const settings = unsqh.get("settings", "app") || {};
@@ -540,6 +565,7 @@ router.post(
     if (!user) return res.status(404).send("User not found");
 
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     server.name = newName;
     user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
@@ -550,7 +576,7 @@ router.post(
       adminServer.name = newName;
       unsqh.put("servers", server.id, adminServer);
     }
-
+    logAdd(req.session.userId, `Renamed server to ${newName}`);
     res.redirect(`/server/settings/${server.id}`);
   }
 );
@@ -566,6 +592,7 @@ router.post(
   (req, res) => {
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
 
     if (!server) {
       return res.status(404).send("Server not found");
@@ -583,7 +610,7 @@ router.post(
       adminServer.env = newEnv;
       unsqh.put("servers", server.id, adminServer);
     }
-
+    logAdd(req.session.userId, `Updated environment variables`);
     res.redirect(`/server/settings/${server.id}?env=saved`);
   }
 );
@@ -603,6 +630,7 @@ router.post(
     if (!user) return res.status(404).send("User not found");
 
     const server = getServerForUser(req.session.userId, id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -629,7 +657,7 @@ router.post(
         adminServer.containerId = newContainerId;
         unsqh.put("servers", adminServer.id, adminServer);
       }
-
+      logAdd(req.session.userId, `Reinstalled server`);
       res.redirect(`/server/settings/${server.id}?rs=true`);
     } catch (err) {
       console.error("Reinstall failed:", err);
@@ -654,6 +682,7 @@ router.post(
   upload.single("file"),
   async (req, res) => {
     const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
     if (!server) return res.status(404).send("Server not found");
     if (!server.node) return res.status(500).send("Server node not assigned");
 
@@ -680,7 +709,7 @@ router.post(
           params: { path: pathQuery, key: node.key },
         }
       );
-
+      logAdd(req.session.userId, `Uploaded file ${req.file.originalname} to ${pathQuery}`);
       res.redirect(
         `/server/files/${server.id}?path=${encodeURIComponent(pathQuery)}`
       );
@@ -702,6 +731,7 @@ router.get(
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
+    const logAdd = router.bindLog(server.id);
     if (!server || !server.node) return res.redirect("/dashboard");
 
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
@@ -751,7 +781,7 @@ router.get(
 
       user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
       unsqh.put("users", user.id, user);
-
+      logAdd(req.session.userId, `Claimed allocation on port ${PORT}`);
       res.redirect(`/server/network/${id}?allocation=claimed`);
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -773,6 +803,7 @@ router.post(
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
+    const logAdd = router.bindLog(server.id);
     if (!server || !server.node) return res.redirect("/dashboard");
 
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
@@ -807,7 +838,7 @@ router.post(
 
       user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
       unsqh.put("users", user.id, user);
-
+      logAdd(req.session.userId, `Set primary allocation to port ${PORT}`);
       res.redirect(`/server/network/${id}?allocation=primary`);
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -829,6 +860,7 @@ router.post(
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
+    const logAdd = router.bindLog(server.id);
     if (!server || !server.node) return res.redirect("/dashboard");
 
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
@@ -860,7 +892,7 @@ router.post(
 
       user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
       unsqh.put("users", user.id, user);
-
+      logAdd(req.session.userId, `Deleted allocation on port ${PORT}`);
       res.redirect(`/server/network/${id}?allocation=released`);
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -878,6 +910,7 @@ router.get("/server/network/:id", requireAuth, withServer, (req, res) => {
   if (!user) return res.redirect("/");
 
   const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
   if (!server) return res.redirect("/dashboard");
 
   const settings = unsqh.get("settings", "app") || {};
@@ -923,6 +956,7 @@ router.post(
       if (!me) return res.status(404).send("User not found");
 
       const serverRef = getServerForUser(req.session.userId, req.params.id);
+      const logAdd = router.bindLog(serverRef.id);
       if (!serverRef) return res.status(404).send("Server not found");
 
       const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
@@ -954,6 +988,12 @@ router.post(
         imageId: globalServer.imageId,
         containerId: globalServer.containerId,
         ou: true,
+        ftp: {
+          host: globalServer.ftp.host,
+          port: globalServer.ftp.port,
+          username: globalServer.ftp.username,
+          password: globalServer.ftp.password,
+        },
         owner: globalServer.ownerId || null,
       };
 
@@ -962,8 +1002,8 @@ router.post(
 
       globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
       if (!globalServer.subusers.includes(subuser.id)) globalServer.subusers.push(subuser.id);
-      unsqh.put("servers", globalServer.id, globalServer);
-
+      unsqh.put("servers", globalServer.id, globalServer); 
+      logAdd(req.session.userId, `Added subuser ${subuser.email}`);
       res.redirect(`/server/settings/${globalServer.id}?subuser=added`);
     } catch (err) {
       console.error("Error adding subuser:", err);
@@ -991,6 +1031,7 @@ router.post(
       if (!me) return res.status(404).send("User not found");
 
       const serverRef = getServerForUser(req.session.userId, req.params.id);
+      const logAdd = router.bindLog(serverRef.id);
       if (!serverRef) return res.status(404).send("Server not found");
 
       const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
@@ -1019,7 +1060,7 @@ router.post(
       globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
       globalServer.subusers = globalServer.subusers.filter((u) => u !== subuser.id);
       unsqh.put("servers", globalServer.id, globalServer);
-
+      logAdd(req.session.userId, `Removed subuser ${subuser.email}`);
       res.redirect(`/server/settings/${globalServer.id}?subuser=removed`);
     } catch (err) {
       console.error("Error removing subuser:", err);
@@ -1028,4 +1069,102 @@ router.post(
   }
 );
 
+
+/**
+ * addAuditLog(serverId, userId, action)
+ * - Adds a single audit log entry to the canonical server record stored in unsqh.
+ * - Each entry: { id, userId, action, ts }
+ */
+function addAuditLog(serverId, userId, action) {
+  if (!serverId || !userId || !action) return false;
+
+  const server = unsqh.get("servers", serverId);
+  if (!server) {
+    // if canonical server doesn't exist, try to find server in users (best-effort)
+    // (this keeps things robust if you call addAuditLog from code that only
+    // has the per-user server object)
+    const allServers = unsqh.list("servers") || [];
+    // try quick find by id or idt
+    const fallback = allServers.find(s => s.id === serverId || s.idt === serverId);
+    if (!fallback) return false;
+    server = fallback;
+  }
+
+  server.auditLogs = Array.isArray(server.auditLogs) ? server.auditLogs : [];
+
+  const entry = {
+    id: _makeId(),
+    userId,
+    action: String(action),
+    ts: new Date().toISOString()
+  };
+
+  server.auditLogs.push(entry);
+  // persist canonical server object
+  unsqh.put("servers", server.id, server);
+
+  // Optionally keep per-user copies in user.servers in sync (best-effort)
+  // update all users who reference this server
+  const users = unsqh.list("users") || [];
+  for (const u of users) {
+    if (!Array.isArray(u.servers)) continue;
+    const idx = u.servers.findIndex(s => s.id === server.id);
+    if (idx !== -1) {
+      // ensure local copy has auditLogs (shallow copy)
+      u.servers[idx].auditLogs = server.auditLogs;
+      unsqh.put("users", u.id, u);
+    }
+  }
+
+  return entry;
+}
+
+/**
+ * bindLog(serverId) -> returns logAdd(userId, action)
+ * so you can call: const logAdd = bindLog(server.id); logAdd('userId','whathedid');
+ */
+function bindLog(serverId) {
+  return function logAdd(userId, action) {
+    return addAuditLog(serverId, userId, action);
+  };
+}
+
+// expose helpers on router so other modules can call them easily:
+router.addAuditLog = addAuditLog;
+router.bindLog = bindLog;
+
+// --- ROUTE: GET /server/auditlogs/:serverId ---
+router.get("/server/auditlogs/:serverId", requireAuth, (req, res) => {
+  const serverId = req.params.serverId;
+  const user = unsqh.get("users", req.session.userId);
+  if (!user) return res.redirect("/");
+
+  // use getServerForUser so permissions are respected
+  const server = getServerForUser(req.session.userId, serverId);
+  if (!server) return res.redirect("/dashboard?error=NOTFOUND");
+  if (server.suspended) return res.redirect("/dashboard?error=SUSPENDED");
+
+  // canonical server record (to read persisted audit logs)
+  const canonical = unsqh.get("servers", server.id) || server;
+  const logs = Array.isArray(canonical.auditLogs) ? canonical.auditLogs.slice().reverse() : [];
+
+  // decorate logs with user display info
+  const displayLogs = logs.map((entry) => {
+    const u = unsqh.get("users", entry.userId) || { id: entry.userId, name: "Unknown" };
+    return {
+      ...entry,
+      userName: u.name || u.email || `user:${entry.userId}`
+    };
+  });
+
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+
+  res.render("server/auditlogs", {
+    name: appName,
+    user,
+    server,
+    logs: displayLogs,
+  });
+});
 module.exports = router;

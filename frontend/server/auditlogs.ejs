@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= name %> - <%= server.name %> Audit Logs
+    </title>
+
+    <link rel="stylesheet" href="/assets/tailwind.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        .font-space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body class="flex h-full w-full overflow-hidden">
+
+    <%- include('../components/sidebar', { name: name, user: user }) %>
+
+        <main class="relative flex-1 overflow-y-auto bg-black">
+            <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+
+                <!-- Header -->
+                <div class="mb-12">
+                    <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">
+                        Audit Logs
+                    </h1>
+                    <p class="mt-2 text-neutral-400">
+                        Track actions performed on this server.
+                    </p>
+                </div>
+
+                <!-- Logs -->
+                <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                    <h2 class="mb-6 text-lg font-bold text-white">Recent Activity</h2>
+
+                    <% const PER_PAGE=10; const page=Math.max(parseInt(req.query.page || '1' , 10), 1); const
+                        total=logs?.length || 0; const totalPages=Math.max(Math.ceil(total / PER_PAGE), 1); const
+                        safePage=Math.min(page, totalPages); const start=(safePage - 1) * PER_PAGE; const
+                        pageLogs=logs.slice(start, start + PER_PAGE); %>
+
+                        <div class="space-y-4">
+
+                            <% if (!pageLogs || pageLogs.length===0) { %>
+                                <div
+                                    class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
+                                    No audit logs recorded.
+                                </div>
+                                <% } else { %>
+
+                                    <% pageLogs.forEach(log=> { %>
+                                        <div
+                                            class="flex items-center gap-4 rounded-lg border border-neutral-900 bg-neutral-900/30 p-3 transition-colors hover:border-neutral-800">
+
+                                            <div
+                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-800 text-neutral-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-2 text-sm">
+                                                    <span class="font-semibold text-white truncate">
+                                                        <%= log.userName %>
+                                                    </span>
+                                                    <span class="text-xs text-neutral-500 font-mono truncate">
+                                                        (<%= log.userId %>)
+                                                    </span>
+                                                    <span class="mx-1 text-neutral-700">•</span>
+                                                    <span class="text-xs text-neutral-500 whitespace-nowrap">
+                                                        <%= new Date(log.ts).toLocaleString() %>
+                                                    </span>
+                                                </div>
+
+                                                <p class="mt-0.5 text-sm text-neutral-300 truncate">
+                                                    <%= log.action %>
+                                                </p>
+                                            </div>
+
+                                        </div>
+                                        <% }) %>
+
+                                            <% } %>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (totalPages> 1) { %>
+                            <div class="mt-8 flex items-center justify-between text-sm">
+
+                                <!-- Prev -->
+                                <div>
+                                    <% if (safePage> 1) { %>
+                                        <a href="?page=<%= safePage - 1 %>"
+                                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 font-bold hover:bg-neutral-800 transition">
+                                            ← Previous
+                                        </a>
+                                        <% } %>
+                                </div>
+
+                                <!-- Pages -->
+                                <div class="flex gap-2">
+                                    <% for (let i=1; i <=totalPages; i++) { %>
+                                        <a href="?page=<%= i %>" class="rounded-lg px-3 py-2 font-bold transition
+                    <%= i === safePage
+                      ? 'bg-white text-black'
+                      : 'border border-neutral-800 bg-neutral-900 hover:bg-neutral-800' %>">
+                                            <%= i %>
+                                        </a>
+                                        <% } %>
+                                </div>
+
+                                <!-- Next -->
+                                <div>
+                                    <% if (safePage < totalPages) { %>
+                                        <a href="?page=<%= safePage + 1 %>"
+                                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 font-bold hover:bg-neutral-800 transition">
+                                            Next →
+                                        </a>
+                                        <% } %>
+                                </div>
+
+                            </div>
+                            <% } %>
+
+                </div>
+
+            </div>
+        </main>
+
+</body>
+
+</html>
