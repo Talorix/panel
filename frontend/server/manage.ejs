@@ -394,15 +394,20 @@
           let lastMessage = '';
           let lastTime = 0;
           function termWrite(msg) {
-            if (lastMessage === msg && (Date.now() - lastTime) < 800) return;
-            if (msg.includes && !msg.includes('\r')) {
-              lastMessage = msg;
+            let message = msg;
+            if (message === '{"success":true}') return;
+            if (message.includes('Log stream ended.')) {
+              message = '\x1b[1;91m[System] Server marked as stopped.\x1b[0m\r\n';
+            }
+            if (lastMessage === message && (Date.now() - lastTime) < 800) return;
+            if (message.includes && !message.includes('\r')) {
+              lastMessage = message;
               lastTime = Date.now();
-              term.write(msg.replace(/\n/g, '\r\n'));
+              term.write(message.replace(/\n/g, '\r\n'));
             } else {
-              lastMessage = msg;
+              lastMessage = message;
               lastTime = Date.now();
-              term.write(msg);
+              term.write(message);
             }
           }
 
@@ -414,35 +419,40 @@
             consoleWs = new WebSocket(`${protocol}://${window.location.hostname}:${window.location.port}/console/${serverId}`);
 
             consoleWs.onmessage = (evt) => {
-              // Hide loading/error banner
-              document.getElementById("systemnodedown").classList.add("hidden");
+              const raw = evt.data;
+              document
+                .getElementById("systemnodedown")
+                .classList.add("hidden");
 
-              let data;
-              try { data = JSON.parse(evt.data); }
-              catch {
-                termWrite(evt.data); // Raw fallback
-                return;
-              }
+              if (typeof raw === "string" && raw.trim().startsWith("{")) {
+                try {
+                  const data = JSON.parse(raw);
+                  if (data.event === "stats" || data.event === "status") return;
+                  if (data.event === "cmd" || data.event === "error") {
+                    const msg = data.payload;
+                    termWrite(typeof msg === "string" ? msg : JSON.stringify(msg));
+                    return;
+                  }
 
-              if (data.event === "cmd" || data.event === "error") {
-                let msg = data.payload;
-                if (typeof msg === 'string') {
-                  termWrite(msg);
-                } else {
-                  termWrite(JSON.stringify(msg));
+                  if (data.event?.startsWith("power")) {
+                    termWrite(`\r\n\x1b[1;33m[System] ${data.payload}\x1b[0m\r\n`);
+                    return;
+                  }
+
+                  if (data.payload) {
+                    termWrite(
+                      typeof data.payload === "string"
+                        ? data.payload
+                        : JSON.stringify(data.payload)
+                    );
+                    return;
+                  }
+                } catch {
                 }
-              } else if (data.event && data.event.startsWith("power")) {
-                termWrite(`\r\n\x1b[1;33m[System] ${data.payload}\x1b[0m\r\n`);
-              } else if (data.event === "stats" || data.event === "status") {
-                // Ignore stats/status updates in console to prevent spam
-              } else {
-                if (data.payload) {
-                  const p = typeof data.payload === 'string' ? data.payload : JSON.stringify(data.payload);
-
-                  termWrite(p);
-                }
               }
+              termWrite(raw);
             };
+
 
             consoleWs.onclose = () => {
               termWrite('\r\n\x1b[1;31m[System] Disconnected. Reconnecting...\x1b[0m\r\n');
