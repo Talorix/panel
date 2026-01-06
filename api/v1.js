@@ -3,8 +3,6 @@ const crypto = require("crypto");
 const axios = require("axios");
 const router = express.Router();
 const unsqh = require("../modules/db.js");
-const { start } = require("repl");
-
 // --- Middleware: requireAPI
 function requireAPI(req, res, next) {
   try {
