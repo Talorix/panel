@@ -61,10 +61,11 @@
             <button onclick="openCreateModal()"
               class="flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200 hover:scale-105">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="h-5 w-5">
+                stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3.75 19.5a6.96 6.96 0 006.138-3.963 12.022 12.022 0 00.524 6.487 7.06 7.06 0 01-6.662-2.525z" />
+                  d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
               </svg>
+
               Create User
             </button>
           </div>
@@ -84,7 +85,8 @@
             <tbody class="divide-y divide-neutral-900" id="usersTableBody">
               <% if (users && users.length> 0) { %>
                 <% users.forEach((u, index)=> { %>
-                  <tr class="group hover:bg-neutral-900/40 transition-colors user-row animate-fade-in-up"
+                  <tr onclick="window.location.href='/admin/user/<%= u.id %>'"
+                    class="cursor-pointer group hover:bg-neutral-900/40 transition-colors user-row animate-fade-in-up"
                     style="animation-delay: <%= Math.min(index * 50, 500) %>ms;"
                     data-username="<%= u.username.toLowerCase() %>" data-email="<%= u.email.toLowerCase() %>">
                     <td class="px-6 py-4">

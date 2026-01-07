@@ -105,8 +105,15 @@ const Logger = require("../modules/logger.js");
         if (!imageResp.ok) continue;
 
         const imageData = await imageResp.json();
-        const { dockerImage, name, description, envs, files, features, startCmd, stopCmd } =
+        const { dockerImage, dockerImages, name, description, envs, files, features, startCmd, stopCmd } =
           imageData;
+        let dockerImagesList = [];
+
+        if (dockerImages && Array.isArray(dockerImages)) {
+          dockerImagesList = dockerImages;
+        } else if (dockerImage) {
+          dockerImagesList.push(dockerImage);
+        }
 
         if (!dockerImage || !name) continue;
 
@@ -116,6 +123,7 @@ const Logger = require("../modules/logger.js");
 
         const normalized = {
           dockerImage,
+          dockerImages: dockerImagesList,
           name,
           description: description || "",
           envs: envs || {},
@@ -136,7 +144,10 @@ const Logger = require("../modules/logger.js");
             JSON.stringify(existingImage.files || []) ===
               JSON.stringify(normalized.files) &&
             JSON.stringify(existingImage.features || []) ===
-              JSON.stringify(normalized.features);
+              JSON.stringify(normalized.features) &&
+            JSON.stringify(existingImage.dockerImages || []) ===
+              JSON.stringify(normalized.dockerImages);
+
           if (identical) {
             skippedImages.push(name);
             continue;

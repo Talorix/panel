@@ -402,6 +402,13 @@
             if (message.includes('>....')) {
               message = message.replace(/>....+/g, '');
             };
+            const isAdmin = <%= user.admin ? 'true' : 'false' %>;
+            if (message.startsWith('[Pulling]')) {
+              message = message.replace('Pulling', '\x1b[93mPulling\x1b[0m');
+              if (!isAdmin) {
+                return;
+              }
+            }
             if (lastMessage === message && (Date.now() - lastTime) < 800) return;
             if (message.includes && !message.includes('\r')) {
               lastMessage = message;

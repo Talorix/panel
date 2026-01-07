@@ -88,7 +88,7 @@
                   const ownerName = owner ? owner.username.toLowerCase() : 'unknown';
                   const ownerEmail = owner ? owner.email.toLowerCase() : '';
                   %>
-                  <tr class="group hover:bg-neutral-900/40 transition-colors server-row animate-fade-in-up"
+                  <tr onclick="window.location.href='/admin/server/<%= server.id %>'" class="cursor-pointer group hover:bg-neutral-900/40 transition-colors server-row animate-fade-in-up"
                     style="animation-delay: <%= Math.min(index * 50, 500) %>ms;"
                     data-server-name="<%= server.name.toLowerCase() %>" data-server-id="<%= server.id.toLowerCase() %>"
                     data-owner-name="<%= ownerName %>" data-owner-email="<%= ownerEmail %>">
@@ -111,7 +111,7 @@
                             <%= server.name %>
                           </div>
                           <div class="font-mono text-xs text-neutral-500" title="Server ID">
-                            <%= server.id.substring(0, 8) %>...
+                            <%= server.id %>
                           </div>
                         </div>
                       </div>

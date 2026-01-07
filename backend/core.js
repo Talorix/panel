@@ -865,7 +865,7 @@ router.get(
  * body: { dockerImage, name, description, envs, files, features }
  */
 router.post("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
-  const { dockerImage, name, description, envs, files, features } = req.body;
+  const { dockerImage, name, description, envs, files, features, dockerImages, stopCmd, startCmd } = req.body;
 
   if (!dockerImage || !name)
     return res.status(400).json({ error: "Missing fields" });
@@ -880,6 +880,9 @@ router.post("/admin/images/new", requireAuth, requireAdmin, (req, res) => {
     files: files || [], // [{ filename, url }]
     createdAt: Date.now(),
     features: Array.isArray(features) ? features : [],
+    dockerImages: Array.isArray(dockerImages) ? dockerImages : [],
+    stopCmd: stopCmd || "",
+    startCmd: startCmd || "",
   };
 
   unsqh.put("images", id, image);

@@ -151,7 +151,23 @@
                   <p class="text-sm italic text-neutral-500">No files configured.</p>
                   <% } %>
             </div>
-
+            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Docker Images</h2>
+              <% if (image.dockerImages && image.dockerImages.length) { %>
+                <div class="grid grid-cols-1 gap-2">
+                  <% image.dockerImages.forEach(dockerImage=> { %>
+                    <div
+                      class="flex items-center justify-between rounded-lg border border-neutral-900 bg-neutral-900/50 px-4 py-3">
+                      <span class="font-mono text-sm font-bold text-white">
+                        <%= dockerImage %> <% if (dockerImage === image.dockerImage) { %><span class="rounded-md bg-indigo-900/30 px-2 py-1 text-xs text-indigo-400">Primary</span><% } %>
+                      </span>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } else { %>
+                  <p class="text-sm italic text-neutral-500">No docker images configured.</p>
+                  <% } %>
+            </div>
           </div>
 
           <!-- Meta Sidebar -->

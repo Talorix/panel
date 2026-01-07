@@ -1146,7 +1146,6 @@ router.get("/server/startup/:id", requireAuth, withServer, (req, res) => {
   const server = getServerForUser(req.session.userId, req.params.id);
   const logAdd = router.bindLog(server.id);
   if (!server) return res.redirect("/dashboard");
-
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
   res.render("server/startup", {
@@ -1156,6 +1155,57 @@ router.get("/server/startup/:id", requireAuth, withServer, (req, res) => {
     req
   });
 });
+
+/**
+ * POST /server/startup/:id/setPrimaryImage
+ * Sets the Primary Docker Image for the server
+ * body: { DockerImage }
+ */
+router.post(
+  "/server/startup/:id/setPrimaryImage",
+  requireAuth,
+  withServer,
+  (req, res) => {
+    const { DockerImage } = req.body;
+    if (!DockerImage)
+      return res.status(400).send("Missing DockerImage");
+
+    const user = unsqh.get("users", req.session.userId);
+    if (!user) return res.status(404).send("User not found");
+
+    const server = getServerForUser(req.session.userId, req.params.id);
+    const logAdd = router.bindLog(server.id);
+    if (!server) return res.status(404).send("Server not found");
+
+    server.image.dockerImage = DockerImage;
+    user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
+    unsqh.put("users", user.id, user);
+
+    const adminServer = unsqh.get("servers", server.id);
+    if (adminServer) {
+      adminServer.image.dockerImage = DockerImage;
+      unsqh.put("servers", server.id, adminServer);
+    }
+    const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+    if (node && node.key && DockerImage) {
+      axios
+        .post(
+          `${getNodeUrl(node)}/server/${server.idt}/set-image`,
+          { dockerImage: DockerImage },
+          { params: { key: node.key } }
+        )
+        .catch((err) => {
+          console.error(
+            `Failed to pre-pull image ${DockerImage} on node ${node.ip}:`,
+            err.response?.data || err.message
+          );
+        });
+    }
+    logAdd(req.session.userId, `Set primary image to ${DockerImage}`);
+    res.redirect(`/server/startup/${server.id}?image=updated`);
+  }
+);
+
 /**
  * addAuditLog(serverId, userId, action)
  * - Adds a single audit log entry to the canonical server record stored in unsqh.
@@ -1166,11 +1216,7 @@ function addAuditLog(serverId, userId, action) {
 
   let server = unsqh.get("servers", serverId);
   if (!server) {
-    // if canonical server doesn't exist, try to find server in users (best-effort)
-    // (this keeps things robust if you call addAuditLog from code that only
-    // has the per-user server object)
     const allServers = unsqh.list("servers") || [];
-    // try quick find by id or idt
     const fallback = allServers.find(s => s.id === serverId || s.idt === serverId);
     if (!fallback) return false;
     server = fallback;

@@ -6,6 +6,7 @@ const config = require("./config.json");
 const unsqh = require("./modules/db.js");
 const DBStore = require("./modules/db-session.js");
 const Logger = require("./modules/logger.js");
+const crypto = require("crypto");
 // --- WebSocket support ---
 const expressWs = require("express-ws");
 
@@ -49,6 +50,7 @@ app.set("views", path.join(__dirname, "/frontend"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use((req, res, next) => {
   res.locals.config = config;
+  res.locals.crypto = crypto;
   res.locals.req = req;
   next();
 });
