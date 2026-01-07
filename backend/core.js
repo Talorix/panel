@@ -1141,8 +1141,10 @@ router.post(
 /**
  * POST /admin/edit/:serverId
  * Edit a server (admin)
- * Body: { name?, ram?, core?, disk?, port?, imageId?, env?, files? }
+ * Body: { name?, ram?, core?, disk?, imageId?, env?, files?, userId? }
  * - files: [{ filename, url }] – optional, will be downloaded/overwritten on node
+ * - userId: optional, transfers ownership to another user
+ * NOTE: Node changes are not supported via edit (requires server recreation)
  */
 router.post(
   "/admin/edit/:serverId",
@@ -1151,28 +1153,56 @@ router.post(
   async (req, res) => {
     const { serverId } = req.params;
     const server = unsqh.get("servers", serverId);
-    if (!server) return res.status(404).json({ error: "Server not found" });
+    if (!server) return res.status(404).json({ error: "Server not found", field: "serverId" });
 
     const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
-    if (!node) return res.status(404).json({ error: "Node not found" });
+    if (!node) return res.status(404).json({ error: "Node not found - server's node may be offline or deleted", field: "node" });
 
     const {
       name,
       ram,
       core,
       disk,
-      //  port,
       env: newEnv = {},
       files: newFiles = [],
       imageId,
+      userId: newUserId,
     } = req.body;
+
+    // Validate name if provided
+    if (name !== undefined && (typeof name !== "string" || name.trim() === "")) {
+      return res.status(400).json({ error: "Server name cannot be empty", field: "name" });
+    }
+
+    // Validate resources if provided
+    if (ram !== undefined && (isNaN(ram) || ram < 128)) {
+      return res.status(400).json({ error: "RAM must be at least 128 MB", field: "ram" });
+    }
+    if (core !== undefined && (isNaN(core) || core < 1)) {
+      return res.status(400).json({ error: "CPU cores must be at least 1", field: "core" });
+    }
+    if (disk !== undefined && (isNaN(disk) || disk < 512)) {
+      return res.status(400).json({ error: "Disk must be at least 512 MB", field: "disk" });
+    }
+
+    // Validate new owner if provided
+    let newOwner = null;
+    if (newUserId && newUserId !== server.userId) {
+      newOwner = unsqh.get("users", newUserId);
+      if (!newOwner) {
+        return res.status(404).json({ error: "New owner user not found", field: "userId" });
+      }
+    }
 
     let image;
     if (imageId) {
       image = unsqh.get("images", imageId);
-      if (!image) return res.status(404).json({ error: "Image not found" });
+      if (!image) return res.status(404).json({ error: "Image not found", field: "imageId" });
     } else {
       image = unsqh.get("images", server.imageId);
+      if (!image) {
+        return res.status(404).json({ error: "Server's current image not found - please select an image", field: "imageId" });
+      }
     }
 
     // Merge env variables (existing server env overridden by newEnv)
@@ -1219,6 +1249,9 @@ router.post(
 
       const { containerId } = response.data;
 
+      // Store old userId for ownership transfer
+      const oldUserId = server.userId;
+
       // Update admin server info
       server.name = name || server.name;
       server.ram = ram || server.ram;
@@ -1231,26 +1264,65 @@ router.post(
       server.containerId = containerId;
       server.files = resolvedFiles;
 
-      unsqh.put("servers", server.id, server);
+      // Handle ownership transfer
+      if (newOwner && newUserId !== oldUserId) {
+        // Update server's userId
+        server.userId = newUserId;
+        server.ownerId = newUserId;
 
-      // Update user's server list
-      const user = unsqh.get("users", server.userId);
-      if (user && user.servers) {
-        user.servers = user.servers.map((s) =>
-          s.id === server.id ? server : s
-        );
-        unsqh.put("users", user.id, user);
+        // Remove server from old user's servers array
+        const oldUser = unsqh.get("users", oldUserId);
+        if (oldUser && Array.isArray(oldUser.servers)) {
+          oldUser.servers = oldUser.servers.filter((s) => s.id !== server.id);
+          unsqh.put("users", oldUser.id, oldUser);
+        }
+
+        // Add server to new user's servers array
+        newOwner.servers = Array.isArray(newOwner.servers) ? newOwner.servers : [];
+        // Check if already exists (shouldn't, but be safe)
+        const existingIdx = newOwner.servers.findIndex((s) => s.id === server.id);
+        if (existingIdx >= 0) {
+          newOwner.servers[existingIdx] = server;
+        } else {
+          newOwner.servers.push(server);
+        }
+        unsqh.put("users", newOwner.id, newOwner);
+      } else {
+        // No ownership change - just update the current user's server copy
+        const user = unsqh.get("users", server.userId);
+        if (user && user.servers) {
+          user.servers = user.servers.map((s) =>
+            s.id === server.id ? server : s
+          );
+          unsqh.put("users", user.id, user);
+        }
       }
 
-      res.json({ success: true, server });
+      // Persist server to global servers store
+      unsqh.put("servers", server.id, server);
+
+      res.json({ success: true, server, ownershipTransferred: newOwner ? true : false });
     } catch (err) {
       console.error(
         "Failed to edit server:",
         err.response?.data || err.message
       );
-      res
-        .status(500)
-        .json({ error: "Failed to edit server", details: err.message });
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to edit server";
+      let errorDetails = err.message;
+
+      if (err.code === "ECONNREFUSED") {
+        errorMessage = "Cannot connect to node";
+        errorDetails = "The server's node appears to be offline. Please check node status.";
+      } else if (err.response?.status === 404) {
+        errorMessage = "Server container not found on node";
+        errorDetails = "The server may have been deleted on the node. Consider recreating it.";
+      } else if (err.response?.data?.error) {
+        errorDetails = err.response.data.error;
+      }
+
+      res.status(500).json({ error: errorMessage, details: errorDetails });
     }
   }
 );
