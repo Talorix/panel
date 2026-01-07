@@ -5,6 +5,7 @@ database.unsqh
 *.log
 npm-debug.log*
 yarn-debug.log*
+bun.lock
 yarn-error.log*
 lerna-debug.log*
 
