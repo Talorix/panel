@@ -1164,7 +1164,7 @@ router.get("/server/startup/:id", requireAuth, withServer, (req, res) => {
 function addAuditLog(serverId, userId, action) {
   if (!serverId || !userId || !action) return false;
 
-  const server = unsqh.get("servers", serverId);
+  let server = unsqh.get("servers", serverId);
   if (!server) {
     // if canonical server doesn't exist, try to find server in users (best-effort)
     // (this keeps things robust if you call addAuditLog from code that only
