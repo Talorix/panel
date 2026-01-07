@@ -27,15 +27,169 @@
       background: #333;
       border-radius: 3px;
     }
+
+    .field-error {
+      border-color: #ef4444 !important;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-4px);
+      }
+
+      75% {
+        transform: translateX(4px);
+      }
+    }
+
+    .toast {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .toast-exit {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    /* Success overlay animation */
+    .success-overlay {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .success-checkmark {
+      animation: scaleIn 0.4s ease-out 0.1s both;
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .success-text {
+      animation: slideUp 0.4s ease-out 0.3s both;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .checkmark-circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) 0.2s forwards;
+    }
+
+    .checkmark-check {
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+    }
+
+    @keyframes stroke {
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .pulse-ring {
+      animation: pulseRing 1s ease-out infinite;
+    }
+
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body class="flex h-full w-full overflow-hidden">
 
-  <%- include('../../components/sidebar', { name, user }) %>
+  <%- include('../../components/sidebar', { name, user, hideServerNav: true }) %>
 
     <main class="relative flex-1 overflow-y-auto bg-black">
+      <!-- Toast Container -->
+      <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+      <!-- Success Overlay (hidden by default) -->
+      <div id="successOverlay" class="hidden fixed inset-0 z-[100] bg-black/90 flex items-center justify-center">
+        <div class="text-center">
+          <!-- Animated Checkmark -->
+          <div class="relative inline-block mb-6">
+            <div class="absolute inset-0 bg-green-500/20 rounded-full pulse-ring"></div>
+            <svg class="w-24 h-24 success-checkmark" viewBox="0 0 52 52">
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none" stroke="#22c55e" stroke-width="2" />
+              <path class="checkmark-check" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"
+                stroke-linejoin="round" d="M14 27l7 7 16-16" />
+            </svg>
+          </div>
+          <h2 id="successTitle" class="text-2xl font-bold text-white success-text">Server Updated!</h2>
+          <p id="successSubtitle" class="text-neutral-400 mt-2 success-text">Redirecting to servers list...</p>
+        </div>
+      </div>
+
       <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
         <!-- Back Link -->
@@ -67,6 +221,7 @@
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Server Name</label>
                 <input id="name" type="text" value="<%= server.name %>"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                <p id="name-error" class="text-xs text-red-500 hidden"></p>
               </div>
 
               <div class="space-y-2">
@@ -74,22 +229,31 @@
                 <select id="user"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
                   <% users.forEach(u=> { %>
-                    <option value="<%= u.id %>" <%=u.id===server.userId ? "selected" : "" %>><%= u.username %>
+                    <option value="<%= u.id %>" <%=u.id===server.userId ? "selected" : "" %>><%= u.username || u.email
+                        || u.name || u.id %>
                     </option>
                     <% }) %>
                 </select>
+                <p class="text-xs text-amber-500">⚠️ Changing owner will transfer the server to another user</p>
+                <p id="user-error" class="text-xs text-red-500 hidden"></p>
               </div>
 
               <div class="space-y-2">
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Node</label>
-                <select id="node"
-                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
-                  <% nodes.forEach(n=> { %>
-                    <option value="<%= n.id %>" <%=n.name===server.node.name ? "selected" : "" %>>
-                      <%= n.name %> (<%= n.ip %>:<%= n.port %>)
-                    </option>
-                    <% }) %>
-                </select>
+                <div class="relative">
+                  <input type="text" disabled
+                    value="<%= server.node ? server.node.name + ' (' + server.node.ip + ')' : 'No node assigned' %>"
+                    class="w-full rounded-lg border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-sm text-neutral-400 cursor-not-allowed" />
+                  <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                      stroke="currentColor" class="w-4 h-4 text-neutral-600">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                  </div>
+                </div>
+                <p class="text-xs text-neutral-500">Node cannot be changed after creation. Delete and recreate the
+                  server to move it.</p>
               </div>
 
               <div class="space-y-2">
@@ -103,6 +267,7 @@
                     </option>
                     <% }) %>
                 </select>
+                <p id="image-error" class="text-xs text-red-500 hidden"></p>
               </div>
 
             </div>
@@ -114,18 +279,21 @@
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div class="space-y-2">
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">RAM (MB)</label>
-                <input id="ram" type="number" value="<%= server.ram %>"
+                <input id="ram" type="number" value="<%= server.ram %>" min="128"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                <p id="ram-error" class="text-xs text-red-500 hidden"></p>
               </div>
               <div class="space-y-2">
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Disk (MB)</label>
-                <input id="disk" type="number" value="<%= server.disk %>"
+                <input id="disk" type="number" value="<%= server.disk %>" min="512"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                <p id="disk-error" class="text-xs text-red-500 hidden"></p>
               </div>
               <div class="space-y-2">
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">CPU (Cores)</label>
-                <input id="core" type="number" value="<%= server.core %>"
+                <input id="core" type="number" value="<%= server.core %>" min="1"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                <p id="core-error" class="text-xs text-red-500 hidden"></p>
               </div>
             </div>
           </div>
@@ -147,8 +315,15 @@
             <a href="/admin/servers"
               class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
             <button onclick="editServer()" id="editBtn"
-              class="flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10">
-              Save Changes
+              class="flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+              <span id="btnText">Save Changes</span>
+              <svg id="btnSpinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
             </button>
           </div>
 
@@ -157,29 +332,131 @@
     </main>
 
     <script>
-      const serverEnv = <% - JSON.stringify(server.env || {}) %>;
+      // Server environment variables - properly escaped
+      const serverEnv = <%- JSON.stringify(server.env || {}) %>;
+      const currentUserId = "<%= server.userId %>";
+
+      // Toast notification system
+      function showToast(message, type = "error") {
+        const container = document.getElementById("toastContainer");
+        const toast = document.createElement("div");
+
+        const colors = {
+          error: "bg-red-500 border-red-400",
+          success: "bg-green-500 border-green-400",
+          warning: "bg-amber-500 border-amber-400"
+        };
+
+        toast.className = `toast ${colors[type] || colors.error} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 max-w-sm border backdrop-blur-sm`;
+
+        const icons = {
+          error: `<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+          success: `<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+          warning: `<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+        };
+
+        toast.innerHTML = `
+        ${icons[type] || icons.error}
+        <span class="text-sm font-medium flex-1">${message}</span>
+        <button onclick="dismissToast(this.parentElement)" class="text-white/80 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      `;
+
+        container.appendChild(toast);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => dismissToast(toast), 5000);
+      }
+
+      function dismissToast(toast) {
+        if (!toast || !toast.parentElement) return;
+        toast.classList.add("toast-exit");
+        setTimeout(() => toast.remove(), 300);
+      }
+
+      function showSuccessOverlay(ownershipTransferred = false) {
+        const overlay = document.getElementById("successOverlay");
+        const title = document.getElementById("successTitle");
+        const subtitle = document.getElementById("successSubtitle");
+
+        if (ownershipTransferred) {
+          title.textContent = "Ownership Transferred!";
+          subtitle.textContent = "Server has been transferred to the new owner. Redirecting...";
+        } else {
+          title.textContent = "Server Updated!";
+          subtitle.textContent = "Changes saved successfully. Redirecting...";
+        }
+
+        overlay.classList.remove("hidden");
+        overlay.classList.add("success-overlay");
+
+        // Redirect after animation
+        setTimeout(() => {
+          window.location.href = "/admin/servers";
+        }, 1800);
+      }
+
+      function clearFieldErrors() {
+        document.querySelectorAll(".field-error").forEach(el => el.classList.remove("field-error"));
+        document.querySelectorAll("[id$='-error']").forEach(el => {
+          el.classList.add("hidden");
+          el.textContent = "";
+        });
+      }
+
+      function showFieldError(field, message) {
+        const input = document.getElementById(field);
+        const errorEl = document.getElementById(`${field}-error`);
+
+        if (input) {
+          input.classList.add("field-error");
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => input.focus(), 300);
+        }
+        if (errorEl) {
+          errorEl.textContent = message;
+          errorEl.classList.remove("hidden");
+        }
+      }
 
       function loadImageEnv() {
         const select = document.getElementById("image");
+        if (!select || !select.options.length) return;
+
         const option = select.options[select.selectedIndex];
-        const raw = option.dataset.env;
+        const raw = option?.dataset?.env;
         const envs = raw ? JSON.parse(decodeURIComponent(raw)) : {};
 
         const envList = document.getElementById("envList");
         envList.innerHTML = "";
 
-        // Merge
+        // Merge image envs with server envs (server takes precedence)
         const mergedEnv = { ...envs, ...serverEnv };
+
+        if (Object.keys(mergedEnv).length === 0) {
+          envList.innerHTML = '<p class="text-neutral-500 text-sm col-span-2">No environment variables configured for this image.</p>';
+          return;
+        }
 
         Object.entries(mergedEnv).forEach(([key, value]) => {
           const div = document.createElement("div");
           div.className = "flex flex-col space-y-1";
           div.innerHTML = `
-              <label class="text-xs font-mono text-neutral-400">${key}</label>
-              <input data-key="${key}" value="${value}" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
-          `;
+          <label class="text-xs font-mono text-neutral-400">${escapeHtml(key)}</label>
+          <input data-key="${escapeHtml(key)}" value="${escapeHtml(String(value))}" 
+            class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+        `;
           envList.appendChild(div);
         });
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function collectEnv() {
@@ -192,38 +469,110 @@
 
       async function editServer() {
         const btn = document.getElementById("editBtn");
+        const btnText = document.getElementById("btnText");
+        const btnSpinner = document.getElementById("btnSpinner");
+
+        // Clear previous errors
+        clearFieldErrors();
+
+        // Disable button and show spinner
         btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = "Saving...";
+        btnText.textContent = "Saving...";
+        btnSpinner.classList.remove("hidden");
 
         const serverId = "<%= server.id %>";
+        const newUserId = document.getElementById("user").value;
+
+        // Client-side validation
+        const name = document.getElementById("name").value.trim();
+        const ram = parseInt(document.getElementById("ram").value);
+        const core = parseInt(document.getElementById("core").value);
+        const disk = parseInt(document.getElementById("disk").value);
+
+        if (!name) {
+          showFieldError("name", "Server name is required");
+          showToast("Please enter a server name", "error");
+          resetButton();
+          return;
+        }
+        if (isNaN(ram) || ram < 128) {
+          showFieldError("ram", "RAM must be at least 128 MB");
+          showToast("RAM must be at least 128 MB", "error");
+          resetButton();
+          return;
+        }
+        if (isNaN(core) || core < 1) {
+          showFieldError("core", "CPU cores must be at least 1");
+          showToast("CPU cores must be at least 1", "error");
+          resetButton();
+          return;
+        }
+        if (isNaN(disk) || disk < 512) {
+          showFieldError("disk", "Disk must be at least 512 MB");
+          showToast("Disk must be at least 512 MB", "error");
+          resetButton();
+          return;
+        }
+
+        // Confirmation for ownership transfer
+        if (newUserId !== currentUserId) {
+          const confirmTransfer = confirm("⚠️ Ownership Transfer\n\nYou are about to transfer this server to a different user.\n\nThis action cannot be easily undone. The current owner will lose access.\n\nContinue?");
+          if (!confirmTransfer) {
+            resetButton();
+            return;
+          }
+        }
 
         try {
+          console.log("Submitting edit request for server:", serverId);
+
           const res = await axios.post(`/admin/edit/${serverId}`, {
-            userId: document.getElementById("user").value,
-            nodeId: document.getElementById("node").value,
+            userId: newUserId,
             imageId: document.getElementById("image").value,
-            name: document.getElementById("name").value,
-            ram: parseInt(document.getElementById("ram").value),
-            core: parseInt(document.getElementById("core").value),
-            disk: parseInt(document.getElementById("disk").value),
+            name: name,
+            ram: ram,
+            core: core,
+            disk: disk,
             env: collectEnv()
           });
 
+          console.log("Server response:", res.data);
+
           if (res.data.success) {
-            window.location.href = "/admin/servers";
+            // Show success overlay with animation
+            showSuccessOverlay(res.data.ownershipTransferred);
           } else {
-            throw new Error("Server update failed");
+            throw new Error(res.data.error || "Server update failed");
           }
         } catch (err) {
-          alert("Failed to update server");
-          console.error(err);
+          console.error("Edit server error:", err);
+
+          const response = err.response?.data;
+
+          if (response?.field) {
+            showFieldError(response.field, response.error);
+          }
+
+          const errorMessage = response?.error || response?.details || err.message || "Failed to update server";
+          showToast(errorMessage, "error");
+
+          resetButton();
+        }
+
+        function resetButton() {
           btn.disabled = false;
-          btn.textContent = originalText;
+          btnText.textContent = "Save Changes";
+          btnSpinner.classList.add("hidden");
         }
       }
 
-      loadImageEnv();
+      // Initialize on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadImageEnv();
+        console.log("Edit server page initialized");
+        console.log("Server ID:", "<%= server.id %>");
+        console.log("Current owner:", currentUserId);
+      });
     </script>
 </body>
 

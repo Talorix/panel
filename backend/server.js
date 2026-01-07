@@ -88,7 +88,7 @@ router.get("/server/manage/:id", requireAuth, withServer, async (req, res) => {
   const image = unsqh.get("images", server.imageId);
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
-  
+
   if (!server.node) {
     return res.render("server/manage", {
       name: appName,
@@ -97,10 +97,10 @@ router.get("/server/manage/:id", requireAuth, withServer, async (req, res) => {
       image,
     });
   }
-  
+
   const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
   let state = null;
-  
+
   try {
     const response = await axios.get(
       `${getNodeUrl(node)}/server/${server.idt}/state`,
@@ -110,11 +110,11 @@ router.get("/server/manage/:id", requireAuth, withServer, async (req, res) => {
   } catch (err) {
     state = "running";
   }
-  
+
   if (state === 'installing') {
     return res.redirect('/server/installing/' + server.id);
   }
-  
+
   res.render("server/manage", {
     name: appName,
     user,
@@ -1068,7 +1068,7 @@ router.post(
 
       globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
       if (!globalServer.subusers.includes(subuser.id)) globalServer.subusers.push(subuser.id);
-      unsqh.put("servers", globalServer.id, globalServer); 
+      unsqh.put("servers", globalServer.id, globalServer);
       logAdd(req.session.userId, `Added subuser ${subuser.email}`);
       res.redirect(`/server/settings/${globalServer.id}?subuser=added`);
     } catch (err) {
@@ -1164,7 +1164,7 @@ router.get("/server/startup/:id", requireAuth, withServer, (req, res) => {
 function addAuditLog(serverId, userId, action) {
   if (!serverId || !userId || !action) return false;
 
-  const server = unsqh.get("servers", serverId);
+  let server = unsqh.get("servers", serverId);
   if (!server) {
     // if canonical server doesn't exist, try to find server in users (best-effort)
     // (this keeps things robust if you call addAuditLog from code that only
