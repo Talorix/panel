@@ -641,7 +641,7 @@ router.post(
         }
       );
 
-      const { containerId, idt } = response.data || {};
+      const { containerId, idt, ftppass } = response.data || {};
 
       const serverId = crypto.randomUUID().replace(/-/g, "").slice(0, 7);
       const serverData = {
@@ -659,6 +659,12 @@ router.post(
         port: allocation.port,
         containerId,
         idt,
+        ftp: {
+          host: node.ip,
+          port: node.ftpPort || 3001,
+          username: `talorix.${idt}`,
+          password: ftppass,
+        },
         env: finalEnv,
         suspended: false,
         createdAt: Date.now(),
