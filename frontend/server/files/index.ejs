@@ -167,7 +167,7 @@
               </tr>
             </thead>
             <tbody id="filesTbody" class="divide-y divide-neutral-900">
-              
+
               <% const sortedFiles=files.sort((a,b)=> (a.type === 'folder' && b.type !== 'folder') ? -1 : (a.type !==
                 'folder' && b.type === 'folder') ? 1 : 0);
                 sortedFiles.forEach((file, index) => {
@@ -309,9 +309,24 @@
     </div>
 
     <!-- Editor Modal (Fullscreen) -->
-    <div id="editorModalOverlay" class="fixed inset-0 z-[60] hidden bg-black/90 backdrop-blur-md transition-opacity">
-      <div id="editorModal"
-        class="flex h-full w-full flex-col bg-[#1e1e1e] transition-transform scale-95 opacity-0 duration-200">
+    <div id="editorModalOverlay" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md
+         flex items-center justify-center p-8 transition-opacity">
+    <div id="editorModal"
+  class="flex flex-col
+         w-full
+         max-w-8xl
+
+         h-[90vh]
+         max-h-[90vh]
+
+         bg-[#1e1e1e]
+         rounded-2xl
+         shadow-2xl
+         overflow-hidden
+
+         transition-all duration-200
+         scale-95 opacity-0">
+
         <!-- Editor Header -->
         <div class="flex h-12 items-center justify-between border-b border-[#333] bg-[#252526] px-4">
           <div class="flex items-center gap-3">
@@ -593,7 +608,6 @@
           document.getElementById("editorFilename").textContent = filename;
 
           editorOverlay.classList.remove("hidden");
-          editorOverlay.classList.add("flex"); // Ensure flex
           setTimeout(() => {
             editorModal.classList.remove("scale-95", "opacity-0");
             editorModal.classList.add("scale-100", "opacity-100");

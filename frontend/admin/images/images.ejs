@@ -30,171 +30,170 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-
-<body class="flex h-full w-full overflow-hidden">
-
+<body class="flex h-full w-full bg-black text-gray-100">
   <%- include('../../components/sidebar', { name, user }) %>
 
-    <main class="relative flex-1 overflow-y-auto bg-black">
-      <div class="mx-auto max-w-7xl px-6 py-12 md:px-12">
+  <main class="relative flex-1 overflow-y-auto">
+    <div class="mx-auto max-w-7xl px-6 py-10 md:px-12">
 
-        <!-- Header -->
-        <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Images</h1>
-            <p class="mt-2 text-neutral-400">Manage Docker images and configurations for your servers.</p>
-          </div>
-
-          <div class="flex flex-wrap gap-3">
-            <a href="/admin/images/new"
-              class="flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform hover:scale-[1.02] hover:bg-neutral-200 active:scale-[0.98]">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                stroke="currentColor" class="h-4 w-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Create Image
-            </a>
-
-            <label
-              class="flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:scale-[1.02] hover:bg-neutral-800 active:scale-[0.98]">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                stroke="currentColor" class="h-4 w-4">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-              Import JSON
-              <input type="file" id="json-upload" accept=".json" class="hidden" onchange="uploadJSON()" />
-            </label>
-          </div>
+      <!-- header -->
+      <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-3xl font-bold">Images</h1>
+          <p class="mt-1 text-sm text-neutral-400">Manage Docker images and configurations.</p>
         </div>
 
-        <!-- Images Grid -->
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          <% if (images && images.length> 0) { %>
-            <% images.forEach(img=> { %>
-              <div
-                class="group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:border-neutral-700">
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="/admin/images/new"
+             class="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200 active:scale-95">
+            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Create Image
+          </a>
 
-                <div>
-                  <div class="mb-4 flex items-start justify-between">
-                    <div
-                      class="flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-900 text-white border border-neutral-800">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor" class="h-6 w-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-                      </svg>
-                    </div>
-                    <div class="flex gap-2">
-                      <a href="/admin/images/export/<%= img.id %>" target="_blank"
-                        class="rounded-lg bg-neutral-900 p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors"
-                        title="Export">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                          stroke="currentColor" class="h-4 w-4">
-                          <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                      </a>
-                      <button onclick="deleteImage('<%= img.id %>')"
-                        class="rounded-lg bg-red-900/10 p-2 text-red-500 hover:bg-red-900/20 transition-colors"
-                        title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                          stroke="currentColor" class="h-4 w-4">
-                          <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <h2 class="text-xl font-bold text-white">
-                    <%= img.name %>
-                  </h2>
-                  <p class="mt-1 text-sm text-neutral-500 font-mono truncate">
-                    <%= img.dockerImage %>
-                  </p>
-
-                  <div class="mt-4 space-y-2">
-                    <div class="flex items-center justify-between text-xs">
-                      <span class="text-neutral-500">Environment Vars</span>
-                      <span class="font-mono text-neutral-300">
-                        <%= Object.keys(img.envs).length %>
-                      </span>
-                    </div>
-                    <div class="flex items-center justify-between text-xs">
-                      <span class="text-neutral-500">Scripts/Files</span>
-                      <span class="font-mono text-neutral-300">
-                        <%= img.files.length %>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <a href="/admin/image/<%= img.id %>"
-                  class="absolute inset-0 z-10 rounded-2xl ring-offset-2 ring-offset-black focus:outline-none focus:ring-2 focus:ring-white"></a>
-                <div class="relative z-20 mt-6 pt-4 border-t border-neutral-900 flex justify-end">
-                  <span class="text-xs font-bold text-white group-hover:underline">Manage Configuration &rarr;</span>
-                </div>
-              </div>
-              <% }) %>
-                <% } else { %>
-                  <div
-                    class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-800 p-12 text-center text-neutral-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                      stroke="currentColor" class="h-12 w-12 mb-4 opacity-50">
-                      <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                    </svg>
-                    <h3 class="text-lg font-bold text-white">No Images Found</h3>
-                    <p class="mt-1 max-w-sm text-sm">Get started by creating a new Docker image from scratch or
-                      importing a JSON configuration.</p>
-                  </div>
-                  <% } %>
+          <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-semibold">
+            <svg class="h-4 w-4 text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            Import JSON
+            <input id="json-upload" type="file" accept=".json" class="hidden" onchange="uploadJSON()" />
+          </label>
         </div>
-
       </div>
-    </main>
 
-    <script>
-      async function deleteImage(id) {
-        event.preventDefault(); // Prevent link click
-        event.stopPropagation();
-        if (!confirm("Are you sure you want to delete this image?")) return;
+      <!-- table wrapper -->
+      <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950 shadow-inner">
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[720px] table-fixed text-left text-sm">
+            <thead class="bg-neutral-900/40 text-neutral-300">
+              <tr>
+                <th class="px-4 py-3 w-1/3">Image</th>
+                <th class="px-4 py-3 w-1/4">Docker Image</th>
+                <th class="px-4 py-3 w-1/8 text-center">Envs</th>
+                <th class="px-4 py-3 w-1/8 text-center">Files</th>
+                <th class="px-4 py-3 w-1/6 text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-neutral-900">
+              <% if (images && images.length > 0) { %>
+                <% images.forEach(img => { %>
+                  <tr onclick="window.location.href='/admin/image/<%= img.id %>'" class="cursor-pointer group hover:bg-neutral-900/30 transition-colors">
+                    <td class="px-4 py-4 align-top">
+                      <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-900 text-neutral-300">
+                          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                          </svg>
+                        </div>
+
+                        <div class="flex-1">
+                          <div class="font-semibold text-white"><%= img.name %></div>
+                          <div class="mt-1 text-xs text-neutral-400 truncate-2" title="<%= img.description || '' %>"><%= img.description ? img.description.substring(0, 20) + (img.description.length > 20 ? '…' : '') : '\u00A0' %></div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="px-4 py-4 align-top">
+                      <div class="font-mono text-xs text-neutral-300 truncate" title="<%= img.dockerImage %>"><%= img.dockerImage %></div>
+                    </td>
+
+                    <td class="px-4 py-4 text-center align-top">
+                      <div class="font-mono text-sm text-neutral-300"><%= Object.keys(img.envs || {}).length %></div>
+                    </td>
+
+                    <td class="px-4 py-4 text-center align-top">
+                      <div class="font-mono text-sm text-neutral-300"><%= (img.files || []).length %></div>
+                    </td>
+
+                    <td class="px-4 py-4 text-right align-top">
+                      <div class="flex items-center justify-end gap-2">
+                        <a href="/admin/images/export/<%= img.id %>" target="_blank" title="Export"
+                           class="rounded-md bg-neutral-900 p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+                          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                          </svg>
+                        </a>
+
+                        <a href="/admin/image/<%= img.id %>" title="Edit"
+                           class="rounded-md bg-neutral-900 p-2 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+                          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M4 20h16" />
+                            <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232a2.5 2.5 0 013.536 3.536L7 20l-4 1 1-4 11.232-11.304z"/>
+                          </svg>
+                        </a>
+
+                        <button type="button" aria-label="Delete" title="Delete"
+                                onclick="deleteImage(event, '<%= img.id %>')"
+                                class="rounded-md bg-red-900/10 p-2 text-red-500 hover:bg-red-900/20">
+                          <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M8 7v11a2 2 0 002 2h4a2 2 0 002-2V7M10 7V5a2 2 0 012-2h0a2 2 0 012 2v2" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="px-8 py-16 text-center text-neutral-400">
+                    <div class="mx-auto max-w-md">
+                      <svg class="h-12 w-12 mx-auto mb-4 text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/>
+                      </svg>
+                      <h3 class="text-lg font-semibold text-white">No Images</h3>
+                      <p class="mt-2 text-sm">Create an image or import a JSON configuration to get started.</p>
+                    </div>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    async function deleteImage(e, id) {
+      e.stopPropagation();
+      if (!confirm('Delete this image?')) return;
+      try {
+        const res = await fetch(`/admin/images/delete/${id}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) location.reload();
+        else alert('Delete failed');
+      } catch (err) {
+        alert('Network error: ' + (err.message || err));
+      }
+    }
+
+    function uploadJSON() {
+      const input = document.getElementById('json-upload');
+      if (!input || !input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
         try {
-          const res = await axios.post(`/admin/images/delete/${id}`);
-          if (res.data.success) location.reload();
-          else alert("Failed to delete.");
+          const data = JSON.parse(ev.target.result);
+          const { dockerImage, name } = data;
+          if (!dockerImage || !name) return alert('Invalid JSON: missing name or dockerImage');
+          const res = await fetch('/admin/images/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const j = await res.json();
+          if (j.success) { alert('Imported'); location.reload(); }
+          else alert('Import failed');
         } catch (err) {
-          alert("Failed to delete image: " + err.message);
+          alert('Invalid JSON file');
         }
-      }
-
-      async function uploadJSON() {
-        const input = document.getElementById("json-upload");
-        if (!input.files || !input.files[0]) return;
-        const file = input.files[0];
-        const reader = new FileReader();
-
-        reader.onload = async function (e) {
-          try {
-            const data = JSON.parse(e.target.result);
-            const { dockerImage, name, description = "", envs = {}, files = [] } = data;
-            if (!dockerImage || !name) return alert("Invalid JSON: Missing dockerImage or name");
-
-            const res = await axios.post("/admin/images/new", { dockerImage, name, description, envs, files });
-            if (res.data.success) {
-              alert("Imported successfully!");
-              location.reload();
-            } else {
-              alert("Import failed.");
-            }
-          } catch (err) {
-            alert("Error parsing JSON or uploading.");
-          }
-        };
-        reader.readAsText(file);
-      }
-    </script>
+      };
+      reader.readAsText(file);
+    }
+  </script>
 </body>
-
 </html>

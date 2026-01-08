@@ -19,7 +19,7 @@ async function checkNodeHealth(node) {
       { timeout: 3000 }
     );
 
-    if (!res.ok) throw new Error("Bad response");
+    if (!res.ok) return "offline";
 
     const data = await res.json();
 
@@ -40,6 +40,24 @@ function requireAdmin(req, res, next) {
     return res.status(403).send("Forbidden");
   }
   next();
+}
+
+function generateToken() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+  function rand(len) {
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, x => chars[x % chars.length]).join("");
+  }
+
+  return (
+    "eyJ" + rand(30) + "." +
+    rand(30) + "." +
+    rand(30) + "." +
+    rand(7)
+  );
+  // yes its 100 alphabet long you retard
 }
 
 /* =========================
@@ -89,7 +107,7 @@ router.post("/admin/node/create", requireAuth, requireAdmin, (req, res) => {
   }
 
   const id = crypto.randomUUID();
-  const key = crypto.randomBytes(32).toString("hex");
+  const key = generateToken();
 
   const node = {
     name,
@@ -190,7 +208,7 @@ router.get("/admin/node/ver/:id", requireAuth, requireAdmin, async (req, res) =>
       `http://${node.ip}:${node.port}/version?key=${node.key}`,
       { timeout: 3000 }
     );
-    if (!response.ok) throw new Error("Bad response");
+    if (!response.ok) return res.json({ version: 'unknown' });
     const data = await response.json();
     res.json({ version: data.version });
   } catch (err) {
@@ -330,11 +348,9 @@ router.post(
           }
         }
 
-        // Remove server from global servers store (best-effort)
         try {
-          unsqh.delete("servers", server.id);
+          unsqh.delete("servers", server.id);          
         } catch (err) {
-          // continue even if deletion fails
           console.warn(`Failed to delete server ${server.id} from store:`, err?.message || err);
         }
 

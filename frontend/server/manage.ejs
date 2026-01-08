@@ -135,15 +135,18 @@
               </svg>
               Restart
             </button>
-            <button data-action="stop" disabled
+            <button data-action="stop" disabled id="stop-btn"
               class="flex items-center gap-2 rounded-xl bg-red-900/20 border border-red-900/50 px-5 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-900/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="h-5 w-5">
                 <path stroke-linecap="round" stroke-linejoin="round"
                   d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />
               </svg>
-              Stop
+
+              <span class="btn-label">Stop</span>
             </button>
+
           </div>
         </div>
 
@@ -188,7 +191,6 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                   </svg>
-                  <span class="text-sm text-neutral-500">Connecting Socket...</span>
                 </div>
               </div>
               <div id="terminal" class="h-full w-full bg-[#0e0e0e] pl-2 pt-2"></div>
@@ -390,7 +392,6 @@
           term.open(document.getElementById('terminal'));
           fitAddon.fit();
           new ResizeObserver(() => fitAddon.fit()).observe(document.getElementById('terminal'));
-          term.writeln('Connecting to socket...');
           let lastMessage = '';
           let lastTime = 0;
           function termWrite(msg) {
@@ -410,6 +411,9 @@
               }
             }
             if (lastMessage === message && (Date.now() - lastTime) < 800) return;
+            if (message.includes('Container Killed')) {
+              return setStoptoNormal();
+            }
             if (message.includes && !message.includes('\r')) {
               lastMessage = message;
               lastTime = Date.now();
@@ -429,6 +433,11 @@
             consoleWs = new WebSocket(`${protocol}://${window.location.hostname}:${window.location.port}/console/${serverId}`);
 
             consoleWs.onmessage = (evt) => {
+              if (consoleWs.readyState !== WebSocket.OPEN) return;
+              if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => loadingOverlay.classList.add('hidden'), 300);
+              }
               const raw = evt.data;
               document
                 .getElementById("systemnodedown")
@@ -476,10 +485,6 @@
             statsWs = new WebSocket(`${protocol}://${window.location.hostname}:${window.location.port}/stats/${serverId}`);
 
             statsWs.onmessage = (evt) => {
-              if (loadingOverlay) {
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => loadingOverlay.classList.add('hidden'), 300);
-              }
 
               try {
                 const stats = JSON.parse(evt.data);
@@ -533,6 +538,7 @@
 
               if (isOnline && action === 'start') btn.disabled = true;
               if (!isOnline && (action === 'stop' || action === 'restart')) btn.disabled = true;
+              if (!isOnline && action === 'kill') setStoptoNormal();
             });
 
             // Update Badge
@@ -646,7 +652,9 @@
               const action = btn.dataset.action;
               if (action === 'start') {
                 sendPower(action);
-              } else {
+              } else if (action == 'stop') {
+                sendPower(action);
+              } else if (action == 'kill' || action === 'restart') {
                 openConfirm(action);
               }
             };
@@ -660,18 +668,17 @@
             const iconWrapper = document.getElementById("confirm-icon-wrapper");
             const confirmBtn = document.getElementById("confirm-action");
 
-            if (action === 'stop') {
-              title.textContent = "Stop Server?";
-              msg.textContent = "This will forcefully terminate the process.";
+            if (action === 'kill') {
+              title.textContent = "Kill Server?";
+              msg.textContent = "This will immediately terminate the process.";
               iconWrapper.className = "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-900/20 text-red-500";
               confirmBtn.className = "flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700";
-            } else {
+            } else if (action === 'restart') {
               title.textContent = "Restart Server?";
               msg.textContent = "The server will go offline briefly.";
               iconWrapper.className = "flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-yellow-900/20 text-yellow-500";
               confirmBtn.className = "flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-bold text-black hover:bg-yellow-500";
             }
-
             confirmModal.classList.remove("hidden");
             confirmModal.classList.add("flex");
             // Trigger reflow
@@ -695,14 +702,35 @@
             if (pendingAction) sendPower(pendingAction);
             closeConfirm();
           };
-
+          function setStoptoNormal() {
+            const stopBtn = document.getElementById("stop-btn");
+            const svg = stopBtn.querySelector("svg");
+            svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25v-9z" />`;
+            stopBtn.querySelector(".btn-label").textContent = "Stop";
+            stopBtn.disabled = true;
+            stopBtn.dataset.action = "stop";
+          }
           function sendPower(action) {
             if (!consoleWs || consoleWs.readyState !== WebSocket.OPEN) return;
-            // Clear terminal on start
-            if (action === 'start' || action === 'restart') logContainer.innerHTML = "";
 
-            consoleWs.send(JSON.stringify({ event: `power:${action}`, payload: { containerId } }));
+            if (action === 'start' || action === 'restart') {
+              logContainer.innerHTML = "";
+            }
+
+            if (action === 'stop') {
+              const stopBtn = document.getElementById("stop-btn");
+              const svg = stopBtn.querySelector("svg");
+              svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />`;
+              stopBtn.querySelector(".btn-label").textContent = "Kill";
+              stopBtn.dataset.action = "kill";
+            }
+
+            consoleWs.send(JSON.stringify({
+              event: `power:${action}`,
+              payload: { containerId }
+            }));
           }
+
 
     // --- EULA (If applicable) ---
     <% if (image && Array.isArray(image.features) && image.features.includes('EULA')) { %>

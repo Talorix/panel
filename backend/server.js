@@ -280,6 +280,84 @@ router.get(
   }
 );
 
+const SPIGET_API_URL = 'https://api.spiget.org/v2/resources/free';
+
+/**
+ * GET /server/plugins/:id
+ * Feature: Plugins for an minecraft server
+ */
+router.get("/server/plugins/:id", requireAuth, withServer, (req, res) => {
+  const user = unsqh.get("users", req.session.userId);
+  if (!user) return res.redirect("/");
+  const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  if (!server.image.features.includes('PLUGINS')) {return res.redirect('/server/manage/' + req.params.id)};
+  res.render("server/features/plugins", {
+    name: appName,
+    user,
+    server,
+  });
+});
+
+/**
+ * POST /server/plugins/:id
+ * Feature: Get installed Plugins 
+ */
+router.post("/server/plugins/:id", requireAuth, withServer, async (req, res) => {
+  const user = unsqh.get("users", req.session.userId);
+  if (!user) return res.redirect("/");
+  const server = getServerForUser(req.session.userId, req.params.id);
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+  const logAdd = router.bindLog(server.id);
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  if (!server.image.features.includes('PLUGINS')) {return res.json({ error: 'Not avaliable for your server' })};
+  let plugins;
+  try {
+    const response = await axios.get(
+      `${getNodeUrl(node)}/server/fs/${server.idt}/files`,
+      {
+        params: { path: '/plugins/', key: node.key },
+      }
+    );
+    const data = response.data;
+    plugins = data.filter(file => file.type === 'file' && file.extension === '.jar');
+  } catch (err) {
+    plugins = [];
+    res.status(200).json({ plugins });
+  }
+});
+
+/**
+ * GET /server/plugins/:id/download
+ * Feature: Query: { downloadUrl, pluginName }
+ */
+router.get("/server/plugins/:id/download", requireAuth, withServer, async (req, res) => {
+  const user = unsqh.get("users", req.session.userId);
+  const { downloadUrl, pluginName } = req.query;
+  if (!user) return res.redirect("/");
+  const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  if (!server.image.features.includes('PLUGINS')) {return res.redirect('/server/manage/' + req.params.id)};
+  try {
+    const response = await axios.get(
+      `${getNodeUrl(node)}/server/plugin/${server.idt}/download`,
+      {
+        params: { downloadUrl, pluginName, key: node.key },
+      }
+    );
+    const data = response.data;
+    plugins = data.filter(file => file.type === 'file' && file.extension === '.jar');
+  } catch (err) {
+    plugins = [];
+    res.status(200).json({ plugins });
+  }
+});
 /**
  * GET /server/files/:id
  * List files and folders for a server
