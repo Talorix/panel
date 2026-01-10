@@ -10,7 +10,7 @@ const crypto = require("crypto");
 // --- WebSocket support ---
 const expressWs = require("express-ws");
 
-const PORT = config.port;
+const PORT = config.configuration.port;
 const app = express();
 
 // --- Initialize express-ws
@@ -19,19 +19,19 @@ expressWs(app);
 // --- Settings ---
 const currentSettings = unsqh.get("settings", "app") || {};
 const newSettings = {
-  name: currentSettings.name || config.name,
+  name: currentSettings.name || config.configuration.name,
   registerEnabled:
     currentSettings.registerEnabled !== undefined
       ? currentSettings.registerEnabled
       : false,
-  port: currentSettings.port || config.port,
+  port: currentSettings.port || config.configuration.port,
 };
 unsqh.put("settings", "app", newSettings);
 
 const sessionMiddleware = session({
   name: "sid",
   store: new DBStore({ table: "sessions" }),
-  secret: config.session_secret,
+  secret: config.website.session_secret,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -74,7 +74,8 @@ const routeFiles = fs
   .filter((file) => file.endsWith(".js"));
 
 for (const file of routeFiles) {
-  const routeModule = require(path.join(__dirname, "backend", file));
+  const Module = path.join(__dirname, "backend", file);
+  const routeModule = require(Module);
   const router = routeModule;
   app.use("/", router);
 }
@@ -83,17 +84,14 @@ for (const file of routeFiles) {
 app.use(async (req, res) => {
   res.status(404).render("404", {
     req,
-    name: config.name,
+    name: config.configuration.name,
   });
 });
 let version;
 
 async function getVersion() {
-  const res = await fetch("https://ma4z.is-a.dev/repo/version_library.json");
-  const data = await res.json();
-  version = data["hydren:sr"]["talorix"]["panel"];
-  const ascii = `
- _____     _            _      
+  version = `\x1b[36m${config.dev.version}\x1b[0m`;
+  const ascii = ` _____     _            _      
 |_   _|_ _| | ___  _ __(_)_  __
   | |/ _\` | |/ _ \\| '__| \\ \\/ /
   | | (_| | | (_) | |  | |>  <    ${version}
@@ -118,4 +116,21 @@ async function start() {
   });
 }
 
+app.use(async (err, req, res, next) => {
+  res.status(500).render("500", {
+    req,
+    name: config.configuration.name,
+    message: err.message, 
+    stack: config.dev.MODE === "development" ? err.stack : null
+  });
+});
+
 start();
+
+if (config.dev.MODE === "development") {
+  setTimeout(() => {
+    Logger.warn(
+      "Running in development mode may have some bugs. If you find any, please create an issue at https://github.com/Talorix/panel/issues"
+    );
+  }, 1500);
+}

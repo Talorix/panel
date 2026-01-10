@@ -8,7 +8,7 @@
     <%= name %> - Register
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+  <link rel="icon" type="image/x-icon" href="<%= config.configuration.logo %>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
@@ -50,8 +50,8 @@
       <!-- Header -->
       <div class="mb-10">
         <div class="mb-6 flex items-center gap-3">
-          <% if (config.logo) { %>
-            <img src="<%= config.logo %>" alt="Logo"
+          <% if (config.configuration.logo) { %>
+            <img src="<%= config.configuration.logo %>" alt="Logo"
               class="h-10 w-10 object-contain brightness-200 contrast-100 grayscale hover:grayscale-0 transition-all duration-300">
             <% } %>
               <span class="text-xl font-bold tracking-tight text-neutral-100">

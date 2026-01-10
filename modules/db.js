@@ -6,32 +6,32 @@ const config = require("../config.json");
 const DB_FILE = path.resolve("./database.unsqh");
 const AES_ALGO = "aes-256-gcm";
 
-const MASTER_PASSWORD = config.MASTER_PASSWORD;
+const MASTER_PASSWORD = config.database.password;
 
 function fail(reason) {
   throw new Error(`[UNSQH SECURITY ERROR] ${reason}`);
 }
 
 function validatePassword(pw) {
-  if (!pw) fail("No password provided. Set MASTER_PASSWORD in config.json.");
+  if (!pw) fail("No password provided. Set DataBase password in config.json.");
 
   if (pw.length < 12)
-    fail("Master password must be at least 12 characters long.");
+    fail("database password must be at least 12 characters long.");
 
   if (/^(.)\1+$/.test(pw))
-    fail("Password cannot be the same repeated character.");
+    fail("database Password cannot be the same repeated character.");
 
   if (!/[a-z]/.test(pw))
-    fail("Password must contain at least one lowercase letter.");
+    fail("database Password must contain at least one lowercase letter.");
 
   if (!/[A-Z]/.test(pw))
-    fail("Password must contain at least one uppercase letter.");
+    fail("database Password must contain at least one uppercase letter.");
 
   if (!/[0-9]/.test(pw))
-    fail("Password must contain at least one number.");
+    fail("database Password must contain at least one number.");
 
   if (!/[^a-zA-Z0-9]/.test(pw))
-    fail("Password must contain at least one special symbol.");
+    fail("database Password must contain at least one special symbol.");
 
   const uniqueCount = new Set(pw.split("")).size;
   if (uniqueCount < pw.length / 3)

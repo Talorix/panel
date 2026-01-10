@@ -1,11 +1,17 @@
 {
+  "website": {
+    "session_secret": "you_fell_for_it_like_a_stupid_fish"
+  },
+  "dev": {
+    "MODE": "development",
+    "version": "1.0-dev"
+  },
+  "database": {
+    "password": "MyStr0ng!Passw0rd" 
+  },
+  "configuration": {
     "port": 3500,
-    "_note0": "YOU CAN CHANGE THE NAME IN THE ADMIN SETTINGS",
     "name": "Talorix",
-    "session_secret": "you_fell_for_it_like_a_stupid_fish",
-    "version": "1.0-dev",
-    "logo": "https://talorix.io/Rounded%20Logo%20Design%20for%20Talorix.png",
-    "_note1": "Change the logo URL to your own logo if you want to customize it.",
-    "MASTER_PASSWORD": "MyStr0ng!Passw0rd",
-    "_note2": "Your password must be at least 12 chars, include upper/lowercase, a number, and a special character."
+    "logo": "https://talorix.io/Rounded%20Logo%20Design%20for%20Talorix.png"
+  }
 }

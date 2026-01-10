@@ -8,7 +8,7 @@
     <%= name %> - Administration
   </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
-  <link rel="icon" type="image/x-icon" href="<%= config.logo %>">
+  <link rel="icon" type="image/x-icon" href="<%= config.configuration.logo %>">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
@@ -210,7 +210,7 @@
         return 0;
       }
 
-      const currentVersion = '<%= config.version %>';
+      const currentVersion = '<%= config.dev.version %>';
 
       /* Fetch Latest Version */
       (async () => {
