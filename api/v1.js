@@ -90,6 +90,25 @@ async function checkNodeHealth(node) {
   }
 }
 
+
+function generateToken() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+  function rand(len) {
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, x => chars[x % chars.length]).join("");
+  }
+
+  return (
+    "eyJ" + rand(30) + "." +
+    rand(30) + "." +
+    rand(30) + "." +
+    rand(7)
+  );
+  // yes its 100 alphabet long you retard
+}
+
 /**
  * POST /api/v1/node/create
  * body: { name, ip, port }
@@ -99,14 +118,14 @@ router.post(
   requireAPI,
   requirePermission("nodes"),
   (req, res) => {
-    const { name, ip, port } = req.body || {};
+    const { name, ip, port, ftpPort } = req.body || {};
 
     if (!name || !ip || !port) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
     const id = crypto.randomUUID();
-    const key = crypto.randomBytes(32).toString("hex");
+    const key = generateToken();
 
     const node = {
       id,
@@ -115,6 +134,7 @@ router.post(
       core: "unknown",
       ip,
       port,
+      ftpPort,
       key,
       allocations: [],
       status: "offline",
@@ -168,7 +188,7 @@ router.post(
     const panelUrl = `${req.protocol}://${req.get("host")}`;
 
     return res.json({
-      command: `npm run configure -- --key ${node.key} --panel ${panelUrl} --port ${node.port}`,
+      command: `npm run configure -- --key ${node.key} --panel ${panelUrl} --port ${node.port} --ftpport ${node.ftpPort}`,
     });
   }
 );
@@ -995,6 +1015,18 @@ router.post(
     });
   }
 );
+router.get(
+  "/api/v1/user/:id/servers",
+  requireAPI,
+  requirePermission("users"),
+  async (req, res) => {
+    const targetId = req.params.id;
+    const target = unsqh.get("users", targetId);
+    if (!target) return res.status(404).json({ error: "User not found" });
+    const userServers = Array.isArray(target.servers) ? target.servers : [];
+    return res.status(200).json({ success: true, servers: userServers });
+  }
+);
 
 router.post(
   "/api/v1/user/:id/delete",
@@ -1004,13 +1036,6 @@ router.post(
     const targetId = req.params.id;
     const target = unsqh.get("users", targetId);
     if (!target) return res.status(404).json({ error: "User not found" });
-
-    if (req.apiKey && req.apiKey.id === targetId) {
-      // Prevent accidental self-delete via API key that maps to user id (defensive)
-      return res
-        .status(400)
-        .json({ error: "Cannot delete user associated with this API key" });
-    }
 
     const userServers = Array.isArray(target.servers) ? target.servers : [];
 

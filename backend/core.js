@@ -212,7 +212,6 @@ router.get("/admin/node/ver/:id", requireAuth, requireAdmin, async (req, res) =>
     const data = await response.json();
     res.json({ version: data.version });
   } catch (err) {
-    console.log(err)
     res.status(500).json({ version: 'unknown' });
   }
 });

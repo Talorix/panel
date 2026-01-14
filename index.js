@@ -99,7 +99,7 @@ async function getVersion() {
 
 Copyright © %s Talon Project
 
-Website:  https://taloix.io
+Website:  https://talorix.io
 Source:   https://github.com/talorix/panel
 `;
   const gray = "\x1b[90m";
