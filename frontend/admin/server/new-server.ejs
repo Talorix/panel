@@ -119,19 +119,24 @@
               <!-- Limits -->
               <div class="space-y-4">
                 <div class="grid grid-cols-3 gap-4">
+                   <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Allocations Limit</label>
+                    <input id="allocationLimit" type="number" placeholder="5" value="1"
+                      class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                  </div>
                   <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">RAM (MB)</label>
-                    <input id="ram" type="number" placeholder="1024"
+                    <input id="ram" type="number" placeholder="1024" value="2048"
                       class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
                   </div>
                   <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Disk (GB)</label>
-                    <input id="disk" type="number" placeholder="10"
+                    <input id="disk" type="number" placeholder="10" value="5"
                       class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
                   </div>
                   <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">CPU (Cores)</label>
-                    <input id="core" type="number" placeholder="1"
+                    <input id="core" type="number" placeholder="1" value="1"
                       class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
                   </div>
                 </div>
@@ -296,6 +301,7 @@
         const user = document.getElementById("user").value;
         const node = document.getElementById("node").value;
         const allocation = document.getElementById("allocation").value;
+        const allocationLimit = document.getElementById("allocationLimit").value;
         const image = document.getElementById("image").value;
         const ram = parseInt(document.getElementById("ram").value);
         const disk = parseInt(document.getElementById("disk").value);
@@ -313,6 +319,7 @@
             userId: user,
             nodeId: node,
             allocationId: allocation,
+            allocationLimit,
             imageId: image,
             name: name,
             ram,

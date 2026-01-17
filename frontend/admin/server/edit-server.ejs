@@ -261,8 +261,7 @@
                 <select id="image" onchange="loadImageEnv()"
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
                   <% images.forEach(i=> { %>
-                    <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>"
-                      <%=i.id===server.imageId ? "selected" : "" %>>
+                    <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>">
                       <%= i.name %>
                     </option>
                     <% }) %>
@@ -277,6 +276,12 @@
           <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
             <h2 class="mb-6 text-lg font-bold text-white">Resources</h2>
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Allocations limit</label>
+                <input id="allocationLimit" type="number" value="<%= server.allocationLimit || '1' %>" min="1"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
+                <p id="ram-error" class="text-xs text-red-500 hidden"></p>
+              </div>
               <div class="space-y-2">
                 <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">RAM (MB)</label>
                 <input id="ram" type="number" value="<%= server.ram %>" min="128"
@@ -488,7 +493,7 @@
         const ram = parseInt(document.getElementById("ram").value);
         const core = parseInt(document.getElementById("core").value);
         const disk = parseInt(document.getElementById("disk").value);
-
+        const allocationLimit = document.getElementById("allocationLimit").value;
         if (!name) {
           showFieldError("name", "Server name is required");
           showToast("Please enter a server name", "error");
@@ -533,7 +538,8 @@
             ram: ram,
             core: core,
             disk: disk,
-            env: collectEnv()
+            env: collectEnv(),
+            allocationLimit,
           });
 
           console.log("Server response:", res.data);

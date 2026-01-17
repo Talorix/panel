@@ -42,10 +42,93 @@
           <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Network Management</h1>
           <p class="mt-2 text-neutral-400">Configure ports and allocations for your server.</p>
         </div>
+<% if (req.query.error === 'cant_add_more') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-red-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+    </svg>
+    You’ve reached the maximum number of allocations. Delete one to add a new port.
+  </div>
+<% } %>
 
+<% if (req.query.error === 'no_ports_available') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-red-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+    </svg>
+    No free ports are available on this node right now.
+  </div>
+<% } %>
+<% if (req.query.error === 'failed') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-red-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+    </svg>
+    Failed to add an allocation, please contact an administrator
+  </div>
+<% } %>
+<% if (req.query.allocation === 'primary_exists') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-red-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+    </svg>
+    This server already has a primary allocation.
+  </div>
+<% } %>
+
+<% if (req.query.allocation === 'claimed') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-green-900/50 bg-green-950/20 px-4 py-3 text-sm text-green-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-green-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M5 13l4 4L19 7" />
+    </svg>
+    Allocation successfully claimed!
+  </div>
+<% } %>
+<% if (req.query.allocation === 'released') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-green-900/50 bg-green-950/20 px-4 py-3 text-sm text-green-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-green-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M5 13l4 4L19 7" />
+    </svg>
+    Allocation successfully released!
+  </div>
+<% } %>
+<% if (req.query.allocation === 'primary') { %>
+  <div class="mb-6 flex items-center gap-3 rounded-xl border border-green-900/50 bg-green-950/20 px-4 py-3 text-sm text-green-200">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+      stroke="currentColor" class="h-5 w-5 text-green-500">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M5 13l4 4L19 7" />
+    </svg>
+   Primary updated!
+  </div>
+<% } %>
         <!-- Allocations List -->
         <div class="mb-8 rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
-          <h2 class="mb-6 text-lg font-bold text-white">Assigned Allocations</h2>
+          <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-lg font-bold text-white">
+              Assigned Allocations
+            </h2>
+
+            <span class="text-sm font-medium text-neutral-400">
+              Allowed:
+              <span class="font-mono text-white">
+                <%= server.allocationLimit - allocations.length %>
+              </span>
+            </span>
+          </div>
+
 
           <div class="space-y-4">
             <% if (!allocations || allocations.length===0) { %>
@@ -116,21 +199,20 @@
 
         <!-- Add Allocation -->
         <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
-          <h2 class="mb-4 text-lg font-bold text-white">Create Allocation</h2>
+          <h2 class="mb-4 text-lg font-bold text-white">Add Port</h2>
           <p class="mb-6 text-sm text-neutral-500">
-            Manually assign a new port to this server. Note that adding or removing ports may require a server restart.
+            A random available port will be automatically assigned to this server.
+            A restart may be required for changes to take effect.
           </p>
 
-          <form onsubmit="event.preventDefault(); addPort();" class="flex gap-4">
-            <input id="new-port" type="number" min="1" max="65535" placeholder="e.g. 8080"
-              class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
-              required />
+          <form method="GET" action="/server/network/<%= server.id %>/add">
             <button type="submit"
               class="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200">
-              Add Port
+              Add Random Port
             </button>
           </form>
         </div>
+
 
       </div>
     </main>

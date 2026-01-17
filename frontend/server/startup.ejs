@@ -67,26 +67,26 @@
               <!-- Startup Command -->
               <div class="rounded-2xl bg-neutral-950 p-6">
                 <h2 class="text-2xl font-bold text-white">Startup Command</h2>
-                <p class="mt-2 text-neutral-400">Define the command that will be executed to start your server.</p>
+                <p class="mt-2 text-neutral-400">The command that will be executed to start your server.</p>
                 <form id="startup-form" class="mt-4 space-y-4">
                   <div>
                     <label for="startup-command" class="block text-sm font-medium text-white">Startup Command</label>
                     <input type="text" name="startup-command" id="startup-command"
                       value="<%= (server.image && server.image.startCmd ? server.image.startCmd : '').replace(/{{(.*?)}}/g, (_, key) => (server.image && server.image.env && server.image.env[key]) ?? `{{${key}}}`) %>"
-                      class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white w-full placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                      class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-stone-500 w-full placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                       disabled>
                   </div>
                 </form>
               </div>
               <div class="rounded-2xl bg-neutral-950 p-6">
                 <h2 class="text-2xl font-bold text-white">Stop Command</h2>
-                <p class="mt-2 text-neutral-400">Define the command that will be executed to stop your server.</p>
+                <p class="mt-2 text-neutral-400">The command that will be executed to stop your server.</p>
                 <form id="stop-form" class="mt-4 space-y-4">
                   <div>
                     <label for="stop-command" class="block text-sm font-medium text-white">Stop Command</label>
                     <input type="text" name="stop-command" id="stop-command"
                       value="<%= (server.image && server.image.stopCmd ? server.image.stopCmd : '').replace(/{{(.*?)}}/g, (_, key) => (server.image && server.image.env && server.image.env[key]) ?? `{{${key}}}`) %>"
-                      class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white w-full placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                      class="flex-1 rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-stone-500 w-full placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                       disabled>
                   </div>
                 </form>

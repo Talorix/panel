@@ -1022,6 +1022,7 @@ router.post(
       imageId,
       nodeId,
       allocationId,
+      allocationLimit,
       name,
       ram,
       core,
@@ -1112,6 +1113,7 @@ router.post(
           name: node.name,
         },
         allocationId,
+        allocationLimit: allocationLimit || 1,
         ip: `${domain ?? ip}`,
         imageId,
         image,
@@ -1185,6 +1187,7 @@ router.post(
       files: newFiles = [],
       imageId,
       userId: newUserId,
+      allocationLimit
     } = req.body;
 
     // Validate name if provided
@@ -1280,8 +1283,8 @@ router.post(
       server.image = image;
       server.imageId = image.id;
       server.containerId = containerId;
-      server.files = resolvedFiles;
-
+      server.files = resolvedFiles; 
+      server.allocationLimit = allocationLimit || 1
       // Handle ownership transfer
       if (newOwner && newUserId !== oldUserId) {
         // Update server's userId

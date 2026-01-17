@@ -280,84 +280,6 @@ router.get(
   }
 );
 
-const SPIGET_API_URL = 'https://api.spiget.org/v2/resources/free';
-
-/**
- * GET /server/plugins/:id
- * Feature: Plugins for an minecraft server
- */
-router.get("/server/plugins/:id", requireAuth, withServer, (req, res) => {
-  const user = unsqh.get("users", req.session.userId);
-  if (!user) return res.redirect("/");
-  const server = getServerForUser(req.session.userId, req.params.id);
-  const logAdd = router.bindLog(server.id);
-  const settings = unsqh.get("settings", "app") || {};
-  const appName = settings.name || "App";
-  if (!server.image.features.includes('PLUGINS')) {return res.redirect('/server/manage/' + req.params.id)};
-  res.render("server/features/plugins", {
-    name: appName,
-    user,
-    server,
-  });
-});
-
-/**
- * POST /server/plugins/:id
- * Feature: Get installed Plugins 
- */
-router.post("/server/plugins/:id", requireAuth, withServer, async (req, res) => {
-  const user = unsqh.get("users", req.session.userId);
-  if (!user) return res.redirect("/");
-  const server = getServerForUser(req.session.userId, req.params.id);
-  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
-  if (!node) return res.status(404).send("Node not found");
-  const logAdd = router.bindLog(server.id);
-  const settings = unsqh.get("settings", "app") || {};
-  const appName = settings.name || "App";
-  if (!server.image.features.includes('PLUGINS')) {return res.json({ error: 'Not avaliable for your server' })};
-  let plugins;
-  try {
-    const response = await axios.get(
-      `${getNodeUrl(node)}/server/fs/${server.idt}/files`,
-      {
-        params: { path: '/plugins/', key: node.key },
-      }
-    );
-    const data = response.data;
-    plugins = data.filter(file => file.type === 'file' && file.extension === '.jar');
-  } catch (err) {
-    plugins = [];
-    res.status(200).json({ plugins });
-  }
-});
-
-/**
- * GET /server/plugins/:id/download
- * Feature: Query: { downloadUrl, pluginName }
- */
-router.get("/server/plugins/:id/download", requireAuth, withServer, async (req, res) => {
-  const user = unsqh.get("users", req.session.userId);
-  const { downloadUrl, pluginName } = req.query;
-  if (!user) return res.redirect("/");
-  const server = getServerForUser(req.session.userId, req.params.id);
-  const logAdd = router.bindLog(server.id);
-  const settings = unsqh.get("settings", "app") || {};
-  const appName = settings.name || "App";
-  if (!server.image.features.includes('PLUGINS')) {return res.redirect('/server/manage/' + req.params.id)};
-  try {
-    const response = await axios.get(
-      `${getNodeUrl(node)}/server/plugin/${server.idt}/download`,
-      {
-        params: { downloadUrl, pluginName, key: node.key },
-      }
-    );
-    const data = response.data;
-    plugins = data.filter(file => file.type === 'file' && file.extension === '.jar');
-  } catch (err) {
-    plugins = [];
-    res.status(200).json({ plugins });
-  }
-});
 /**
  * GET /server/files/:id
  * List files and folders for a server
@@ -863,15 +785,14 @@ router.post(
   }
 );
 /**
- * GET /server/network/:id/add/:port
+ * GET /server/network/:id/add
  */
 router.get(
-  "/server/network/:id/add/:port",
+  "/server/network/:id/add",
   requireAuth,
   withServer,
   async (req, res) => {
-    const { id, port } = req.params;
-    const PORT = Number(port);
+    const { id } = req.params;
 
     const user = unsqh.get("users", req.session.userId);
     const server = getServerForUser(req.session.userId, id);
@@ -883,12 +804,21 @@ router.get(
 
     node.allocations = Array.isArray(node.allocations) ? node.allocations : [];
 
-    const allocation = node.allocations.find((a) => a.port === PORT);
-    if (!allocation)
-      return res.redirect(`/server/network/${id}?error=invalid_allocation`);
-    if (allocation.allocationOwnedto)
-      return res.redirect(`/server/network/${id}?error=allocation_taken`);
+    const availableAllocations = node.allocations.filter(
+      (a) => !a.allocationOwnedto
+    );
 
+    if (!availableAllocations.length)
+      return res.redirect(`/server/network/${id}?error=no_ports_available`);
+
+    const allocation =
+      availableAllocations[
+      Math.floor(Math.random() * availableAllocations.length)
+      ];
+
+    const PORT = allocation.port;
+
+    // Prevent multiple primaries
     if (allocation.type === "primary") {
       const hasPrimary = node.allocations.some(
         (a) =>
@@ -898,6 +828,13 @@ router.get(
         return res.redirect(`/server/network/${id}?error=primary_exists`);
     }
 
+    const currentAllocations = node.allocations.filter(
+      a => a.allocationOwnedto?.serverId === server.id
+    ).length;
+
+    if (currentAllocations >= server.allocationLimit) {
+      return res.redirect(`/server/network/${id}?error=cant_add_more`);
+    }
     try {
       const { data } = await axios.post(
         `${getNodeUrl(node)}/server/network/${server.idt}/add/${PORT}`,
@@ -907,25 +844,28 @@ router.get(
 
       // Claim allocation
       allocation.allocationOwnedto = { serverId: server.id };
-      // Ensure allocation.type is properly set if primary
+
       if (!server.port || allocation.type === "primary")
         allocation.type = "primary";
 
       unsqh.update("nodes", node.id, { allocations: node.allocations });
 
-      // Add port to server.ports safely
+      // Add port to server
       server.ports = server.ports || [];
       if (!server.ports.includes(PORT)) server.ports.push(PORT);
 
-      // Set server.port if not set or this is primary
-      if (!server.port || allocation.type === "primary") server.port = PORT;
+      if (!server.port || allocation.type === "primary")
+        server.port = PORT;
 
       server.containerId = data.containerId;
       unsqh.put("servers", server.id, server);
 
-      user.servers = user.servers.map((s) => (s.id === server.id ? server : s));
+      user.servers = user.servers.map((s) =>
+        s.id === server.id ? server : s
+      );
       unsqh.put("users", user.id, user);
-      logAdd(req.session.userId, `Claimed allocation on port ${PORT}`);
+
+      logAdd(req.session.userId, `Claimed random allocation on port ${PORT}`);
       res.redirect(`/server/network/${id}?allocation=claimed`);
     } catch (err) {
       console.error(err.response?.data || err.message);
@@ -933,6 +873,7 @@ router.get(
     }
   }
 );
+
 
 /**
  * POST /server/network/:id/setprimary/:port
