@@ -111,7 +111,7 @@
                     tooltip.innerText = "Copied"
                     function tooltipx() {
                       tooltip.classList.remove('scale-100');
-                      tooltip.innerText='Copy'
+                      tooltip.innerText = 'Copy'
                     }
                     setTimeout(() => tooltipx(), 1000);
                   } catch (err) {
@@ -508,13 +508,12 @@
             };
           }
 
-          function connectStats() {
+          async function connectStats() {
             if (statsWs && statsWs.readyState === WebSocket.OPEN) return;
             statsWs = new WebSocket(`${protocol}://${window.location.hostname}:${window.location.port}/stats/${serverId}`);
-
             statsWs.onmessage = (evt) => {
-
               try {
+                connectConsole();
                 const stats = JSON.parse(evt.data);
                 updateStatsUI(stats);
               } catch (e) { }
@@ -523,7 +522,6 @@
             statsWs.onclose = () => setTimeout(connectStats, 2000);
           }
 
-          connectConsole();
           connectStats();
 
           // --- Stats Update Logic ---
@@ -603,40 +601,55 @@
                 {
                   label: 'CPU',
                   data: Array(20).fill(0),
-                  borderColor: '#6366f1', // Indigo
+                  borderColor: '#6366f1',       // Indigo line
+                  backgroundColor: 'rgba(99, 102, 241, 0.2)', // Inner fill
                   tension: 0.4,
                   pointRadius: 0,
-                  borderWidth: 2
+                  borderWidth: 2,
+                  fill: true                   // Enable fill under the line
                 },
                 {
                   label: 'RAM',
                   data: Array(20).fill(0),
-                  borderColor: '#a855f7', // Purple
+                  borderColor: '#a855f7',       // Purple line
+                  backgroundColor: 'rgba(168, 85, 247, 0.2)', // Inner fill
                   tension: 0.4,
                   pointRadius: 0,
-                  borderWidth: 2
+                  borderWidth: 2,
+                  fill: true
                 },
                 {
                   label: 'Disk',
                   data: Array(20).fill(0),
-                  borderColor: '#ef4444', // Red
+                  borderColor: '#ef4444',       // Red line
+                  backgroundColor: 'rgba(239, 68, 68, 0.2)', // Inner fill
                   tension: 0.4,
                   pointRadius: 0,
-                  borderWidth: 2
+                  borderWidth: 2,
+                  fill: true
                 }
               ]
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              plugins: { legend: { display: false } }, // Custom legend used
+              plugins: { legend: { display: false } },
               scales: {
                 y: { beginAtZero: true, max: 100, grid: { color: '#333' }, ticks: { color: '#666' } },
                 x: { display: true }
               },
-              animation: false
+              animation: false,
+              interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false,
+                radius: 10
+              },
+              hover: { mode: 'nearest', intersect: false }
             }
           });
+
+
 
           function pushChartData(chart, datasetIndex, val) {
             chart.data.datasets[datasetIndex].data.push(val);

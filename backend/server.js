@@ -279,7 +279,103 @@ router.get(
 
   }
 );
+/**
+ * GET /server/features/:id/minecraft
+ * Manage Server.properties or so 
+ */
+router.get("/server/features/:id/minecraft", requireAuth, withServer, async (req, res) => {
+  const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
+  if (!server) return res.status(404).send("Server not found");
 
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  const user = unsqh.get("users", req.session.userId);
+  if (server.image && Array.isArray(server.image.features) && !server.image.features.includes('EULA', 'PLUGINS', 'PLAYERS')) {
+    return res.redirect('/server/manage/'+ req.params.id);
+  };
+  let properties = [];
+  try {
+    const response = await axios.get(
+      `${getNodeUrl(node)}/server/fs/feature/${server.idt}/properties`,
+      {
+        params: { key: node.key },
+      }
+    );
+    properties = response.data.properties || [];
+  } catch (err) {
+    // the error would usually means node is offline
+    // console.error("Error fetching properties:", err.message);
+    properties = [];
+  }
+  res.render("server/minecraft", {
+    name: appName,
+    user,
+    server,
+    properties,
+  });
+});
+
+/**
+ * POST /server/features/:id/minecraft
+ * Edit Server.properties or so 
+ */
+router.post("/server/features/:id/minecraft", requireAuth, withServer, async (req, res) => {
+  const server = getServerForUser(req.session.userId, req.params.id);
+  const logAdd = router.bindLog(server.id);
+  if (!server) return res.status(404).send("Server not found");
+
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  const settings = unsqh.get("settings", "app") || {};
+  const appName = settings.name || "App";
+  const user = unsqh.get("users", req.session.userId);
+  
+  if (server.image && Array.isArray(server.image.features) && !server.image.features.includes('EULA', 'PLUGINS', 'PLAYERS')) {
+    return res.redirect('/server/manage/'+ req.params.id);
+  }
+  
+  try {
+    // Transform form data into expected format
+    const properties = [];
+    
+    if (req.body.properties) {
+      Object.keys(req.body.properties).forEach(index => {
+        const prop = req.body.properties[index];
+        if (prop.key) {
+          properties.push({
+            key: prop.key,
+            value: prop.value === 'true' ? true : (prop.value === 'false' ? false : prop.value || false)
+          });
+        }
+      });
+    }
+    const response = await axios.post(
+      `${getNodeUrl(node)}/server/fs/feature/${server.idt}/properties`,
+      { properties },
+      {
+        params: { key: node.key } 
+      }
+    );
+
+    logAdd(`Updated server.properties`, "info");
+    res.redirect('/server/features/' + req.params.id + '/minecraft?success=true');
+    
+  } catch (err) {
+    console.error("Failed to update properties:", err);
+    logAdd(`Failed to update server.properties: ${err.message}`, "error");
+    res.redirect('/server/features/' + req.params.id + '/minecraft?error=true');
+  }
+  
+});
 /**
  * GET /server/files/:id
  * List files and folders for a server

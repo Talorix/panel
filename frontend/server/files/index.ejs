@@ -163,6 +163,7 @@
                 <th class="px-4 py-3 font-medium">Name</th>
                 <th class="px-4 py-3 font-medium">Size</th>
                 <th class="px-4 py-3 font-medium text-right">Modified</th>
+                <th class="px-4 py-3 font-medium text-right">Permissions</th>
                 <th class="w-10 px-4 py-3"></th>
               </tr>
             </thead>
@@ -223,7 +224,10 @@
                     <%= formatSize(file.size) %>
                   </td>
                   <td class="px-4 py-3 text-right text-sm text-neutral-500">
-                    <%= new Date(file.createdAt).toLocaleDateString() %>
+                    <%= (new Date(file.modifiedAt).toDateString() === new Date().toDateString()) ? new Date(file.modifiedAt).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit', hour12:true}) : new Date(file.modifiedAt).toLocaleDateString() %>
+                  </td>
+                  <td class="px-4 py-3 text-right text-sm text-neutral-400 font-mono">
+                    <%= file.mode %> 
                   </td>
                   <td class="px-4 py-3 text-right relative">
                     <button
@@ -311,8 +315,7 @@
     <!-- Editor Modal (Fullscreen) -->
     <div id="editorModalOverlay" class="fixed inset-0 z-[60] hidden bg-black/80 backdrop-blur-md
          flex items-center justify-center p-8 transition-opacity">
-    <div id="editorModal"
-  class="flex flex-col
+      <div id="editorModal" class="flex flex-col
          w-full
          max-w-8xl
 
