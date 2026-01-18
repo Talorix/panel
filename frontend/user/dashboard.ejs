@@ -43,8 +43,18 @@
         <!-- Welcome Header -->
         <div class="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Dashboard</h1>
-            <p class="mt-2 text-neutral-400">Overview of your deployed infrastructure.</p>
+            <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">
+              Dashboard
+            </h1>
+            <p class="mt-2 text-neutral-400 flex items-center gap-2">
+              <% if (req.query.admin==='true' ) { %>
+                <span class="flex h-2 w-2 rounded-full bg-indigo-500"></span>
+                Monitoring all deployed infrastructure across the network
+                <% } else { %>
+                  <span class="flex h-2 w-2 rounded-full bg-green-500"></span>
+                  Manage and monitor your active servers
+                  <% } %>
+            </p>
           </div>
 
           <!-- Quick Actions / Filter (Optional) -->

@@ -4,14 +4,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= name %> - <%= server.name %> Minecraft</title>
+  <title>
+    <%= name %> - <%= server.name %> Minecraft
+  </title>
   <link rel="stylesheet" href="/assets/tailwind.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-    .font-space-grotesk { font-family: 'Space Grotesk', sans-serif; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #000; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+    @font-face {
+      font-family: 'Monocraft';
+      src: url('https://cdn.jsdelivr.net/gh/IdreesInc/Monocraft@main/dist/Monocraft-ttf/Monocraft.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    .minecraft-text {
+      font-family: 'Monocraft', monospace;
+      /* Fallback to monospace if font fails to load */
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 8px;
+      line-height: 1.5;
+      border: 2px solid #333;
+      image-rendering: pixelated;
+      /* Keeps the pixel font crisp */
+    }
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
     .toggle-checkbox {
       appearance: none;
       width: 36px;
@@ -23,7 +58,11 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .toggle-checkbox:checked { background-color: #6366f1; }
+
+    .toggle-checkbox:checked {
+      background-color: #6366f1;
+    }
+
     .toggle-checkbox::before {
       content: '';
       position: absolute;
@@ -35,8 +74,117 @@
       border-radius: 9999px;
       transition: transform 0.2s;
     }
-    .toggle-checkbox:checked::before { transform: translateX(16px); }
-    .minecraft-text { font-family: 'Courier New', monospace; background: #1a1a1a; padding: 12px; border-radius: 4px; }
+
+    .toggle-checkbox:checked::before {
+      transform: translateX(16px);
+    }
+
+    /* Animation for the Modal Pop-in */
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+        filter: blur(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    .modal-animate-in {
+      animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Progress Bar Shimmer Effect */
+    .progress-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent);
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(100%);
+      }
+    }
+
+    /* Success Icon Pop */
+    .success-pop {
+      animation: successScale 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes successScale {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      50% {
+        transform: scale(1.2);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* The container rotation */
+    .spinner {
+      animation: rotate 2s linear infinite;
+      width: 64px;
+      height: 64px;
+    }
+
+    /* The expanding/contracting stroke */
+    .spinner .path {
+      stroke: #7c7c7c;
+      stroke-linecap: round;
+      animation: dash 1.5s ease-in-out infinite;
+    }
+
+    @keyframes rotate {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes dash {
+      0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+      }
+
+      50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+      }
+
+      100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+      }
+    }
   </style>
 </head>
 
@@ -44,338 +192,553 @@
 
   <%- include('../components/sidebar', { name: name, user: user }) %>
 
-  <main class="relative flex-1 overflow-y-auto bg-black">
-    <div class="mx-auto max-w-6xl px-6 py-12 md:px-12">
+    <main class="relative flex-1 overflow-y-auto bg-black">
 
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold tracking-tight text-gray-100 md:text-4xl">Minecraft Server</h1>
-        <p class="mt-2 text-neutral-400">Configure your Minecraft server settings</p>
+      <div id="unsavedBar"
+        class="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 hidden transition-all duration-300 ease-out -translate-y-20 opacity-0">
+        <div
+          class="flex items-center gap-4 rounded-full border border-yellow-600/50 bg-yellow-950/90 px-6 py-3 backdrop-blur-md shadow-lg shadow-black/50">
+          <div class="flex items-center gap-3">
+            <svg class="h-5 w-5 text-yellow-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="text-sm font-medium text-yellow-100">You have unsaved changes</span>
+          </div>
+          <div class="h-4 w-px bg-yellow-700/50"></div>
+          <button onclick="handleSave(event)"
+            class="rounded-full bg-yellow-600 px-4 py-1 text-xs font-bold text-white hover:bg-yellow-500 transition-colors">
+            Save Now
+          </button>
+        </div>
       </div>
 
-      <div class="mb-6">
-        <input
-          type="text"
-          id="searchProps"
-          placeholder="Search properties..."
-          class="w-full rounded-md border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm text-gray-100 placeholder-neutral-500 focus:outline-none focus:border-indigo-500"
-        />
-      </div>
+      <div class="mx-auto max-w-6xl px-6 py-12 md:px-12">
 
-      <form method="POST" action="/server/features/<%= server.id %>/minecraft">
-        <div class="space-y-6">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold tracking-tight text-gray-100 md:text-4xl">Minecraft Server</h1>
+          <p class="mt-2 text-neutral-400">Configure your Minecraft server settings</p>
+        </div>
 
-          <% 
-          const categories = {};
-          let motdIndex = -1;
-          let motdValue = '';
-          
-          properties.forEach((prop, i) => {
-            if ('key' in prop) {
+        <div class="mb-6">
+          <input type="text" id="searchProps" placeholder="Search properties..."
+            class="w-full rounded-md border border-neutral-800 bg-neutral-950 px-4 py-2.5 text-sm text-gray-100 placeholder-neutral-500 focus:outline-none focus:border-indigo-500" />
+        </div>
+
+        <form id="settingsForm" onsubmit="handleSave(event)">
+          <div class="space-y-6">
+
+            <% const categories={}; let motdIndex=-1; let motdValue='' ; properties.forEach((prop, i)=> {
+              if ('key' in prop) {
               if (prop.key === 'motd') {
-                motdIndex = i;
-                motdValue = prop.value;
-                return;
+              motdIndex = i;
+              motdValue = prop.value;
+              return;
               }
-              
+
               const category = prop.key.includes('spawn') ? 'Spawn Settings' :
-                             prop.key.includes('difficulty') || prop.key.includes('hardcore') || prop.key.includes('pvp') ? 'Gameplay' :
-                             prop.key.includes('max-') || prop.key.includes('view-distance') ? 'Performance' :
-                             prop.key.includes('port') || prop.key.includes('ip') || prop.key.includes('online-mode') ? 'Network' :
-                             prop.key.includes('level-') || prop.key.includes('generator') ? 'World' :
-                             'General';
+              prop.key.includes('difficulty') || prop.key.includes('hardcore') || prop.key.includes('pvp') ? 'Gameplay'
+              :
+              prop.key.includes('max-') || prop.key.includes('view-distance') ? 'Performance' :
+              prop.key.includes('port') || prop.key.includes('ip') || prop.key.includes('online-mode') ? 'Network' :
+              prop.key.includes('level-') || prop.key.includes('generator') ? 'World' :
+              'General';
               if (!categories[category]) categories[category] = [];
               categories[category].push({ ...prop, index: i });
-            }
-          });
-          %>
+              }
+              });
+              %>
 
-          <% if (motdIndex !== -1) { %>
-            <div class="rounded-md border border-neutral-800 bg-neutral-950 overflow-hidden">
-              <div class="border-b border-neutral-800 bg-neutral-900 px-5 py-3">
-                <h2 class="text-sm font-semibold text-gray-100 uppercase tracking-wider">MOTD (Message of the Day)</h2>
-              </div>
-              <div class="p-5">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex-1">
-                    <input
-                      type="text"
-                      id="motdInput"
-                      name="properties[<%= motdIndex %>][value]"
-                      value="<%= motdValue %>"
-                      readonly
-                      class="w-full rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 cursor-pointer hover:border-indigo-500 transition-colors"
-                      onclick="openMotdModal()"
-                    />
-                    <input type="hidden" name="properties[<%= motdIndex %>][key]" value="motd" />
+              <% if (motdIndex !==-1) { %>
+                <div class="rounded-md border border-neutral-800 bg-neutral-950 overflow-hidden">
+                  <div class="border-b border-neutral-800 bg-neutral-900 px-5 py-3">
+                    <h2 class="text-sm font-semibold text-gray-100 uppercase tracking-wider">MOTD (Message of the Day)
+                    </h2>
                   </div>
-                  <button type="button" onclick="openMotdModal()" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
-                    Customize MOTD
-                  </button>
-                </div>
-              </div>
-            </div>
-          <% } %>
-
-          <% Object.keys(categories).forEach(category => { %>
-            <div class="category-section rounded-md border border-neutral-800 bg-neutral-950 overflow-hidden">
-              <div class="border-b border-neutral-800 bg-neutral-900 px-5 py-3">
-                <h2 class="text-sm font-semibold text-gray-100 uppercase tracking-wider"><%= category %></h2>
-              </div>
-              <div class="p-5 space-y-4">
-                <% categories[category].forEach(prop => { %>
-                  <div class="property-item flex items-center justify-between gap-4 pb-4 border-b border-neutral-800 last:border-0 last:pb-0" data-key="<%= prop.key %>">
-                    <label class="text-sm font-medium text-gray-100 flex-shrink-0 min-w-[180px]">
-                      <%= prop.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
-                    </label>
-                    <div class="flex-1 flex items-center gap-3">
-                      <% if (typeof prop.value === 'boolean') { %>
-                        <input 
-                          type="checkbox" 
-                          id="prop-<%= prop.index %>" 
-                          name="properties[<%= prop.index %>][value]" 
-                          value="true" 
-                          class="toggle-checkbox" 
-                          <%= prop.value ? 'checked' : '' %> 
-                        />
-                        <input type="hidden" name="properties[<%= prop.index %>][key]" value="<%= prop.key %>" />
-                      <% } else { %>
-                        <input
-                          type="text"
-                          name="properties[<%= prop.index %>][value]"
-                          value="<%= prop.value %>"
-                          class="flex-1 rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-indigo-500"
-                        />
-                        <input type="hidden" name="properties[<%= prop.index %>][key]" value="<%= prop.key %>" />
-                      <% } %>
+                  <div class="p-5">
+                    <div class="flex items-center justify-between gap-4">
+                      <div class="flex-1">
+                        <input type="text" id="motdInput" name="properties[<%= motdIndex %>][value]"
+                          value="<%= motdValue %>" readonly
+                          class="w-full rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 cursor-pointer hover:border-indigo-500 transition-colors"
+                          onclick="openMotdModal()" />
+                        <input type="hidden" name="properties[<%= motdIndex %>][key]" value="motd" />
+                      </div>
+                      <button type="button" onclick="openMotdModal()"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
+                        Customize MOTD
+                      </button>
                     </div>
                   </div>
-                <% }) %>
-              </div>
+                </div>
+                <% } %>
+                  <% if (Object.keys(categories).length> 0) { %>
+                    <% Object.keys(categories).forEach(category=> { %>
+                      <div class="category-section rounded-md border border-neutral-800 bg-neutral-950 overflow-hidden">
+                        <div class="border-b border-neutral-800 bg-neutral-900 px-5 py-3">
+                          <h2 class="text-sm font-semibold text-gray-100 uppercase tracking-wider">
+                            <%= category %>
+                          </h2>
+                        </div>
+                        <div class="p-5 space-y-4">
+                          <% categories[category].forEach(prop=> { %>
+                            <div
+                              class="property-item flex items-center justify-between gap-4 pb-4 border-b border-neutral-800 last:border-0 last:pb-0"
+                              data-key="<%= prop.key %>">
+                              <label class="text-sm font-medium text-gray-100 flex-shrink-0 min-w-[180px]">
+                                <%= prop.key.replace(/-/g, ' ' ).replace(/\b\w/g, l=> l.toUpperCase()) %>
+                              </label>
+                              <div class="flex-1 flex items-center gap-3">
+                                <% if (typeof prop.value==='boolean' ) { %>
+                                  <input type="checkbox" id="prop-<%= prop.index %>"
+                                    name="properties[<%= prop.index %>][value]" value="true" class="toggle-checkbox"
+                                    <%= prop.value ? 'checked' : '' %>
+                                  />
+                                  <input type="hidden" name="properties[<%= prop.index %>][key]"
+                                    value="<%= prop.key %>" />
+                                  <% } else { %>
+                                    <input type="text" name="properties[<%= prop.index %>][value]"
+                                      value="<%= prop.value === null || prop.value === undefined ? '' : prop.value %>"
+                                      class="flex-1 rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-indigo-500" />
+                                    <input type="hidden" name="properties[<%= prop.index %>][key]"
+                                      value="<%= prop.key %>" />
+                                    <% } %>
+                              </div>
+                            </div>
+                            <% }) %>
+                        </div>
+                      </div>
+                      <% }) %>
+                        <% } else { %>
+                        <div class="p-12 text-center rounded-md border border-dashed border-neutral-800">
+                           <p class="text-neutral-500">No server properties found.</p>
+                       </div>
+                   <% } %>
+
+          </div>
+
+          <div class="mt-8 flex items-center gap-4">
+            <button type="submit"
+              class="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
+              Save Changes
+            </button>
+            <button type="button" onclick="window.location.reload()"
+              class="rounded-md border border-neutral-800 bg-neutral-950 px-6 py-2.5 text-sm font-medium text-gray-100 hover:bg-neutral-900 transition-colors">
+              Reset
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </main>
+
+    <div id="motdModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+      <div class="bg-neutral-950 border border-neutral-800 rounded-md max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+          class="sticky top-0 border-b border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-between">
+          <h3 class="text-lg font-bold text-gray-100">MOTD Builder</h3>
+          <button type="button" onclick="closeMotdModal()"
+            class="text-neutral-400 hover:text-gray-100 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-100 mb-2">Preview</label>
+            <div id="motdPreview" class="minecraft-text text-gray-100 text-sm whitespace-pre-wrap">A Minecraft Server
             </div>
-          <% }) %>
+          </div>
 
+          <div>
+            <label class="block text-sm font-semibold text-gray-100 mb-2">Message</label>
+            <textarea id="motdText" rows="3"
+              class="w-full rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-indigo-500 font-mono"
+              placeholder="Enter your MOTD message..."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-100 mb-3">Colors</label>
+            <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+              <button type="button" onclick="insertCode('§0')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #000000; background: #1a1a1a;">Black</button>
+              <button type="button" onclick="insertCode('§1')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #0000AA;">Dark Blue</button>
+              <button type="button" onclick="insertCode('§2')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #00AA00;">Dark Green</button>
+              <button type="button" onclick="insertCode('§3')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #00AAAA;">Dark Aqua</button>
+              <button type="button" onclick="insertCode('§4')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #AA0000;">Dark Red</button>
+              <button type="button" onclick="insertCode('§5')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #AA00AA;">Purple</button>
+              <button type="button" onclick="insertCode('§6')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #FFAA00;">Gold</button>
+              <button type="button" onclick="insertCode('§7')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #AAAAAA;">Gray</button>
+              <button type="button" onclick="insertCode('§8')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #555555;">Dark Gray</button>
+              <button type="button" onclick="insertCode('§9')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #5555FF;">Blue</button>
+              <button type="button" onclick="insertCode('§a')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #55FF55;">Green</button>
+              <button type="button" onclick="insertCode('§b')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #55FFFF;">Aqua</button>
+              <button type="button" onclick="insertCode('§c')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #FF5555;">Red</button>
+              <button type="button" onclick="insertCode('§d')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #FF55FF;">Pink</button>
+              <button type="button" onclick="insertCode('§e')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #FFFF55;">Yellow</button>
+              <button type="button" onclick="insertCode('§f')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"
+                style="color: #FFFFFF;">White</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-100 mb-3">Formatting</label>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <button type="button" onclick="insertCode('§l')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><strong>Bold</strong></button>
+              <button type="button" onclick="insertCode('§o')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><em>Italic</em></button>
+              <button type="button" onclick="insertCode('§n')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><u>Underline</u></button>
+              <button type="button" onclick="insertCode('§m')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><s>Strike</s></button>
+              <button type="button" onclick="insertCode('§k')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">Obfuscated</button>
+              <button type="button" onclick="insertCode('§r')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">Reset</button>
+              <button type="button" onclick="insertCode('\\n')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">New
+                Line</button>
+              <button type="button" onclick="clearMotd()"
+                class="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm hover:border-red-500 hover:bg-red-950 transition-colors">Clear</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-100 mb-3">Quick Templates</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <button type="button"
+                onclick="useTemplate('§6§l⭐ §e§lWelcome to My Server §6§l⭐\\n§7Join us for epic adventures!')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Welcome
+                Template</button>
+              <button type="button"
+                onclick="useTemplate('§c§lSURVIVAL §8§l| §a§lCREATIVE §8§l| §b§lSKYBLOCK\\n§7Version 1.20 §8• §7play.myserver.com')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Multi-Mode</button>
+              <button type="button"
+                onclick="useTemplate('§5§l§k||§r §d§lMYSTIC REALM §5§l§k||§r\\n§7An enchanted adventure awaits...')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Mystic
+                Theme</button>
+              <button type="button"
+                onclick="useTemplate('§4§l[§c§lPVP§4§l] §6§lFACTIONS SERVER\\n§eFight, Build, Conquer! §7- §eplay.myserver.com')"
+                class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">PvP
+                Factions</button>
+            </div>
+          </div>
         </div>
 
-        <div class="mt-8 flex items-center gap-4">
-          <button type="submit" class="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
-            Save Changes
+        <div
+          class="sticky bottom-0 border-t border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeMotdModal()"
+            class="rounded-md border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm font-medium text-gray-100 hover:bg-neutral-900 transition-colors">
+            Cancel
           </button>
-          <button type="button" onclick="window.location.reload()" class="rounded-md border border-neutral-800 bg-neutral-950 px-6 py-2.5 text-sm font-medium text-gray-100 hover:bg-neutral-900 transition-colors">
-            Reset
+          <button type="button" onclick="saveMotd()"
+            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
+            Apply MOTD
           </button>
         </div>
-      </form>
-
-    </div>
-  </main>
-
-  <!-- MOTD Modal -->
-  <div id="motdModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-neutral-950 border border-neutral-800 rounded-md max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-      <div class="sticky top-0 border-b border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-gray-100">MOTD Builder</h3>
-        <button type="button" onclick="closeMotdModal()" class="text-neutral-400 hover:text-gray-100 transition-colors">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-6">
-        <!-- Preview -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-100 mb-2">Preview</label>
-          <div id="motdPreview" class="minecraft-text text-gray-100 text-sm whitespace-pre-wrap">A Minecraft Server</div>
-        </div>
-
-        <!-- Text Editor -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-100 mb-2">Message</label>
-          <textarea
-            id="motdText"
-            rows="3"
-            class="w-full rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-indigo-500 font-mono"
-            placeholder="Enter your MOTD message..."
-          ></textarea>
-        </div>
-
-        <!-- Color Options -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-100 mb-3">Colors</label>
-          <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
-            <button type="button" onclick="insertCode('§0')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #000000; background: #1a1a1a;">Black</button>
-            <button type="button" onclick="insertCode('§1')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #0000AA;">Dark Blue</button>
-            <button type="button" onclick="insertCode('§2')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #00AA00;">Dark Green</button>
-            <button type="button" onclick="insertCode('§3')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #00AAAA;">Dark Aqua</button>
-            <button type="button" onclick="insertCode('§4')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #AA0000;">Dark Red</button>
-            <button type="button" onclick="insertCode('§5')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #AA00AA;">Purple</button>
-            <button type="button" onclick="insertCode('§6')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #FFAA00;">Gold</button>
-            <button type="button" onclick="insertCode('§7')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #AAAAAA;">Gray</button>
-            <button type="button" onclick="insertCode('§8')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #555555;">Dark Gray</button>
-            <button type="button" onclick="insertCode('§9')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #5555FF;">Blue</button>
-            <button type="button" onclick="insertCode('§a')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #55FF55;">Green</button>
-            <button type="button" onclick="insertCode('§b')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #55FFFF;">Aqua</button>
-            <button type="button" onclick="insertCode('§c')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #FF5555;">Red</button>
-            <button type="button" onclick="insertCode('§d')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #FF55FF;">Pink</button>
-            <button type="button" onclick="insertCode('§e')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #FFFF55;">Yellow</button>
-            <button type="button" onclick="insertCode('§f')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors" style="color: #FFFFFF;">White</button>
-          </div>
-        </div>
-
-        <!-- Formatting Options -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-100 mb-3">Formatting</label>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <button type="button" onclick="insertCode('§l')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><strong>Bold</strong></button>
-            <button type="button" onclick="insertCode('§o')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><em>Italic</em></button>
-            <button type="button" onclick="insertCode('§n')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><u>Underline</u></button>
-            <button type="button" onclick="insertCode('§m')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors"><s>Strike</s></button>
-            <button type="button" onclick="insertCode('§k')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">Obfuscated</button>
-            <button type="button" onclick="insertCode('§r')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">Reset</button>
-            <button type="button" onclick="insertCode('\\n')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm hover:border-indigo-500 transition-colors">New Line</button>
-            <button type="button" onclick="clearMotd()" class="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm hover:border-red-500 hover:bg-red-950 transition-colors">Clear</button>
-          </div>
-        </div>
-
-        <!-- Templates -->
-        <div>
-          <label class="block text-sm font-semibold text-gray-100 mb-3">Quick Templates</label>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <button type="button" onclick="useTemplate('§6§l⭐ §e§lWelcome to My Server §6§l⭐\\n§7Join us for epic adventures!')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Welcome Template</button>
-            <button type="button" onclick="useTemplate('§c§lSURVIVAL §8§l| §a§lCREATIVE §8§l| §b§lSKYBLOCK\\n§7Version 1.20 §8• §7play.myserver.com')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Multi-Mode</button>
-            <button type="button" onclick="useTemplate('§5§l§k||§r §d§lMYSTIC REALM §5§l§k||§r\\n§7An enchanted adventure awaits...')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">Mystic Theme</button>
-            <button type="button" onclick="useTemplate('§4§l[§c§lPVP§4§l] §6§lFACTIONS SERVER\\n§eFight, Build, Conquer! §7- §eplay.myserver.com')" class="rounded-md border border-neutral-800 bg-black px-3 py-2 text-sm text-left hover:border-indigo-500 transition-colors">PvP Factions</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="sticky bottom-0 border-t border-neutral-800 bg-neutral-900 px-6 py-4 flex items-center justify-end gap-3">
-        <button type="button" onclick="closeMotdModal()" class="rounded-md border border-neutral-800 bg-neutral-950 px-4 py-2 text-sm font-medium text-gray-100 hover:bg-neutral-900 transition-colors">
-          Cancel
-        </button>
-        <button type="button" onclick="saveMotd()" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-gray-100 hover:bg-indigo-500 transition-colors">
-          Apply MOTD
-        </button>
       </div>
     </div>
-  </div>
 
-  <script>
-    const searchInput = document.getElementById('searchProps');
-    const propertyItems = document.querySelectorAll('.property-item');
-    const categorySections = document.querySelectorAll('.category-section');
-    const motdModal = document.getElementById('motdModal');
-    const motdText = document.getElementById('motdText');
-    const motdPreview = document.getElementById('motdPreview');
-    const motdInput = document.getElementById('motdInput');
+    <div id="saveModal"
+      class="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] hidden items-center justify-center p-4 transition-opacity duration-300">
+      <div id="saveModalContent"
+        class="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
 
-    searchInput.addEventListener('input', (e) => {
-      const searchTerm = e.target.value.toLowerCase();
-      
-      categorySections.forEach(section => {
-        let hasVisibleItems = false;
-        const items = section.querySelectorAll('.property-item');
-        
-        items.forEach(item => {
-          const key = item.dataset.key.toLowerCase();
-          if (key.includes(searchTerm)) {
-            item.style.display = '';
-            hasVisibleItems = true;
-          } else {
-            item.style.display = 'none';
-          }
+        <div id="saveIcon" class="mx-auto mb-6">
+          <div class="flex justify-center items-center">
+            <svg class="spinner" viewBox="0 0 50 50">
+              <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+            </svg>
+          </div>
+        </div>
+
+        <div id="successIcon" class="mx-auto mb-6 hidden">
+          <div
+            class="h-16 w-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto text-green-500 success-pop">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="w-16 h-16">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+
+          </div>
+        </div>
+
+        <h3 id="saveTitle" class="text-xl font-bold text-gray-100 mb-2">Syncing Data</h3>
+        <p id="saveDesc" class="text-neutral-400 text-sm mb-8">Writing properties to server.properties...</p>
+
+        <div class="relative w-full bg-neutral-900 rounded-full h-3 overflow-hidden border border-white/5">
+          <div id="saveProgressBar"
+            class="bg-[#7c7c7c] h-full rounded-full transition-all duration-500 ease-out progress-shimmer"
+            style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const searchInput = document.getElementById('searchProps');
+      const propertyItems = document.querySelectorAll('.property-item');
+      const categorySections = document.querySelectorAll('.category-section');
+      const motdModal = document.getElementById('motdModal');
+      const motdText = document.getElementById('motdText');
+      const motdPreview = document.getElementById('motdPreview');
+      const motdInput = document.getElementById('motdInput');
+
+      // Unsaved Changes Variables
+      const form = document.getElementById('settingsForm');
+      const unsavedBar = document.getElementById('unsavedBar');
+      let initialFormData = new FormData(form);
+
+      // Save Modal Variables
+      const saveModal = document.getElementById('saveModal');
+      const saveProgressBar = document.getElementById('saveProgressBar');
+      const saveIcon = document.getElementById('saveIcon');
+      const successIcon = document.getElementById('successIcon');
+      const saveTitle = document.getElementById('saveTitle');
+      const saveDesc = document.getElementById('saveDesc');
+
+      // --- Search Functionality ---
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+
+        categorySections.forEach(section => {
+          let hasVisibleItems = false;
+          const items = section.querySelectorAll('.property-item');
+
+          items.forEach(item => {
+            const key = item.dataset.key.toLowerCase();
+            if (key.includes(searchTerm)) {
+              item.style.display = '';
+              hasVisibleItems = true;
+            } else {
+              item.style.display = 'none';
+            }
+          });
+
+          section.style.display = hasVisibleItems ? '' : 'none';
         });
-        
-        section.style.display = hasVisibleItems ? '' : 'none';
       });
-    });
 
-    function openMotdModal() {
-      motdText.value = motdInput.value;
-      updatePreview();
-      motdModal.classList.remove('hidden');
-      motdModal.classList.add('flex');
-    }
+      // --- Unsaved Changes Logic ---
+      function getFormState() {
+        return new URLSearchParams(new FormData(form)).toString();
+      }
 
-    function closeMotdModal() {
-      motdModal.classList.add('hidden');
-      motdModal.classList.remove('flex');
-    }
+      const initialStateStr = getFormState();
 
-    function insertCode(code) {
-      const start = motdText.selectionStart;
-      const end = motdText.selectionEnd;
-      const text = motdText.value;
-      motdText.value = text.substring(0, start) + code + text.substring(end);
-      motdText.selectionStart = motdText.selectionEnd = start + code.length;
-      motdText.focus();
-      updatePreview();
-    }
-
-    function useTemplate(template) {
-      motdText.value = template;
-      updatePreview();
-    }
-
-    function clearMotd() {
-      motdText.value = '';
-      updatePreview();
-    }
-
-    function updatePreview() {
-      const colorMap = {
-        '§0': '#000000', '§1': '#0000AA', '§2': '#00AA00', '§3': '#00AAAA',
-        '§4': '#AA0000', '§5': '#AA00AA', '§6': '#FFAA00', '§7': '#AAAAAA',
-        '§8': '#555555', '§9': '#5555FF', '§a': '#55FF55', '§b': '#55FFFF',
-        '§c': '#FF5555', '§d': '#FF55FF', '§e': '#FFFF55', '§f': '#FFFFFF'
-      };
-
-      let text = motdText.value.replace(/\\n/g, '\n');
-      let html = '';
-      let currentColor = '#FFFFFF';
-      let bold = false, italic = false, underline = false, strike = false;
-
-      for (let i = 0; i < text.length; i++) {
-        if (text[i] === '§' && i + 1 < text.length) {
-          const code = text[i + 1];
-          if (colorMap['§' + code]) {
-            currentColor = colorMap['§' + code];
-            bold = italic = underline = strike = false;
-          } else if (code === 'l') bold = true;
-          else if (code === 'o') italic = true;
-          else if (code === 'n') underline = true;
-          else if (code === 'm') strike = true;
-          else if (code === 'r') {
-            currentColor = '#FFFFFF';
-            bold = italic = underline = strike = false;
-          }
-          i++;
+      function checkChanges() {
+        const currentStateStr = getFormState();
+        if (currentStateStr !== initialStateStr) {
+          // Show bar
+          unsavedBar.classList.remove('hidden');
+          // Small delay to allow display:block to apply before opacity transition
+          setTimeout(() => {
+            unsavedBar.classList.remove('-translate-y-20', 'opacity-0');
+          }, 10);
         } else {
-          let char = text[i] === '\n' ? '<br>' : text[i];
-          let styles = `color: ${currentColor};`;
-          if (bold) styles += ' font-weight: bold;';
-          if (italic) styles += ' font-style: italic;';
-          if (underline) styles += ' text-decoration: underline;';
-          if (strike) styles += ' text-decoration: line-through;';
-          html += `<span style="${styles}">${char}</span>`;
+          // Hide bar
+          unsavedBar.classList.add('-translate-y-20', 'opacity-0');
+          setTimeout(() => {
+            unsavedBar.classList.add('hidden');
+          }, 300);
         }
       }
 
-      motdPreview.innerHTML = html || 'Preview will appear here...';
-    }
+      // Listen for changes on the form (delegated)
+      form.addEventListener('input', checkChanges);
+      form.addEventListener('change', checkChanges);
 
-    function saveMotd() {
-      motdInput.value = motdText.value;
-      closeMotdModal();
-    }
+      async function handleSave(e) {
+        if (e) e.preventDefault();
 
-    motdText.addEventListener('input', updatePreview);
+        const modal = document.getElementById('saveModal');
+        const content = document.getElementById('saveModalContent');
+        const bar = document.getElementById('saveProgressBar');
+        const sIcon = document.getElementById('saveIcon');
+        const checkIcon = document.getElementById('successIcon');
+        const title = document.getElementById('saveTitle');
 
-    // Close modal on outside click
-    motdModal.addEventListener('click', (e) => {
-      if (e.target === motdModal) closeMotdModal();
-    });
-  </script>
+        // 1. Open Modal with Animation
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        content.classList.add('modal-animate-in');
+
+        // Reset state
+        bar.style.width = '0%';
+        bar.classList.replace('bg-green-500', 'bg-[#7c7c7c]');
+        sIcon.classList.remove('hidden');
+        checkIcon.classList.add('hidden');
+        title.textContent = "Syncing Data";
+
+        // 2. Initial "Jump" animation
+        setTimeout(() => bar.style.width = '20%', 100);
+
+        try {
+          const formData = new FormData(form);
+          const response = await fetch(form.action || window.location.href, {
+            method: 'POST',
+            body: new URLSearchParams(formData),
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+          });
+
+          // Move bar to 70% while waiting for a brief beat to feel "real"
+          bar.style.width = '70%';
+
+          if (response.ok) {
+            // 3. Complete animation
+            setTimeout(() => {
+              bar.style.width = '100%';
+              bar.classList.replace('bg-[#7c7c7c]', 'bg-green-500');
+
+              // Switch icons with a pop
+              sIcon.classList.add('hidden');
+              checkIcon.classList.remove('hidden');
+              title.textContent = "Changes Applied";
+
+              // Hide the unsaved bar
+              unsavedBar.classList.add('-translate-y-20', 'opacity-0');
+
+              // Close modal after success
+              setTimeout(() => {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                  modal.classList.add('hidden');
+                  modal.style.opacity = '1';
+                  // Optional: reload or refresh internal state
+                  // window.location.reload(); 
+                }, 300);
+              }, 1200);
+            }, 500);
+          }
+        } catch (err) {
+          title.textContent = "Save Failed";
+          bar.classList.replace('bg-[#7c7c7c]', 'bg-red-500');
+          setTimeout(() => modal.classList.add('hidden'), 2000);
+        }
+      }
+      // --- MOTD Logic ---
+      function openMotdModal() {
+        motdText.value = motdInput.value;
+        updatePreview();
+        motdModal.classList.remove('hidden');
+        motdModal.classList.add('flex');
+      }
+
+      function closeMotdModal() {
+        motdModal.classList.add('hidden');
+        motdModal.classList.remove('flex');
+      }
+
+      function insertCode(code) {
+        const start = motdText.selectionStart;
+        const end = motdText.selectionEnd;
+        const text = motdText.value;
+        motdText.value = text.substring(0, start) + code + text.substring(end);
+        motdText.selectionStart = motdText.selectionEnd = start + code.length;
+        motdText.focus();
+        updatePreview();
+      }
+
+      function useTemplate(template) {
+        motdText.value = template;
+        updatePreview();
+      }
+
+      function clearMotd() {
+        motdText.value = '';
+        updatePreview();
+      }
+
+      function updatePreview() {
+        const colorMap = {
+          '§0': '#000000', '§1': '#0000AA', '§2': '#00AA00', '§3': '#00AAAA',
+          '§4': '#AA0000', '§5': '#AA00AA', '§6': '#FFAA00', '§7': '#AAAAAA',
+          '§8': '#555555', '§9': '#5555FF', '§a': '#55FF55', '§b': '#55FFFF',
+          '§c': '#FF5555', '§d': '#FF55FF', '§e': '#FFFF55', '§f': '#FFFFFF'
+        };
+
+        let text = motdText.value.replace(/\\n/g, '\n');
+        let html = '';
+        let currentColor = '#FFFFFF';
+        let bold = false, italic = false, underline = false, strike = false;
+
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === '§' && i + 1 < text.length) {
+            const code = text[i + 1];
+            if (colorMap['§' + code]) {
+              currentColor = colorMap['§' + code];
+              bold = italic = underline = strike = false;
+            } else if (code === 'l') bold = true;
+            else if (code === 'o') italic = true;
+            else if (code === 'n') underline = true;
+            else if (code === 'm') strike = true;
+            else if (code === 'r') {
+              currentColor = '#FFFFFF';
+              bold = italic = underline = strike = false;
+            }
+            i++;
+          } else {
+            let char = text[i] === '\n' ? '<br>' : text[i];
+            let styles = `color: ${currentColor};`;
+            if (bold) styles += ' font-weight: bold;';
+            if (italic) styles += ' font-style: italic;';
+            if (underline) styles += ' text-decoration: underline;';
+            if (strike) styles += ' text-decoration: line-through;';
+            html += `<span style="${styles}">${char}</span>`;
+          }
+        }
+
+        motdPreview.innerHTML = html || 'Preview will appear here...';
+      }
+
+      function saveMotd() {
+        motdInput.value = motdText.value;
+        // Trigger change event so the unsaved warning bar appears
+        motdInput.dispatchEvent(new Event('input', { bubbles: true }));
+        closeMotdModal();
+      }
+
+      motdText.addEventListener('input', updatePreview);
+
+      // Close modal on outside click
+      motdModal.addEventListener('click', (e) => {
+        if (e.target === motdModal) closeMotdModal();
+      });
+    </script>
 
 </body>
+
 </html>

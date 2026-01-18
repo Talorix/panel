@@ -115,6 +115,9 @@ router.get("/server/manage/:id", requireAuth, withServer, async (req, res) => {
     return res.redirect('/server/installing/' + server.id);
   }
 
+  if (state === 'failed') {
+    return res.redirect('/dashboard?err=failed')
+  }
   res.render("server/manage", {
     name: appName,
     user,
@@ -158,8 +161,11 @@ router.get("/server/state/:id", requireAuth, withServer, async (req, res) => {
       { params: { key: node.key } }
     );
     state = response.data.state;
+    if (state === "failed" && response.data) {
+      return res.json({ state, error: response.data.error })
+    }
   } catch (err) {
-    state = "running";
+    state = "failed";
   }
   res.json({ state });
 });

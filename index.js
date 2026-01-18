@@ -97,7 +97,7 @@ async function getVersion() {
   | | (_| | | (_) | |  | |>  <    ${version}
   |_|\\__,_|_|\\___/|_|  |_/_/\\_\\
 
-Copyright © %s Talon Project
+Copyright © %s ma4z and contributers
 
 Website:  https://talorix.io
 Source:   https://github.com/talorix/panel
