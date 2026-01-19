@@ -46,6 +46,7 @@ function withServer(req, res, next) {
   const logAdd = router.bindLog(server.id);
   if (!server) return res.redirect("/dashboard?error=NOTFOUND");
   if (server.suspended) return res.redirect("/dashboard?error=SUSPENDED");
+  req.server = server; 
   next();
 }
 
@@ -303,7 +304,7 @@ router.get("/server/features/:id/minecraft", requireAuth, withServer, async (req
   const appName = settings.name || "App";
   const user = unsqh.get("users", req.session.userId);
   if (server.image && Array.isArray(server.image.features) && !server.image.features.includes('EULA', 'PLUGINS', 'PLAYERS')) {
-    return res.redirect('/server/manage/'+ req.params.id);
+    return res.redirect('/server/manage/' + req.params.id);
   };
   let properties = [];
   try {
@@ -344,15 +345,15 @@ router.post("/server/features/:id/minecraft", requireAuth, withServer, async (re
   const settings = unsqh.get("settings", "app") || {};
   const appName = settings.name || "App";
   const user = unsqh.get("users", req.session.userId);
-  
+
   if (server.image && Array.isArray(server.image.features) && !server.image.features.includes('EULA', 'PLUGINS', 'PLAYERS')) {
-    return res.redirect('/server/manage/'+ req.params.id);
+    return res.redirect('/server/manage/' + req.params.id);
   }
-  
+
   try {
     // Transform form data into expected format
     const properties = [];
-    
+
     if (req.body.properties) {
       Object.keys(req.body.properties).forEach(index => {
         const prop = req.body.properties[index];
@@ -368,19 +369,19 @@ router.post("/server/features/:id/minecraft", requireAuth, withServer, async (re
       `${getNodeUrl(node)}/server/fs/feature/${server.idt}/properties`,
       { properties },
       {
-        params: { key: node.key } 
+        params: { key: node.key }
       }
     );
 
     logAdd(`Updated server.properties`, "info");
     res.redirect('/server/features/' + req.params.id + '/minecraft?success=true');
-    
+
   } catch (err) {
     console.error("Failed to update properties:", err);
     logAdd(`Failed to update server.properties: ${err.message}`, "error");
     res.redirect('/server/features/' + req.params.id + '/minecraft?error=true');
   }
-  
+
 });
 /**
  * GET /server/files/:id
@@ -1420,4 +1421,119 @@ router.get("/server/auditlogs/:serverId", requireAuth, (req, res) => {
     logs: displayLogs,
   });
 });
+
+/**
+ * GET /server/archives/:id
+ * All archives
+ */
+router.get("/server/archives/:id", requireAuth, withServer, async (req, res) => {
+  const user = unsqh.get("users", req.session.userId);
+  if (!user) return res.redirect("/");
+  const server = req.server;
+  if (!server.node) return res.status(500).send("Server node not assigned");
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  try {
+    let archives;
+    const response = await axios.get(
+      `${getNodeUrl(node)}/server/fs/${server.idt}/archives`,
+      { params: { key: node.key } }
+    );
+    if (response.data && !response.data.error) {
+      archives = response.data;
+    } else {
+      archives = [];
+    }
+    const settings = unsqh.get("settings", "app") || {};
+    const appName = settings.name || "App";
+    res.render("server/archives", { 
+      name: appName,
+      user,
+      server,
+      archives,
+     });
+  } catch (err) {
+    console.error("Fetching archives failed:", err.response?.data || err.message);
+    res.status(500).send("Failed to fetch archives");
+  }
+});
+
+/**
+ * POST /server/archive/:id/create
+ * Create an archive and redirect to /server/archives/:id
+ */
+router.post("/server/archive/:id/create", requireAuth, withServer, async (req, res) => {
+  const server = req.server;
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  try {
+    await axios.get(`${getNodeUrl(node)}/server/fs/${server.idt}/archive`, {
+      params: { key: node.key },
+    });
+
+    res.redirect(`/server/archives/${server.id}?success=true`);
+  } catch (err) {
+    console.error("Archive creation failed:", err.response?.data || err.message);
+    res.status(500).send("Failed to create archive");
+  }
+});
+
+/**
+ * POST /server/archive/:id/extract
+ * Extract an archive and redirect to /server/archives/:id
+ */
+router.post("/server/archive/:id/extract", requireAuth, withServer, async (req, res) => {
+  const { archiveName } = req.body;
+  if (!archiveName) return res.status(400).send("archiveName is required");
+
+  const server = req.server;
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  try {
+    await axios.post(
+      `${getNodeUrl(node)}/server/fs/${server.idt}/archive`,
+      { archiveName },
+      { params: { key: node.key } }
+    );
+
+    res.redirect(`/server/archives/${server.id}?success=true`);
+  } catch (err) {
+    console.error("Archive extraction failed:", err.response?.data || err.message);
+    res.status(500).send("Failed to extract archive");
+  }
+});
+
+/**
+ * DELETE /server/archive/:id
+ * Delete an archive and redirect to /server/archives/:id
+ */
+router.delete("/server/archive/:id", requireAuth, withServer, async (req, res) => {
+  const { archiveName } = req.query;
+  if (!archiveName) return res.status(400).send("archiveName query param required");
+
+  const server = req.server;
+  if (!server.node) return res.status(500).send("Server node not assigned");
+
+  const node = unsqh.list("nodes").find((n) => n.ip === server.node.ip);
+  if (!node) return res.status(404).send("Node not found");
+
+  try {
+    await axios.delete(`${getNodeUrl(node)}/server/fs/${server.idt}/archive`, {
+      params: { key: node.key, archiveName },
+    });
+
+    res.json({ success: true })
+  } catch (err) {
+    console.error("Archive deletion failed:", err.response?.data || err.message);
+    res.status(500).send("Failed to delete archive");
+  }
+});
+
 module.exports = router;

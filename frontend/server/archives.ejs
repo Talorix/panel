@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-neutral-950 text-gray-100 font-space-grotesk antialiased">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+        <%= name %> - <%= server.name %> Archives
+    </title>
+    <link rel="stylesheet" href="/assets/tailwind.css" />
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        .font-space-grotesk {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0b0b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2b2b2b;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body class="flex h-full w-full overflow-hidden">
+
+    <%- include('../components/sidebar', { name: name, user: user }) %>
+
+        <main class="relative flex-1 overflow-y-auto bg-black">
+            <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+                <!-- Header -->
+                <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold tracking-tight text-gray-100 md:text-4xl">
+                            Archives
+                        </h1>
+                        <p class="mt-1 text-sm text-neutral-400">
+                            Backups and archives for <span class="font-medium">
+                                <%= server.name %>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <!-- Create button -->
+                        <button onclick="createarchive()" id="createBtn"
+                            class="inline-flex items-center gap-2 rounded-2xl border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-semibold text-gray-100 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-700"
+                            aria-haspopup="dialog" aria-controls="create-archive-modal">
+                            <!-- plus icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span id="createBtnText">Create Archive</span>
+                        </button>
+                    </div>
+                </div>
+                <% if (req.query.success) { %>
+                    <div
+                        class="mb-6 flex items-center gap-3 rounded-xl border border-green-900/50 bg-green-950/20 px-4 py-3 text-sm text-green-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-5 w-5 text-green-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Successfully completed the action!
+                    </div>
+                    <% } %>
+                        <!-- Archive list panel -->
+                        <section class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                            <h2 class="mb-4 text-lg font-bold text-gray-100">Available Archives</h2>
+
+                            <% if (!archives || archives.length===0) { %>
+                                <div
+                                    class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
+                                    No archives found.
+                                </div>
+                                <% } else { %>
+
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full min-w-[640px] table-auto">
+                                            <thead>
+                                                <tr class="text-left text-sm text-neutral-400">
+                                                    <th class="py-2 px-3">Name</th>
+                                                    <th class="py-2 px-3">Size</th>
+                                                    <th class="py-2 px-3">Created</th>
+                                                    <th class="py-2 px-3 text-right">Actions</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody class="divide-y divide-neutral-900">
+                                                <% archives.forEach((a)=> { %>
+                                                    <tr class="group">
+                                                        <td class="py-3 px-3 align-top">
+                                                            <div class="max-w-[36rem] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium text-gray-100"
+                                                                title="<%= a.name %>">
+                                                                <%= a.name %>
+                                                            </div>
+                                                            <div class="mt-1 text-xs text-neutral-500">
+                                                                <span class="font-mono">
+                                                                    <%= a.path ? a.path.replace(/^.*[\\/]/, '' ) : '' %>
+                                                                </span>
+                                                            </div>
+                                                        </td>
+
+                                                        <td class="py-3 px-3 align-top text-sm text-neutral-300">
+                                                            <%= a.sizeHuman || (a.size ? (a.size + ' bytes' ) : '-' ) %>
+                                                        </td>
+
+                                                        <td
+                                                            class="py-3 px-3 align-top text-sm text-neutral-300 whitespace-nowrap">
+                                                            <%= new Date(a.createdAt).toLocaleString() %>
+                                                        </td>
+
+                                                        <td class="py-3 px-3 align-top text-right">
+                                                            <div class="flex items-center justify-end gap-2">
+                                                                <!-- Extract form -->
+                                                                <form action="/server/archive/<%= server.id %>/extract"
+                                                                    method="POST" class="inline">
+                                                                    <input type="hidden" name="archiveName"
+                                                                        value="<%= a.name %>" />
+                                                                    <button type="submit"
+                                                                        class="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm font-semibold text-gray-100 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-700"
+                                                                        aria-label="Extract <%= a.name %>">
+                                                                        Extract
+                                                                    </button>
+                                                                </form>
+
+                                                                <!-- Download link (optional) -->
+                                                                <% /* If you have a download route, you can enable it
+                                                                    here. Example:
+                                                                    /server/archive/:id/download?archiveName=... */ %>
+
+                                                                    <!-- Delete button (uses JS to send DELETE and confirm) -->
+                                                                    <button type="button"
+                                                                        onclick="confirmDelete('<%= encodeURIComponent(a.name) %>', '<%= a.name %>')"
+                                                                        class="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-800"
+                                                                        aria-label="Delete <%= a.name %>">
+                                                                        Delete
+                                                                    </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <% } %>
+                        </section>
+
+            </div>
+        </main>
+        <!-- Scripts -->
+        <script>
+            /**
+             * Confirm-delete flow — sends DELETE to server archive endpoint and reloads on success.
+             * @param {string} encodedName - encodeURIComponent(a.name)
+             * @param {string} prettyName - shown in confirmation
+             */
+            async function confirmDelete(encodedName, prettyName) {
+                // decode the encodedName for display
+                const displayName = prettyName || decodeURIComponent(encodedName);
+
+                if (!confirm(`Delete archive "${displayName}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                try {
+                    const resp = await fetch(`/server/archive/<%= server.id %>?archiveName=${encodedName}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        const body = await resp.json().catch(() => ({}));
+                        alert('Failed to delete archive: ' + (body.error || resp.statusText));
+                        return;
+                    }
+
+                    // successful — reload to refresh archives list
+                    window.location.reload();
+                } catch (err) {
+                    console.error('Delete failed', err);
+                    alert('Failed to delete archive. See console for details.');
+                }
+            }
+
+            async function createarchive() {
+                const createBtn = document.getElementById("createBtn");
+                const createBtnText = document.getElementById("createBtnText");
+                createBtn.classList.add("cursor-disabled");
+                createBtnText.innerText = "Creating...";
+                try {
+                    const resp = await fetch(`/server/archive/<%= server.id %>/create`, {
+                        method: 'POST'
+                    });
+                    window.location.reload();
+                } catch (err) {
+                    console.error('creation failed', err);
+                    alert('Failed to creation archive. See console for details.');
+                    createBtn.classList.remove("cursor-disabled");
+                    createBtnText.innerText = "Create";
+                }
+            }
+        </script>
+</body>
+
+</html>
