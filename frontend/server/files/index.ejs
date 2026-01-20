@@ -150,7 +150,7 @@
         </div>
 
         <!-- Files List -->
-        <div class="overflow-hidden rounded-2xl border border-neutral-900 bg-neutral-950 animate-scale-in delay-200">
+        <div class="overflow-hidden rounded-md border border-neutral-800 bg-neutral-900/30 animate-scale-in delay-200">
           <table class="w-full text-left text-sm">
             <thead class="border-b border-neutral-900 bg-neutral-900/50 text-neutral-400">
               <tr>
@@ -179,7 +179,7 @@
                 <tr class="file-row group hover:bg-neutral-900/50 transition-colors animate-fade-in-up"
                   style="animation-delay: <%= Math.min(index * 30, 300) %>ms;" data-name="<%= file.name %>"
                   data-type="<%= file.type %>" data-path="<%= path === '/' ? '' : path + '/' %><%= file.name %>">
-                  <td class="px-4 py-3">
+                  <td class="px-4 py-3.5">
                     <div class="flex items-center">
                       <input type="checkbox"
                         class="row-checkbox h-4 w-4 appearance-none rounded border border-neutral-700 bg-neutral-800 text-white checked:bg-white checked:border-white checked:bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwb2x5bGluZSBwb2ludHM9IjIwIDYgOSAxNyA0IDEyIj48L3BvbHlsaW5lPjwvc3ZnPg==')] checked:bg-center checked:bg-no-repeat transition-all cursor-pointer focus:ring-0 focus:ring-offset-0" />
@@ -295,9 +295,9 @@
     <div id="modalOverlay"
       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
       <div id="modalPanel"
-        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+        class="w-full max-w-md transform rounded-md border border-neutral-800 bg-neutral-950 p-6 shadow-2xl transition-all scale-95 opacity-0">
         <h2 id="modalTitle" class="text-lg font-bold text-white">New File</h2>
-        <div class="mt-4 space-y-4">
+        <div class="mt-4 space-y-5">
           <input id="modalInput" type="text" placeholder="Name"
             class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
           <textarea id="modalContent"

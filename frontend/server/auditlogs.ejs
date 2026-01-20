@@ -1,13 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+<html lang="en" class="h-full bg-neutral-950 text-gray-100 font-space-grotesk antialiased">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= name %> - <%= server.name %> Audit Logs
-    </title>
-
+    <title><%= name %> - <%= server.name %> Audit Logs</title>
     <link rel="stylesheet" href="/assets/tailwind.css">
 
     <style>
@@ -22,12 +19,33 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #000;
+            background: #0b0b0b;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #333;
+            background: #2b2b2b;
             border-radius: 3px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .log-entry {
+            animation: slideIn 0.3s ease-out;
+            transition: all 0.2s ease;
+        }
+
+        .log-entry:hover {
+            background-color: rgba(23, 23, 23, 0.5);
+            border-color: rgb(38, 38, 38);
         }
     </style>
 </head>
@@ -36,117 +54,139 @@
 
     <%- include('../components/sidebar', { name: name, user: user }) %>
 
-        <main class="relative flex-1 overflow-y-auto bg-black">
-            <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+    <main class="relative flex-1 overflow-y-auto bg-black">
+        <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
 
-                <!-- Header -->
-                <div class="mb-12">
-                    <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">
-                        Audit Logs
-                    </h1>
-                    <p class="mt-2 text-neutral-400">
-                        Track actions performed on this server.
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold tracking-tight text-gray-100 md:text-4xl">
+                    Audit Logs
+                </h1>
+                <p class="mt-2 text-sm text-neutral-400">
+                    Track actions performed on 
+                    <span class="font-medium text-neutral-300"><%= server.name %></span>
+                </p>
+            </div>
+
+            <!-- Logs -->
+            <div class="rounded-md border border-neutral-800 bg-neutral-950 overflow-hidden">
+                <div class="border-b border-neutral-800 px-6 py-4">
+                    <h2 class="text-lg font-bold text-gray-100">Recent Activity</h2>
+                    <% const PER_PAGE=10; const page=Math.max(parseInt(req.query.page || '1', 10), 1); 
+                       const total=logs?.length || 0; 
+                       const totalPages=Math.max(Math.ceil(total / PER_PAGE), 1); 
+                       const safePage=Math.min(page, totalPages); 
+                       const start=(safePage - 1) * PER_PAGE; 
+                       const pageLogs=logs.slice(start, start + PER_PAGE); 
+                    %>
+                    <% if (pageLogs && pageLogs.length > 0) { %>
+                    <p class="mt-1 text-xs text-neutral-500">
+                        Showing <%= start + 1 %>-<%= Math.min(start + PER_PAGE, total) %> of <%= total %> logs
                     </p>
+                    <% } %>
                 </div>
 
-                <!-- Logs -->
-                <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
-                    <h2 class="mb-6 text-lg font-bold text-white">Recent Activity</h2>
+                <div class="p-6">
+                    <% if (!pageLogs || pageLogs.length === 0) { %>
+                    <div class="flex flex-col items-center justify-center rounded-md border border-dashed border-neutral-800 bg-neutral-900/30 p-12 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="text-base font-medium text-neutral-400">No audit logs recorded</h3>
+                        <p class="mt-1 text-sm text-neutral-600">Activity will appear here once actions are performed</p>
+                    </div>
+                    <% } else { %>
 
-                    <% const PER_PAGE=10; const page=Math.max(parseInt(req.query.page || '1' , 10), 1); const
-                        total=logs?.length || 0; const totalPages=Math.max(Math.ceil(total / PER_PAGE), 1); const
-                        safePage=Math.min(page, totalPages); const start=(safePage - 1) * PER_PAGE; const
-                        pageLogs=logs.slice(start, start + PER_PAGE); %>
-
-                        <div class="space-y-4">
-
-                            <% if (!pageLogs || pageLogs.length===0) { %>
-                                <div
-                                    class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
-                                    No audit logs recorded.
+                    <div class="space-y-3">
+                        <% pageLogs.forEach((log, idx) => { %>
+                        <div class="log-entry flex items-center gap-4 rounded-md border border-neutral-800 bg-neutral-900/30 p-4" style="animation-delay: <%= idx * 30 %>ms;">
+                            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-800 text-neutral-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 text-sm flex-wrap">
+                                    <span class="font-semibold text-gray-100 truncate">
+                                        <%= log.userName %>
+                                    </span>
+                                    <span class="text-xs text-neutral-500 font-mono truncate">
+                                        (<%= log.userId %>)
+                                    </span>
+                                    <span class="mx-1 text-neutral-700 hidden sm:inline">•</span>
+                                    <span class="text-xs text-neutral-500 whitespace-nowrap">
+                                        <%= new Date(log.ts).toLocaleString() %>
+                                    </span>
                                 </div>
-                                <% } else { %>
-
-                                    <% pageLogs.forEach(log=> { %>
-                                        <div
-                                            class="flex items-center gap-4 rounded-lg border border-neutral-900 bg-neutral-900/30 p-3 transition-colors hover:border-neutral-800">
-
-                                            <div
-                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-800 text-neutral-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                    stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
-                                                </svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center gap-2 text-sm">
-                                                    <span class="font-semibold text-white truncate">
-                                                        <%= log.userName %>
-                                                    </span>
-                                                    <span class="text-xs text-neutral-500 font-mono truncate">
-                                                        (<%= log.userId %>)
-                                                    </span>
-                                                    <span class="mx-1 text-neutral-700">•</span>
-                                                    <span class="text-xs text-neutral-500 whitespace-nowrap">
-                                                        <%= new Date(log.ts).toLocaleString() %>
-                                                    </span>
-                                                </div>
-
-                                                <p class="mt-0.5 text-sm text-neutral-300 truncate">
-                                                    <%= log.action %>
-                                                </p>
-                                            </div>
-
-                                        </div>
-                                        <% }) %>
-
-                                            <% } %>
+                                <p class="mt-1 text-sm text-neutral-300">
+                                    <%= log.action %>
+                                </p>
+                            </div>
                         </div>
+                        <% }) %>
+                    </div>
 
-                        <!-- Pagination -->
-                        <% if (totalPages> 1) { %>
-                            <div class="mt-8 flex items-center justify-between text-sm">
+                    <% } %>
+                </div>
 
-                                <!-- Prev -->
-                                <div>
-                                    <% if (safePage> 1) { %>
-                                        <a href="?page=<%= safePage - 1 %>"
-                                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 font-bold hover:bg-neutral-800 transition">
-                                            ← Previous
-                                        </a>
-                                        <% } %>
-                                </div>
-
-                                <!-- Pages -->
-                                <div class="flex gap-2">
-                                    <% for (let i=1; i <=totalPages; i++) { %>
-                                        <a href="?page=<%= i %>" class="rounded-lg px-3 py-2 font-bold transition
-                    <%= i === safePage
-                      ? 'bg-white text-black'
-                      : 'border border-neutral-800 bg-neutral-900 hover:bg-neutral-800' %>">
-                                            <%= i %>
-                                        </a>
-                                        <% } %>
-                                </div>
-
-                                <!-- Next -->
-                                <div>
-                                    <% if (safePage < totalPages) { %>
-                                        <a href="?page=<%= safePage + 1 %>"
-                                            class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 font-bold hover:bg-neutral-800 transition">
-                                            Next →
-                                        </a>
-                                        <% } %>
-                                </div>
-
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                <div class="border-t border-neutral-800 px-6 py-4">
+                    <div class="flex items-center justify-between text-sm">
+                        <!-- Prev -->
+                        <div>
+                            <% if (safePage > 1) { %>
+                            <a href="?page=<%= safePage - 1 %>" class="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 px-4 py-2 font-semibold text-gray-100 transition-colors hover:border-neutral-700 hover:bg-neutral-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Previous
+                            </a>
+                            <% } else { %>
+                            <div class="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/50 px-4 py-2 font-semibold text-neutral-600 cursor-not-allowed">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Previous
                             </div>
                             <% } %>
+                        </div>
 
+                        <!-- Pages -->
+                        <div class="flex gap-2">
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                            <a href="?page=<%= i %>" class="rounded-md px-3 py-2 font-semibold transition-colors <%= i === safePage ? 'bg-gray-100 text-neutral-950' : 'border border-neutral-800 bg-neutral-900 text-gray-100 hover:border-neutral-700 hover:bg-neutral-800' %>">
+                                <%= i %>
+                            </a>
+                            <% } %>
+                        </div>
+
+                        <!-- Next -->
+                        <div>
+                            <% if (safePage < totalPages) { %>
+                            <a href="?page=<%= safePage + 1 %>" class="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900 px-4 py-2 font-semibold text-gray-100 transition-colors hover:border-neutral-700 hover:bg-neutral-800">
+                                Next
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                            <% } else { %>
+                            <div class="inline-flex items-center gap-2 rounded-md border border-neutral-800 bg-neutral-900/50 px-4 py-2 font-semibold text-neutral-600 cursor-not-allowed">
+                                Next
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
                 </div>
+                <% } %>
 
             </div>
-        </main>
+
+        </div>
+    </main>
 
 </body>
 

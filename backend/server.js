@@ -373,12 +373,12 @@ router.post("/server/features/:id/minecraft", requireAuth, withServer, async (re
       }
     );
 
-    logAdd(`Updated server.properties`, "info");
+    logAdd(req.session.userId, "Updated the server.properties for minecraft");
     res.redirect('/server/features/' + req.params.id + '/minecraft?success=true');
 
   } catch (err) {
     console.error("Failed to update properties:", err);
-    logAdd(`Failed to update server.properties: ${err.message}`, "error");
+    logAdd(req.session.userId, `Failed to update server.properties: ${err.message}`);
     res.redirect('/server/features/' + req.params.id + '/minecraft?error=true');
   }
 
