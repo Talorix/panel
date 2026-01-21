@@ -90,8 +90,8 @@
                   <div class="mb-8 flex flex-wrap gap-2 border-b border-neutral-900 pb-2">
                     <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="general"
                       data-state="active">General</button>
-                    <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="subusers"
-                      data-state="inactive">Subusers</button>
+                    <!--button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="subusers"
+                      data-state="inactive">Subusers</button-->
                     <button class="tab-btn rounded-lg px-4 py-2 text-sm font-bold transition-all" data-target="ftp"
                       data-state="inactive">FTP</button>
                     <button
@@ -107,7 +107,7 @@
 
                       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <!-- Rename -->
-                        <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                        <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
                           <h2 class="mb-4 text-lg font-bold text-white">Rename Server</h2>
                           <form action="/server/settings/<%= server.id %>/rename" method="POST" class="flex gap-3">
                             <input type="text" name="newName" placeholder="<%= server.name %>"
@@ -119,7 +119,7 @@
                         </div>
 
                         <!-- Metadata -->
-                        <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                        <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
                           <h2 class="mb-4 text-lg font-bold text-white">Metadata</h2>
                           <div class="space-y-2 text-sm">
                             <div class="flex justify-between">
@@ -149,8 +149,8 @@
                     </div>
 
                     <!-- SUBUSERS -->
-                    <div id="tab-subusers" class="tab-pane hidden space-y-6">
-                      <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                    <!--div id="tab-subusers" class="tab-pane hidden space-y-6">
+                      <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
                         <div class="mb-6 flex items-center justify-between">
                           <div>
                             <h2 class="text-lg font-bold text-white">Manage Access</h2>
@@ -211,10 +211,10 @@
                                   <% } %>
                         </div>
                       </div>
-                    </div>
+                    </div-->
                     <!-- FTP -->
                     <div id="tab-ftp" class="tab-pane hidden space-y-6">
-                      <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+                      <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
                         <h2 class="mb-4 text-lg font-bold text-white">FTP Access</h2>
                         <p class="mb-6 text-sm text-neutral-500">Use the credentials below to access your server via
                           FTP.</p>
@@ -311,7 +311,7 @@
 
                     <!-- DANGER -->
                     <div id="tab-danger" class="tab-pane hidden space-y-6">
-                      <div class="rounded-2xl border border-red-900/30 bg-red-950/10 p-6">
+                      <div class="rounded-md border border-red-900/30 bg-red-950/10 p-6">
                         <h2 class="text-lg font-bold text-red-500">Danger Zone</h2>
                         <p class="mb-6 text-sm text-red-200/70">These actions are destructive and cannot be undone.</p>
 
@@ -338,7 +338,7 @@
     <div id="reinstall-modal"
       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
       <div id="reinstall-panel"
-        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+        class="w-full max-w-md transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
         <h2 class="text-lg font-bold text-white">Confirm Reinstall</h2>
         <p class="mt-2 text-sm text-neutral-400">
           Are you sure you want to reinstall this server? This will stop the server and may overwrite configuration

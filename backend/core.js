@@ -1028,6 +1028,7 @@ router.post(
       core,
       disk,
       userId,
+      DockerImg,
       env = {},
     } = req.body;
 
@@ -1078,6 +1079,11 @@ router.post(
         url: interpolateEnv(file.url, finalEnv),
         name: interpolateEnv(file.name, finalEnv),
       }));
+      let modifiedImage;
+      if (image) {
+        modifiedImage = image;
+        modifiedImage.dockerImage = DockerImg || image.dockerImage;
+      }
 
       /* -------------------------
        CREATE SERVER ON NODE
@@ -1085,7 +1091,7 @@ router.post(
       const response = await axios.post(
         `http://${node.ip}:${node.port}/server/create?key=${node.key}`,
         {
-          dockerimage: image.dockerImage,
+          dockerimage: modifiedImage.dockerImage,
           startCmd: image.startCmd,
           stopCmd: image.stopCmd,
           env: finalEnv,
@@ -1100,9 +1106,6 @@ router.post(
 
       const { containerId, idt, ftppass } = response.data;
 
-      /* -------------------------
-       SERVER DATA
-    ------------------------- */
       const serverId = crypto.randomUUID().replace(/-/g, '').slice(0, 7);
       const serverData = {
         id: serverId,
@@ -1116,7 +1119,7 @@ router.post(
         allocationLimit: allocationLimit || 1,
         ip: `${domain ?? ip}`,
         imageId,
-        image,
+        image: modifiedImage,
         name,
         ram,
         core,

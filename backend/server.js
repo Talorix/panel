@@ -1124,12 +1124,41 @@ router.get("/server/network/:id", requireAuth, withServer, (req, res) => {
   });
 });
 
+/**
+ * GET /server/subusers/:id
+ * Display the subusers management page
+ */
+router.get("/server/subusers/:id", requireAuth, withServer, (req, res) => {
+  try {
+    const me = unsqh.get("users", req.session.userId);
+    if (!me) return res.status(404).send("User not found");
+
+    const serverRef = getServerForUser(req.session.userId, req.params.id);
+    if (!serverRef) return res.status(404).send("Server not found");
+
+    const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
+
+    // Map subuser IDs to full user objects
+    globalServer.subusers = (globalServer.subusers || [])
+      .map(id => unsqh.get("users", id))
+      .filter(Boolean);
+
+    res.render("server/subusers", {
+      name: req.session.username,
+      user: me,
+      server: globalServer,
+      req
+    });
+  } catch (err) {
+    console.error("Error loading subusers page:", err);
+    res.status(500).send("Failed to load subusers");
+  }
+});
 
 /**
- * POST add a subuser to a server
+ * POST /server/settings/:id/subuser/add
+ * Add a subuser to a server
  * body: { email }
- * - Adds the server to the target user's `servers` array with `ou: true`
- * - Adds the subuser's id to the admin/global server's `subusers` list
  */
 router.post(
   "/server/settings/:id/subuser/add",
@@ -1149,20 +1178,27 @@ router.post(
 
       const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
 
+      // Only owner or admin can add subusers
+      if (me.id !== globalServer.ownerId && !me.admin) {
+        return res.status(403).send("Unauthorized");
+      }
+
       // Find the user by email
       const subuser = unsqh.list("users").find(u => u.email === email);
-      if (!subuser) return res.status(404).send("Subuser not found");
+      if (!subuser) {
+        return res.redirect(`/server/subusers/${globalServer.id}?added=false`);
+      }
 
       // Prevent adding owner as subuser
       if (subuser.id === globalServer.ownerId) {
-        return res.status(400).send("Cannot add the owner as a subuser");
+        return res.redirect(`/server/subusers/${globalServer.id}?added=false`);
       }
 
       subuser.servers = Array.isArray(subuser.servers) ? subuser.servers : [];
 
-      // If the subuser already has access, do nothing
+      // If the subuser already has access, redirect with error
       if (subuser.servers.some((s) => s.id === globalServer.id)) {
-        return res.redirect(`/server/settings/${globalServer.id}?subuser=already`);
+        return res.redirect(`/server/subusers/${globalServer.id}?added=false`);
       }
 
       const subEntry = {
@@ -1189,10 +1225,13 @@ router.post(
       unsqh.put("users", subuser.id, subuser);
 
       globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
-      if (!globalServer.subusers.includes(subuser.id)) globalServer.subusers.push(subuser.id);
+      if (!globalServer.subusers.includes(subuser.id)) {
+        globalServer.subusers.push(subuser.id);
+      }
       unsqh.put("servers", globalServer.id, globalServer);
+      
       logAdd(req.session.userId, `Added subuser ${subuser.email}`);
-      res.redirect(`/server/settings/${globalServer.id}?subuser=added`);
+      res.redirect(`/server/subusers/${globalServer.id}?added=true`);
     } catch (err) {
       console.error("Error adding subuser:", err);
       res.status(500).send("Failed to add subuser");
@@ -1201,10 +1240,9 @@ router.post(
 );
 
 /**
- * POST remove a subuser from a server
+ * POST /server/settings/:id/subuser/remove
+ * Remove a subuser from a server
  * body: { subuserId }
- * - Removes the server entry from the target user's `servers` array
- * - Removes the subuser from the admin/global server's `subusers` list
  */
 router.post(
   "/server/settings/:id/subuser/remove",
@@ -1224,11 +1262,20 @@ router.post(
 
       const globalServer = unsqh.get("servers", serverRef.id) || serverRef;
 
-      if (subuserId === globalServer.ownerId) {
-        return res.redirect(`/server/settings/${globalServer.id}?subuser=owner`);
+      // Only owner or admin can remove subusers
+      if (me.id !== globalServer.ownerId && !me.admin) {
+        return res.status(403).send("Unauthorized");
       }
+
+      // Prevent removing the owner
+      if (subuserId === globalServer.ownerId) {
+        return res.redirect(`/server/subusers/${globalServer.id}?removed=false`);
+      }
+
       const subuser = unsqh.get("users", subuserId);
-      if (!subuser) return res.status(404).send("Subuser not found");
+      if (!subuser) {
+        return res.redirect(`/server/subusers/${globalServer.id}?removed=false`);
+      }
 
       subuser.servers = Array.isArray(subuser.servers) ? subuser.servers : [];
 
@@ -1238,8 +1285,8 @@ router.post(
       const after = subuser.servers.length;
 
       if (before === after) {
-        // nothing removed
-        return res.redirect(`/server/settings/${globalServer.id}?subuser=notfound`);
+        // Nothing was removed
+        return res.redirect(`/server/subusers/${globalServer.id}?removed=false`);
       }
 
       unsqh.put("users", subuser.id, subuser);
@@ -1248,8 +1295,9 @@ router.post(
       globalServer.subusers = Array.isArray(globalServer.subusers) ? globalServer.subusers : [];
       globalServer.subusers = globalServer.subusers.filter((u) => u !== subuser.id);
       unsqh.put("servers", globalServer.id, globalServer);
+      
       logAdd(req.session.userId, `Removed subuser ${subuser.email}`);
-      res.redirect(`/server/settings/${globalServer.id}?subuser=removed`);
+      res.redirect(`/server/subusers/${globalServer.id}?removed=true`);
     } catch (err) {
       console.error("Error removing subuser:", err);
       res.status(500).send("Failed to remove subuser");

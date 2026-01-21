@@ -58,7 +58,7 @@
         <div class="space-y-8">
 
           <!-- Core Details -->
-          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+          <div class="rounded-md border border-neutral-900 bg-neutral-950 p-8">
             <h2 class="mb-6 text-lg font-bold text-white">Basic Information</h2>
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -86,7 +86,7 @@
           </div>
 
           <!-- Allocation & Resources -->
-          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+          <div class="rounded-md border border-neutral-900 bg-neutral-950 p-8">
             <h2 class="mb-6 text-lg font-bold text-white">Resources & Network</h2>
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -119,7 +119,7 @@
               <!-- Limits -->
               <div class="space-y-4">
                 <div class="grid grid-cols-3 gap-4">
-                   <div class="space-y-2">
+                  <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Allocations Limit</label>
                     <input id="allocationLimit" type="number" placeholder="5" value="1"
                       class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
@@ -146,7 +146,7 @@
           </div>
 
           <!-- Image & Startup -->
-          <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-8">
+          <div class="rounded-md border border-neutral-900 bg-neutral-950 p-8">
             <h2 class="mb-6 text-lg font-bold text-white">Startup Configuration</h2>
 
             <div class="space-y-6">
@@ -156,13 +156,20 @@
                   class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
                   <option value="">Select Image...</option>
                   <% images.forEach(i=> { %>
-                    <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>">
+                    <option value="<%= i.id %>" data-env="<%= encodeURIComponent(JSON.stringify(i.envs || {})) %>"
+                      data-dimg="<%= encodeURIComponent(JSON.stringify(i.dockerImages || [])) %>">
                       <%= i.name %>
                     </option>
                     <% }) %>
                 </select>
               </div>
-
+             <div class="space-y-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-neutral-500">Docker Image</label>
+                <select id="DockerImg"
+                  class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all">
+                  <option value="">Select Image First...</option>
+                </select>
+              </div>
               <div id="envSection" class="hidden animate-slide-up">
                 <label class="mb-3 block text-xs font-bold uppercase tracking-wider text-neutral-500">Environment
                   Variables</label>
@@ -191,7 +198,7 @@
     <div id="creating-modal"
       class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
       <div id="creating-panel"
-        class="flex flex-col items-center justify-center rounded-2xl bg-black border border-neutral-900 p-8 shadow-2xl transform scale-95 opacity-0 transition-all">
+        class="flex flex-col items-center justify-center rounded-md bg-black border border-neutral-900 p-8 shadow-2xl transform scale-95 opacity-0 transition-all">
         <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-neutral-800 border-t-white"></div>
         <h2 class="text-lg font-bold text-white">Deploying server...</h2>
         <p class="mt-1 text-sm text-neutral-400">This may take a few moments.</p>
@@ -231,41 +238,59 @@
           allocSelect.appendChild(opt);
         }
       }
-
+      const dockerSelect = document.getElementById("DockerImg");
       function loadImageEnv() {
-        const select = document.getElementById("image");
+        const imageSelect = document.getElementById("image");
         const envSection = document.getElementById("envSection");
         const envList = document.getElementById("envList");
 
-        if (!select.value) {
-          envSection.classList.add("hidden");
-          envList.innerHTML = "";
-          return;
-        }
-
-        const option = select.options[select.selectedIndex];
-        const raw = option.dataset.env;
-        const envs = raw ? JSON.parse(decodeURIComponent(raw)) : {};
-
+        // Reset UI
         envList.innerHTML = "";
-        const keys = Object.keys(envs);
+        dockerSelect.innerHTML = `<option value="">Select Image First...</option>`;
+        envSection.classList.add("hidden");
 
+        if (!imageSelect.value) return;
+
+        const option = imageSelect.options[imageSelect.selectedIndex];
+
+        /* -------------------- ENV VARS -------------------- */
+        const rawEnv = option.dataset.env;
+        const envs = rawEnv ? JSON.parse(decodeURIComponent(rawEnv)) : {};
+
+        const keys = Object.keys(envs);
         if (keys.length > 0) {
           envSection.classList.remove("hidden");
+
           keys.forEach(key => {
             const div = document.createElement("div");
             div.className = "flex flex-col space-y-1";
             div.innerHTML = `
-                      <label class="text-xs font-mono text-neutral-400">${key}</label>
-                      <input data-key="${key}" value="${envs[key]}" class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all" />
-                  `;
+          <label class="text-xs font-mono text-neutral-400">${key}</label>
+          <input
+            data-key="${key}"
+            value="${envs[key]}"
+            class="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm text-white placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+          />
+        `;
             envList.appendChild(div);
           });
-        } else {
-          envSection.classList.add("hidden");
+        }
+
+        /* -------------------- DOCKER IMAGES -------------------- */
+        const rawDockerImgs = option.dataset.dimg;
+        const dockerImages = rawDockerImgs
+          ? JSON.parse(decodeURIComponent(rawDockerImgs))
+          : [];
+        dockerSelect.innerText = ''
+        if (dockerImages.length > 0) {
+          dockerImages.forEach(img => {
+            const opt = document.createElement("option");
+            opt.value = img;
+            opt.textContent = img;
+            dockerSelect.appendChild(opt);
+          });
         }
       }
-
       function collectEnv() {
         const env = {};
         document.querySelectorAll("#envList input[data-key]").forEach(input => {
@@ -325,7 +350,8 @@
             ram,
             core,
             disk,
-            env: collectEnv()
+            env: collectEnv(),
+            DockerImg: dockerSelect.value
           });
 
           if (res.data.success) {

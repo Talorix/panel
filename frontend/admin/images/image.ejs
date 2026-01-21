@@ -91,7 +91,7 @@
           <div class="space-y-8 lg:col-span-2">
 
             <!-- Description -->
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Image Description</h2>
               <div class="text-neutral-300">
                 <%= image.description || 'No description provided.' %>
@@ -99,7 +99,7 @@
             </div>
     
             <!-- Environment Variables -->
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Environment Variables</h2>
               <% if (image.envs && Object.keys(image.envs).length) { %>
                 <div class="grid grid-cols-1 gap-2">
@@ -121,7 +121,7 @@
             </div>
 
             <!-- Files -->
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Startup Files</h2>
               <% if (image.files && image.files.length) { %>
                 <div class="grid grid-cols-1 gap-2">
@@ -151,7 +151,7 @@
                   <p class="text-sm italic text-neutral-500">No files configured.</p>
                   <% } %>
             </div>
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Docker Images</h2>
               <% if (image.dockerImages && image.dockerImages.length) { %>
                 <div class="grid grid-cols-1 gap-2">
@@ -173,7 +173,7 @@
           <!-- Meta Sidebar -->
           <div class="space-y-6">
 
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Configuration</h2>
 
               <div class="space-y-4">
@@ -192,7 +192,7 @@
               </div>
             </div>
 
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Features</h2>
               <% if (image.features && image.features.length) { %>
                 <div class="flex flex-wrap gap-2">
@@ -207,7 +207,7 @@
                   <p class="text-sm italic text-neutral-500">No features.</p>
                   <% } %>
             </div>
-            <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+            <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
               <h2 class="mb-4 text-xs font-bold uppercase tracking-wider text-neutral-500">Start Command</h2>
               <pre
                 class="whitespace-pre-wrap break-all rounded-lg bg-neutral-900/50 p-4 font-mono text-sm text-neutral-300"><%= image.startCmd || 'No start command configured.' %></pre>

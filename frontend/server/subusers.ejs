@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-white font-space-grotesk antialiased">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= name %> - <%= server.name %> SubUsers
+  </title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    .font-space-grotesk {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+
+<body class="flex h-full w-full overflow-hidden">
+
+  <%- include('../components/sidebar', { name: name, user: user }) %>
+
+  <main class="relative flex-1 overflow-y-auto bg-black">
+    <div class="mx-auto max-w-5xl px-6 py-12 md:px-12">
+
+      <!-- Header -->
+      <div class="mb-12">
+        <h1 class="text-3xl font-bold tracking-tight text-white md:text-4xl">Access Management</h1>
+        <p class="mt-2 text-neutral-400">Control who can access and manage this server.</p>
+      </div>
+
+      <!-- Notifications -->
+      <% if (req.query.added === 'true') { %>
+        <div class="mb-6 flex items-center gap-3 rounded-md border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-emerald-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          User added successfully.
+        </div>
+      <% } else if (req.query.added === 'false') { %>
+        <div class="mb-6 flex items-center gap-3 rounded-md border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-red-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          Failed to add user. Please check the email and try again.
+        </div>
+      <% } %>
+
+      <% if (req.query.removed === 'true') { %>
+        <div class="mb-6 flex items-center gap-3 rounded-md border border-blue-900/50 bg-blue-950/20 px-4 py-3 text-sm text-blue-200">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-blue-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          User access revoked successfully.
+        </div>
+      <% } %>
+
+      <!-- Add User Section -->
+      <% if (user && (user.id === server.ownerId || user.admin)) { %>
+        <div class="mb-8 rounded-md border border-neutral-800 bg-neutral-950 p-6">
+          <h2 class="mb-4 text-lg font-bold text-white">Add Subuser</h2>
+          <form method="POST" action="/server/settings/<%= server.id %>/subuser/add" class="flex flex-col gap-4 sm:flex-row">
+            <input 
+              type="email" 
+              name="email" 
+              placeholder="user@example.com"
+              class="flex-1 rounded-md border border-neutral-800 bg-neutral-900 px-4 py-2.5 text-sm text-gray-100 placeholder-neutral-600 outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+              required 
+            />
+            <button 
+              type="submit"
+              class="rounded-md bg-white px-6 py-2.5 text-sm font-bold text-black transition-transform active:scale-95 hover:bg-neutral-200"
+            >
+              Add User
+            </button>
+          </form>
+        </div>
+      <% } %>
+
+      <!-- Subusers List -->
+      <div class="rounded-md border border-neutral-800 bg-neutral-950 p-6">
+        <div class="mb-6">
+          <h2 class="text-lg font-bold text-white">Current Users</h2>
+          <p class="mt-1 text-sm text-neutral-500">
+            <%= (server.subusers && server.subusers.length) || 1 %> user<%= ((server.subusers && server.subusers.length) || 1) !== 1 ? 's' : '' %> with access
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <% if (server.subusers && server.subusers.length > 0) { %>
+            <% server.subusers.forEach(sub => { %>
+              <div class="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-900/30 p-4 transition-colors hover:border-neutral-700">
+                <div class="flex items-center gap-4">
+                  <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-neutral-800 text-sm font-bold text-neutral-400">
+                    <%= sub.email.substring(0, 2).toUpperCase() %>
+                  </div>
+                  <div>
+                    <p class="font-bold text-gray-100"><%= sub.email %></p>
+                    <% if (sub.id === server.ownerId) { %>
+                      <p class="text-xs text-neutral-500">Server Owner · Full Access</p>
+                    <% } else { %>
+                      <p class="text-xs text-neutral-500">Subuser · Limited Access</p>
+                    <% } %>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <% if (sub.id === server.ownerId) { %>
+                    <span class="rounded-md border border-amber-900/50 bg-amber-900/20 px-3 py-1.5 text-xs font-bold text-amber-500">
+                      Owner
+                    </span>
+                  <% } else if (user.id === server.ownerId || user.admin) { %>
+                    <button 
+                      onclick="openRevokeModal('<%= sub.id %>', '<%= sub.email %>')"
+                      class="rounded-md border border-red-900/30 bg-red-900/10 px-4 py-1.5 text-xs font-bold text-red-500 hover:bg-red-900/20 transition-colors"
+                    >
+                      Revoke Access
+                    </button>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="rounded-md border border-dashed border-neutral-800 bg-neutral-900/30 p-12 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto mb-4 h-12 w-12 text-neutral-700">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+              </svg>
+              <p class="text-sm font-bold text-neutral-500">No subusers added yet</p>
+              <p class="mt-1 text-xs text-neutral-600">Add users above to grant them access to this server</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Revoke Confirmation Modal -->
+  <div id="revoke-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
+    <div id="revoke-panel" class="w-full max-w-md transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-900/20 text-red-500">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">Revoke Access</h3>
+          <p class="mt-1 text-sm text-neutral-400">Are you sure you want to revoke access for this user?</p>
+          <p id="revoke-email" class="mt-2 text-xs font-mono text-neutral-500"></p>
+        </div>
+      </div>
+      <div class="mt-6 flex justify-end gap-3">
+        <button 
+          onclick="closeRevokeModal()"
+          class="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-bold text-neutral-300 hover:bg-neutral-800"
+        >
+          Cancel
+        </button>
+        <form id="revoke-form" method="POST" action="/server/settings/<%= server.id %>/subuser/remove">
+          <input type="hidden" name="subuserId" id="revoke-user-id" value="" />
+          <button 
+            type="submit"
+            class="rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700"
+          >
+            Revoke Access
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const revokeModal = document.getElementById('revoke-modal');
+    const revokePanel = document.getElementById('revoke-panel');
+    const revokeUserId = document.getElementById('revoke-user-id');
+    const revokeEmail = document.getElementById('revoke-email');
+
+    function openRevokeModal(userId, email) {
+      revokeUserId.value = userId;
+      revokeEmail.textContent = email;
+      revokeModal.classList.remove('hidden');
+      revokeModal.classList.add('flex');
+      void revokeModal.offsetWidth;
+      revokePanel.classList.remove('scale-95', 'opacity-0');
+      revokePanel.classList.add('scale-100', 'opacity-100');
+    }
+
+    function closeRevokeModal() {
+      revokePanel.classList.remove('scale-100', 'opacity-100');
+      revokePanel.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => {
+        revokeModal.classList.add('hidden');
+        revokeModal.classList.remove('flex');
+      }, 200);
+    }
+  </script>
+
+</body>
+</html>

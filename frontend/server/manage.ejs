@@ -196,7 +196,7 @@
 
           <!-- Terminal (Takes up 2 cols on Large screens) -->
           <div
-            class="flex flex-col rounded-2xl border border-neutral-900 bg-[#0e0e0e] lg:col-span-2 overflow-hidden h-[500px] animate-scale-in delay-100 shadow-2xl">
+            class="flex flex-col rounded-md border border-neutral-900 bg-[#0e0e0e] lg:col-span-2 overflow-hidden h-[500px] animate-scale-in delay-100 shadow-2xl">
             <!-- Terminal Header -->
             <div class="flex items-center justify-between border-b border-neutral-900 bg-neutral-950 px-4 py-2">
               <div class="flex items-center gap-2">
@@ -249,7 +249,7 @@
 
             <!-- Usage Chart -->
             <div
-              class="flex-1 rounded-2xl border border-neutral-900 bg-neutral-950 p-6 flex flex-col animate-scale-in delay-200 shadow-xl">
+              class="flex-1 rounded-md border border-neutral-900 bg-neutral-950 p-6 flex flex-col animate-scale-in delay-200 shadow-xl">
               <h3 class="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-500">Resource Usage</h3>
               <div class="relative flex-1 w-full min-h-[200px]">
                 <canvas id="usageChart"></canvas>
@@ -280,7 +280,7 @@
     <div id="confirm-modal"
       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
       <div id="confirm-panel"
-        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+        class="w-full max-w-md transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
         <div class="flex items-start gap-4">
           <div id="confirm-icon-wrapper"
             class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-yellow-900/20 text-yellow-500">
@@ -312,7 +312,7 @@
       <div id="eula-modal"
         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
         <div id="eula-panel"
-          class="w-full max-w-lg transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+          class="w-full max-w-lg transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
           <h2 class="mb-2 text-lg font-bold text-white">Minecraft EULA Agreement</h2>
           <p class="mb-6 text-sm text-neutral-400">You must accept the EULA to run this server. By clicking "Accept",
             you agree to Mojang's EULA.</p>
@@ -410,7 +410,7 @@
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 13,
             cursorBlink: true,
-            cursorStyle: 'bar',
+            cursorStyle: 'underline',
             disableStdin: true, // Read-only from this socket, input handled via cmd bar
             convertEol: true,
           });

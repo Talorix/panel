@@ -65,7 +65,7 @@
             <div class="space-y-6">
 
               <!-- Startup Command -->
-              <div class="rounded-2xl bg-neutral-950 p-6">
+              <div class="rounded-md bg-neutral-950 p-6">
                 <h2 class="text-2xl font-bold text-white">Startup Command</h2>
                 <p class="mt-2 text-neutral-400">The command that will be executed to start your server.</p>
                 <form id="startup-form" class="mt-4 space-y-4">
@@ -78,7 +78,7 @@
                   </div>
                 </form>
               </div>
-              <div class="rounded-2xl bg-neutral-950 p-6">
+              <div class="rounded-md bg-neutral-950 p-6">
                 <h2 class="text-2xl font-bold text-white">Stop Command</h2>
                 <p class="mt-2 text-neutral-400">The command that will be executed to stop your server.</p>
                 <form id="stop-form" class="mt-4 space-y-4">
@@ -92,7 +92,7 @@
                 </form>
               </div>
               <!-- Docker Image -->
-              <div class="rounded-2xl bg-neutral-950 p-6">
+              <div class="rounded-md bg-neutral-950 p-6">
                 <h2 class="text-2xl font-bold text-white">Docker Image</h2>
                 <p class="mt-2 text-neutral-400">The Docker image your server is running on.</p>
                 <form method="POST" action="/server/startup/<%= server.id %>/setPrimaryImage" class="mt-4 space-y-4"
@@ -113,7 +113,7 @@
 
               </div>
               <!-- ENV VARS -->
-              <div class="rounded-2xl border border-neutral-900 bg-neutral-950 p-6">
+              <div class="rounded-md border border-neutral-900 bg-neutral-950 p-6">
                 <h2 class="mb-1 text-lg font-bold text-white">Environment Variables</h2>
                 <p class="mb-6 text-sm text-neutral-500">Configure the startup parameters for your server.</p>
 

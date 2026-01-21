@@ -59,7 +59,7 @@
                     <% if (apikeys && apikeys.length> 0) { %>
                         <% apikeys.forEach(key=> { %>
                             <div
-                                class="group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:border-neutral-700">
+                                class="group relative flex flex-col justify-between rounded-md border border-neutral-900 bg-neutral-950 p-6 transition-all hover:border-neutral-700">
                                 <div class="flex items-start justify-between">
                                     <div class="flex items-center gap-3">
                                         <div
@@ -126,7 +126,7 @@
                             <% }) %>
                                 <% } else { %>
                                     <div
-                                        class="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-800 p-12 text-center text-neutral-500">
+                                        class="col-span-full flex flex-col items-center justify-center rounded-md border border-dashed border-neutral-800 p-12 text-center text-neutral-500">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                             stroke-width="1.5" stroke="currentColor" class="h-12 w-12 mb-4 opacity-50">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -146,7 +146,7 @@
         <div id="apiKeyModalOverlay"
             class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
             <div id="apiKeyModal"
-                class="w-full max-w-lg transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+                class="w-full max-w-lg transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
                 <h2 id="apiKeyModalTitle" class="text-lg font-bold text-white mb-6">Create API Key</h2>
                 <form id="apiKeyForm" class="space-y-6">
                     <input type="hidden" id="keyId" />
@@ -188,7 +188,7 @@
         <div id="tokenModalOverlay"
             class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
             <div id="tokenModal"
-                class="w-full max-w-lg transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+                class="w-full max-w-lg transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
                 <div class="mb-6 text-center">
                     <div
                         class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">

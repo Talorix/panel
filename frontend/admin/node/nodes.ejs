@@ -60,7 +60,7 @@
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <% nodes.forEach((node, index)=> { %>
               <div style="animation-delay: <%= Math.min(index * 50, 500) %>ms;"
-                class="animate-fade-in-up group relative flex flex-col justify-between rounded-2xl border border-neutral-900 bg-neutral-950 p-6 transition-all hover:-translate-y-2 hover:border-neutral-700 hover:shadow-2xl hover:shadow-neutral-900/40">
+                class="animate-fade-in-up group relative flex flex-col justify-between rounded-md border border-neutral-900 bg-neutral-950 p-6 transition-all hover:-translate-y-2 hover:border-neutral-700 hover:shadow-2xl hover:shadow-neutral-900/40">
 
                 <!-- Card Header -->
                 <div class="mb-6 flex items-start justify-between">
@@ -172,7 +172,7 @@
     <div id="createModal"
       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity">
       <div id="modalContent"
-        class="w-full max-w-md transform rounded-2xl border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
+        class="w-full max-w-md transform rounded-md border border-neutral-900 bg-black p-6 shadow-2xl transition-all scale-95 opacity-0">
 
         <div class="mb-6 flex items-center justify-between">
           <h2 class="text-lg font-bold text-white">Create New Node</h2>
