@@ -1020,7 +1020,7 @@
   .rounded-sm {
     border-radius: var(--radius-sm);
   }
-  .rounded-xl {
+  .rounded-md {
     border-radius: var(--radius-xl);
   }
   .border {

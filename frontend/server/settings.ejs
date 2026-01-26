@@ -54,7 +54,7 @@
         <!-- Notifications -->
         <% if (req.query.rs==='true' ) { %>
           <div
-            class="mb-6 flex items-center gap-3 rounded-xl border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
+            class="mb-6 flex items-center gap-3 rounded-md border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="h-5 w-5 text-emerald-500">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -64,7 +64,7 @@
           </div>
           <% } else if (req.query.rs==='false' ) { %>
             <div
-              class="mb-6 flex items-center gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+              class="mb-6 flex items-center gap-3 rounded-md border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-200">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="h-5 w-5 text-red-500">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -76,7 +76,7 @@
 
               <% if (req.query.env==='saved' ) { %>
                 <div
-                  class="mb-6 flex items-center gap-3 rounded-xl border border-indigo-900/50 bg-indigo-950/20 px-4 py-3 text-sm text-indigo-200">
+                  class="mb-6 flex items-center gap-3 rounded-md border border-indigo-900/50 bg-indigo-950/20 px-4 py-3 text-sm text-indigo-200">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="h-5 w-5 text-indigo-500">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -174,7 +174,7 @@
                           <% if (server.subusers && server.subusers.length> 0) { %>
                             <% server.subusers.forEach(sub=> { %>
                               <div
-                                class="flex items-center justify-between rounded-xl border border-neutral-900 bg-neutral-900/30 p-4 transition-colors hover:border-neutral-800">
+                                class="flex items-center justify-between rounded-md border border-neutral-900 bg-neutral-900/30 p-4 transition-colors hover:border-neutral-800">
                                 <div class="flex items-center gap-4">
                                   <div
                                     class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-800 text-sm font-bold text-neutral-400">
@@ -205,7 +205,7 @@
                               <% }) %>
                                 <% } else { %>
                                   <div
-                                    class="rounded-xl border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
+                                    class="rounded-md border border-dashed border-neutral-800 bg-neutral-900/30 p-8 text-center text-neutral-500">
                                     No subusers have been added.
                                   </div>
                                   <% } %>
@@ -316,7 +316,7 @@
                         <p class="mb-6 text-sm text-red-200/70">These actions are destructive and cannot be undone.</p>
 
                         <div
-                          class="flex items-center justify-between rounded-xl border border-red-900/30 bg-red-950/20 p-4">
+                          class="flex items-center justify-between rounded-md border border-red-900/30 bg-red-950/20 p-4">
                           <div>
                             <h3 class="font-bold text-white">Reinstall Server</h3>
                             <p class="text-sm text-neutral-400">Wipe configuration and re-run installation scripts.</p>

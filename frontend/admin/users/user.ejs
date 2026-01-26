@@ -107,7 +107,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <% target.servers.forEach(s=> { %>
                     <a href="/admin/server/<%= s.id %>"
-                      class="group relative flex flex-col justify-between rounded-xl border border-neutral-900 bg-neutral-900/30 p-4 transition-all hover:bg-neutral-900 hover:border-neutral-700">
+                      class="group relative flex flex-col justify-between rounded-md border border-neutral-900 bg-neutral-900/30 p-4 transition-all hover:bg-neutral-900 hover:border-neutral-700">
                       <div class="flex items-start justify-between">
                         <div class="flex items-center gap-3">
                           <div
@@ -138,7 +138,7 @@
                 </div>
                 <% } else { %>
                   <div
-                    class="flex flex-col items-center justify-center rounded-xl border border-dashed border-neutral-800 bg-neutral-900/10 p-12 text-center text-neutral-500">
+                    class="flex flex-col items-center justify-center rounded-md border border-dashed border-neutral-800 bg-neutral-900/10 p-12 text-center text-neutral-500">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                       stroke="currentColor" class="h-10 w-10 mb-3 opacity-50">
                       <path stroke-linecap="round" stroke-linejoin="round"

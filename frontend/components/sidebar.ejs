@@ -219,7 +219,7 @@
   <!-- User Footer -->
   <div class="border-t border-neutral-900 p-4">
     <div id="userMenuBtn"
-      class="group relative flex cursor-pointer items-center gap-3 rounded-xl bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900">
+      class="group relative flex cursor-pointer items-center gap-3 rounded-md bg-neutral-900/50 p-2.5 transition-colors hover:bg-neutral-900">
       <img
         src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=<%= (typeof user !== 'undefined' ? user.username : 'blue') %>&backgroundColor=transparent"
         alt="Avatar" class="h-9 w-9 rounded-lg bg-neutral-800 object-cover p-0.5">
@@ -238,7 +238,7 @@
 
       <!-- Dropdown -->
       <div id="userMenuDropdown"
-        class="absolute bottom-full left-0 mb-2 hidden w-full min-w-[200px] overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 p-1 shadow-xl">
+        class="absolute bottom-full left-0 mb-2 hidden w-full min-w-[200px] overflow-hidden rounded-md border border-neutral-800 bg-neutral-950 p-1 shadow-xl">
         <form action="/logout" method="POST">
           <button type="submit"
             class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-500 hover:bg-red-950/20 hover:text-red-400 transition-colors">

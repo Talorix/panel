@@ -318,9 +318,9 @@
           <!-- Actions -->
           <div class="flex items-center justify-end gap-4 pt-4 border-t border-neutral-900">
             <a href="/admin/servers"
-              class="rounded-xl px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
+              class="rounded-md px-6 py-3 text-sm font-bold text-neutral-400 hover:text-white transition-colors">Cancel</a>
             <button onclick="editServer()" id="editBtn"
-              class="flex items-center gap-2 rounded-xl bg-white px-8 py-3 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+              class="flex items-center gap-2 rounded-md bg-white px-8 py-3 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:bg-neutral-200 shadow-lg shadow-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
               <span id="btnText">Save Changes</span>
               <svg id="btnSpinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                 viewBox="0 0 24 24">
@@ -352,7 +352,7 @@
           warning: "bg-amber-500 border-amber-400"
         };
 
-        toast.className = `toast ${colors[type] || colors.error} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 max-w-sm border backdrop-blur-sm`;
+        toast.className = `toast ${colors[type] || colors.error} text-white px-4 py-3 rounded-md shadow-2xl flex items-center gap-3 max-w-sm border backdrop-blur-sm`;
 
         const icons = {
           error: `<svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,

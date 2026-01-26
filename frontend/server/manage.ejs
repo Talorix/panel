@@ -82,7 +82,7 @@
 
             <div class="mt-2 flex items-center gap-4 text-sm text-neutral-400">
               <div
-                class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors bg-neutral-950 border border-neutral-900 p-1 rounded-xl relative group"
+                class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors bg-neutral-950 border border-neutral-900 p-1 rounded-md relative group"
                 tabindex="0" onclick="copyIP('<%= server.ip || '0.0.0.0' %>', <%= server.port %>)"
                 onkeypress="if(event.key==='Enter') copyIP('<%= server.ip || '0.0.0.0' %>', <%= server.port %>)">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -146,7 +146,7 @@
           <!-- Power Controls -->
           <div id="power-actions" class="flex items-center gap-3">
             <button data-action="start" disabled
-              class="flex items-center gap-2 rounded-xl bg-emerald-900/20 border border-emerald-900/50 px-5 py-2.5 text-sm font-bold text-emerald-500 transition-all hover:bg-emerald-900/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="flex items-center gap-2 rounded-md bg-emerald-900/20 border border-emerald-900/50 px-5 py-2.5 text-sm font-bold text-emerald-500 transition-all hover:bg-emerald-900/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="h-5 w-5">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -155,7 +155,7 @@
               Start
             </button>
             <button data-action="restart" disabled
-              class="flex items-center gap-2 rounded-xl bg-neutral-800 border border-neutral-700 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-neutral-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="flex items-center gap-2 rounded-md bg-neutral-800 border border-neutral-700 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-neutral-700 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="h-5 w-5">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -164,7 +164,7 @@
               Restart
             </button>
             <button data-action="stop" disabled id="stop-btn"
-              class="flex items-center gap-2 rounded-xl bg-red-900/20 border border-red-900/50 px-5 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-900/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              class="flex items-center gap-2 rounded-md bg-red-900/20 border border-red-900/50 px-5 py-2.5 text-sm font-bold text-red-500 transition-all hover:bg-red-900/40 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
 
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                 stroke="currentColor" class="h-5 w-5">
@@ -180,7 +180,7 @@
 
         <!-- Node Down Alert -->
         <div id="systemnodedown"
-          class="mb-6 hidden rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-red-200 animate-slide-in-right">
+          class="mb-6 hidden rounded-md border border-red-900/50 bg-red-950/20 p-4 text-red-200 animate-slide-in-right">
           <div class="flex items-center gap-3">
             <svg class="animate-spin h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none"
               viewBox="0 0 24 24">
